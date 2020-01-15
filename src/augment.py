@@ -13,7 +13,8 @@ class DataGeneratorFolder(Sequence):
                  batch_size=4, image_size=(256, 1024), nb_y_features=1,
                  augmentation=None,
                  suffle=True,
-                 image_divisibility=32):
+                 image_divisibility=32,
+                 channels = 3):
         self.image_filenames = [os.path.abspath(os.path.join(root_dir, image_folder, i)) for i in os.listdir(os.path.join(root_dir, image_folder))]
         self.mask_names = [os.path.abspath(os.path.join(root_dir, mask_folder, i)) for i in os.listdir(os.path.join(root_dir, mask_folder))]
         self.batch_size = batch_size
@@ -24,6 +25,7 @@ class DataGeneratorFolder(Sequence):
         self.nb_y_features = nb_y_features
         self.indexes = None
         self.suffle = suffle
+        self.channels = channels
 
     def __len__(self):
         """
@@ -37,9 +39,9 @@ class DataGeneratorFolder(Sequence):
             self.image_filenames, self.mask_names = shuffle(self.image_filenames, self.mask_names)
 
     def read_image_mask(self, image_name, mask_name):
-        image = imread(image_name)
-        mask = imread(mask_name, as_gray=True)
-        return img_as_float32(image), img_as_ubyte(mask)
+        image = imread(image_name, as_gray=(self.channels == 1))
+        mask = (imread(mask_name, as_gray=True)  > 0).astype(np.uint8)
+        return img_as_float32(image), mask
 
     def __getitem__(self, index):
         """
@@ -55,7 +57,7 @@ class DataGeneratorFolder(Sequence):
         this_batch_size = len(indexes)  # The last batch can be smaller than the others
 
         # Defining dataset
-        X = np.empty((this_batch_size, self.image_size[0], self.image_size[1], 3), dtype=np.float32)
+        X = np.empty((this_batch_size, self.image_size[0], self.image_size[1], self.channels), dtype=np.float32)
         y = np.empty((this_batch_size, self.image_size[0], self.image_size[1], self.nb_y_features), dtype=np.uint8)
 
         for i, sample_index in enumerate(indexes):
@@ -67,7 +69,7 @@ class DataGeneratorFolder(Sequence):
             if self.augmentation is not None:
                 # Augmentation code
                 augmented = self.augmentation(self.image_size)(image=X_sample, mask=y_sample)
-                image_augm = augmented['image'].reshape(self.image_size[0], self.image_size[1], augmented['image'].shape[2])
+                image_augm = augmented['image'].reshape(self.image_size[0], self.image_size[1], self.channels )
                 mask_augm = augmented['mask'].reshape(self.image_size[0], self.image_size[1], self.nb_y_features)
                 X[i, ...] = np.clip(image_augm, a_min=0., a_max=1.)
                 y[i, ...] = mask_augm
@@ -83,6 +85,6 @@ class DataGeneratorFolder(Sequence):
 
                 X_sample, y_sample = augmented['image'], augmented['mask']
 
-                return X_sample.reshape(1, X_sample.shape[0], X_sample.shape[1], augmented['image'].shape[2]), y_sample.reshape(1, X_sample.shape[0], X_sample.shape[1], self.nb_y_features)
+                return X_sample.reshape(1, X_sample.shape[0], X_sample.shape[1], self.channels), y_sample.reshape(1, X_sample.shape[0], X_sample.shape[1], self.nb_y_features)
 
         return X, y
