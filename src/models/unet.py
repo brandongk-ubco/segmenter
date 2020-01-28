@@ -1,10 +1,17 @@
 # https://github.com/karolzak/keras-unet/blob/master/keras_unet/models/custom_unet.py
 
-from keras.models import Model
-from keras.layers import BatchNormalization, Conv2D, Conv2DTranspose, MaxPooling2D, Dropout, UpSampling2D, Input, concatenate
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import BatchNormalization, Conv2D, Conv2DTranspose, MaxPooling2D, Dropout, UpSampling2D, Input, concatenate, Activation, LeakyReLU, ReLU
 
-def upsample_conv(filters, kernel_size, strides, padding):
-    return Conv2DTranspose(filters, kernel_size, strides=strides, padding=padding)
+def upsample_conv(inputs, filters, kernel_size, strides, padding, dropout=0.3, use_batch_norm=True):
+    c = Conv2DTranspose(filters, kernel_size, strides=strides, padding=padding, activation='linear')(inputs)
+    # c = LeakyReLU()(c)
+    # if use_batch_norm:
+    #     c = BatchNormalization()(c)
+    # if dropout > 0.0:
+    #     c = Dropout(dropout)(c)
+    return c
+
 
 def upsample_simple(filters, kernel_size, strides, padding):
     return UpSampling2D(strides)
@@ -15,18 +22,22 @@ def conv2d_block(
     dropout=0.3, 
     filters=16, 
     kernel_size=(3,3), 
-    activation='relu', 
     kernel_initializer='he_normal', 
     padding='same'):
     
-    c = Conv2D(filters, kernel_size, activation=activation, kernel_initializer=kernel_initializer, padding=padding) (inputs)
+    c = Conv2D(filters, kernel_size, activation='linear', kernel_initializer=kernel_initializer, padding=padding) (inputs)
+    c = LeakyReLU()(c)
     if use_batch_norm:
         c = BatchNormalization()(c)
     if dropout > 0.0:
         c = Dropout(dropout)(c)
-    c = Conv2D(filters, kernel_size, activation=activation, kernel_initializer=kernel_initializer, padding=padding) (c)
+
+    c = Conv2D(filters, kernel_size, activation='linear', kernel_initializer=kernel_initializer, padding=padding) (c)
+    c = LeakyReLU()(c)
     if use_batch_norm:
         c = BatchNormalization()(c)
+    if dropout > 0.0:
+        c = Dropout(dropout)(c)
     return c
 
 def custom_unet(
@@ -48,7 +59,9 @@ def custom_unet(
 
     # Build U-Net model
     inputs = Input(input_shape)
-    x = inputs   
+    x = inputs
+    if use_batch_norm:
+        x = BatchNormalization()(x)
 
     down_layers = []
     for l in range(num_layers):
@@ -67,7 +80,7 @@ def custom_unet(
     for conv in reversed(down_layers):        
         filters //= 2 # decreasing number of filters with each layer 
         dropout -= dropout_change_per_layer
-        x = upsample(filters, (2, 2), strides=(2, 2), padding='same') (x)
+        x = upsample(inputs=x, filters=filters, kernel_size=(2, 2), strides=(2, 2), padding='same', use_batch_norm=use_batch_norm, dropout=dropout)
         x = concatenate([x, conv])
         x = conv2d_block(inputs=x, filters=filters, use_batch_norm=use_batch_norm, dropout=dropout)
     

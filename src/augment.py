@@ -1,6 +1,6 @@
 import os
 import tensorflow as tf
-from keras.utils import Sequence
+from tensorflow.keras.utils import Sequence
 from skimage.io import imread
 from skimage import img_as_float32, img_as_ubyte
 from sklearn.utils import shuffle
@@ -40,7 +40,7 @@ class DataGeneratorFolder(Sequence):
 
     def read_image_mask(self, image_name, mask_name):
         image = imread(image_name, as_gray=(self.channels == 1))
-        mask = (imread(mask_name, as_gray=True)  > 0).astype(np.uint8)
+        mask = (imread(mask_name, as_gray=True)  > 0).astype(np.float32)
         return img_as_float32(image), mask
 
     def __getitem__(self, index):
@@ -58,21 +58,28 @@ class DataGeneratorFolder(Sequence):
 
         # Defining dataset
         X = np.empty((this_batch_size, self.image_size[0], self.image_size[1], self.channels), dtype=np.float32)
-        y = np.empty((this_batch_size, self.image_size[0], self.image_size[1], self.nb_y_features), dtype=np.uint8)
+        y = np.empty((this_batch_size, self.image_size[0], self.image_size[1], self.nb_y_features), dtype=np.float32)
 
         for i, sample_index in enumerate(indexes):
 
             X_sample, y_sample = self.read_image_mask(self.image_filenames[index * self.batch_size + i],
                                                       self.mask_names[index * self.batch_size + i])
 
+            mask_coverage_before = np.sum(y_sample)
+            mask_coverage_after = 0
             # if augmentation is defined, we assume its a train set
             if self.augmentation is not None:
                 # Augmentation code
-                augmented = self.augmentation(self.image_size)(image=X_sample, mask=y_sample)
-                image_augm = augmented['image'].reshape(self.image_size[0], self.image_size[1], self.channels )
-                mask_augm = augmented['mask'].reshape(self.image_size[0], self.image_size[1], self.nb_y_features)
-                X[i, ...] = np.clip(image_augm, a_min=0., a_max=1.)
-                y[i, ...] = mask_augm
+
+                while mask_coverage_after / mask_coverage_before < 0.3:
+                    augmented = self.augmentation(self.image_size)(image=X_sample, mask=y_sample)
+                    mask_coverage_after = np.sum(augmented['mask'])
+
+                image_augm = augmented['image'] / np.max(augmented['image'])
+                mask_augm = augmented['mask'] / np.max(augmented['mask'])
+
+                X[i, :,:, self.channels-1] = image_augm
+                y[i, :, :, self.nb_y_features-1] = mask_augm
 
             # if augmentation isnt defined, we assume its a test set. 
             # Because test images can have different sizes we resize it to be divisable by 32
