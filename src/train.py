@@ -1,5 +1,3 @@
-from albumentations import *
-from augment import DataGeneratorFolder
 from matplotlib import pyplot as plt
 import numpy as np
 from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, EarlyStopping, TensorBoard, TerminateOnNaN, ProgbarLogger, BaseLogger, TerminateOnNaN, CSVLogger, LambdaCallback
@@ -12,28 +10,12 @@ from tensorflow.keras.layers import Input, Conv2D
 from tensorflow.keras.models import Model
 from models import unet
 import os
-import cv2
 from tensorflow.keras.regularizers import l1_l2
 from tensorflow.keras import backend
 import tensorflow as tf
 from math import ceil
-
-def aug_with_crop(image_size, crop_prob=1):
-    box_scale = min(image_size)
-    rescale_percentage = 0.5
-    return Compose([
-        HorizontalFlip(p=0.5),
-        VerticalFlip(p=0.5),
-        OneOf([
-            Compose([
-                RandomScale(scale_limit=(0, rescale_percentage), p=1, interpolation=cv2.INTER_CUBIC),
-                RandomCrop(image_size[0], image_size[1], p=1),
-            ], p=0.5),
-            RandomResizedCrop(image_size[0], image_size[1], scale=(1 - rescale_percentage, 1 + rescale_percentage), ratio=(1600/256, 1600/256), interpolation=cv2.INTER_CUBIC, p=0.5)
-        ], p=1),
-        ElasticTransform(p=0.5, alpha=box_scale, sigma=box_scale * 0.05, alpha_affine=box_scale * 0.03)
-    ], p=1)
-
+from data import DataGenerator
+from augmentations import augment
 
 class NormalizedFocalLoss(Loss):
 
@@ -48,7 +30,7 @@ class NormalizedFocalLoss(Loss):
 
 if __name__ == "__main__":
 
-    for clazz in ["two", "one", "four", "three"]:
+    for clazz in ["2", "1", "4", "3"]:
         for fold in range(5):
 
             print("Training class %s, fold %s" % (clazz, fold))
@@ -59,34 +41,24 @@ if __name__ == "__main__":
             log_folder = os.path.join(output_folder, "logs")
             os.makedirs(output_folder, exist_ok=True)
             os.makedirs(log_folder, exist_ok=True)
-            
-            num_training_images = len(os.listdir(os.path.join(train_folder, "images")))
-            num_val_images = len(os.listdir(os.path.join(val_folder, "images")))
-
-            print("Found %s training images" % num_training_images)
-            print("Found %s validation images" % num_val_images)
 
             BATCH_SIZE = 4
 
-            train_generator = DataGeneratorFolder(root_dir=train_folder,
-                                                image_folder='images/',
-                                                mask_folder='segmentations/',
-                                                batch_size=BATCH_SIZE,
-                                                image_size=(256,1600),
-                                                image_divisibility=(32,32),
-                                                channels=1,
-                                                nb_y_features=1,
-                                                augmentation=aug_with_crop)
+            train_generator = DataGenerator(clazz, fold, augmentations=augment)
+            train_dataset = tf.data.Dataset.from_generator(train_generator.generate, (tf.float32,tf.float32),
+                output_shapes=(tf.TensorShape((None, None, None)), tf.TensorShape((None, None, None))))
+            train_dataset = train_dataset.batch(BATCH_SIZE, drop_remainder=False)
 
-            val_generator = DataGeneratorFolder(root_dir=val_folder,
-                                                image_folder='images/',
-                                                mask_folder='segmentations/',
-                                                batch_size=1,
-                                                image_size=(256,1600),
-                                                image_divisibility=(32,32),
-                                                nb_y_features=1,
-                                                channels=1,
-                                                augmentation=None)
+            val_generator = DataGenerator(clazz, fold, mode="val")
+            val_dataset = tf.data.Dataset.from_generator(val_generator.generate, (tf.float32,tf.float32),
+                output_shapes=(tf.TensorShape((256, 1600, 1)), tf.TensorShape((256, 1600, 1))))
+            val_dataset = val_dataset.batch(1, drop_remainder=False)
+
+            num_training_images = train_generator.size()
+            num_val_images = val_generator.size()
+
+            print("Found %s training images" % num_training_images)
+            print("Found %s validation images" % num_val_images)
 
             lr_reducer = ReduceLROnPlateau(factor=0.1,
                                         cooldown=20,
@@ -104,8 +76,10 @@ if __name__ == "__main__":
             tensorboard = TensorBoard(log_dir=os.path.join(log_folder, "tenboard"), profile_batch=0)
 
             logger = CSVLogger(os.path.join(log_folder, 'train.csv'), separator=',', append=False)
+
+            train_shuffler = LambdaCallback(on_epoch_end= lambda epoch, logs: train_generator.shuffle())
             
-            callbacks = [mode_autosave, lr_reducer, early_stopping, TerminateOnNaN(), logger, tensorboard]
+            callbacks = [mode_autosave, lr_reducer, early_stopping, TerminateOnNaN(), logger, tensorboard, train_shuffler]
 
             model = unet(input_shape=(256,1600,1), use_batch_norm=True, filters=16, dropout=0.2, dropout_change_per_layer=0, use_dropout_on_upsampling=True)
 
@@ -121,6 +95,6 @@ if __name__ == "__main__":
             model.compile(optimizer=Adam(learning_rate=0.002, beta_1=0.9, beta_2=0.999, amsgrad=True),
                     loss=NormalizedFocalLoss(), metrics=[f1_score])
 
-            history = model.fit(x=train_generator, validation_data=val_generator, shuffle=True,
+            history = model.fit(x=train_dataset, validation_data=val_dataset,
                                         epochs=1000, steps_per_epoch=int(num_training_images/BATCH_SIZE),
                                         validation_steps=num_val_images, callbacks=callbacks, verbose=1)

@@ -58,7 +58,7 @@ def custom_unet(
         upsample=upsample_simple
 
     # Build U-Net model
-    inputs = Input(input_shape)
+    inputs = Input(shape=input_shape)
     x = inputs
     if use_batch_norm:
         x = BatchNormalization()(x)
@@ -85,6 +85,5 @@ def custom_unet(
         x = conv2d_block(inputs=x, filters=filters, use_batch_norm=use_batch_norm, dropout=dropout)
     
     outputs = Conv2D(num_classes, (1, 1), activation=output_activation) (x)    
-    
     model = Model(inputs=[inputs], outputs=[outputs])
     return model

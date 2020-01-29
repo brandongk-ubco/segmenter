@@ -19,7 +19,6 @@ docker run \
     -u $(id -u):$(id -g) \
     -it --entrypoint bash keras
 
-
 # Train the segmentation resolver
 docker run \
     -v $(pwd)/src:/src \
