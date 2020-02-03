@@ -1,7 +1,9 @@
 # https://github.com/karolzak/keras-unet/blob/master/keras_unet/models/custom_unet.py
 
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import BatchNormalization, Conv2D, Conv2DTranspose, MaxPooling2D, Dropout, UpSampling2D, Input, concatenate, Activation, LeakyReLU, ReLU
+from tensorflow.keras.layers import BatchNormalization, Conv2D, Conv2DTranspose, MaxPooling2D, Dropout, UpSampling2D, Input, concatenate, LeakyReLU
+from tensorflow.keras import backend as K
+import tensorflow as tf
 
 def upsample_conv(inputs, filters, kernel_size, strides, padding, dropout=0.3, use_batch_norm=True):
     c = Conv2DTranspose(filters, kernel_size, strides=strides, padding=padding, activation='linear')(inputs)
@@ -23,19 +25,20 @@ def conv2d_block(
     filters=16, 
     kernel_size=(3,3), 
     kernel_initializer='he_normal', 
-    padding='same'):
+    padding='same',
+    activation=LeakyReLU):
     
     c = Conv2D(filters, kernel_size, activation='linear', kernel_initializer=kernel_initializer, padding=padding) (inputs)
-    c = LeakyReLU()(c)
     if use_batch_norm:
-        c = BatchNormalization()(c)
+        c = BatchNormalization(scale=True)(c)
+    c = activation()(c)
     if dropout > 0.0:
         c = Dropout(dropout)(c)
 
     c = Conv2D(filters, kernel_size, activation='linear', kernel_initializer=kernel_initializer, padding=padding) (c)
-    c = LeakyReLU()(c)
     if use_batch_norm:
-        c = BatchNormalization()(c)
+        c = BatchNormalization(scale=True)(c)
+    c = activation()(c)
     if dropout > 0.0:
         c = Dropout(dropout)(c)
     return c
@@ -46,10 +49,11 @@ def custom_unet(
     use_batch_norm=True, 
     upsample_mode='deconv', # 'deconv' or 'simple' 
     use_dropout_on_upsampling=False, 
-    dropout=0.3, 
+    dropout=0.0,
     dropout_change_per_layer=0.0,
     filters=16,
     num_layers=4,
+    activation=LeakyReLU,
     output_activation='sigmoid'): # 'sigmoid' or 'softmax'
     
     if upsample_mode=='deconv':
@@ -65,13 +69,13 @@ def custom_unet(
 
     down_layers = []
     for l in range(num_layers):
-        x = conv2d_block(inputs=x, filters=filters, use_batch_norm=use_batch_norm, dropout=dropout)
+        x = conv2d_block(inputs=x, filters=filters, use_batch_norm=use_batch_norm, dropout=dropout, activation=activation)
         down_layers.append(x)
         x = MaxPooling2D((2, 2)) (x)
         dropout += dropout_change_per_layer
         filters = filters*2 # double the number of filters with each layer
 
-    x = conv2d_block(inputs=x, filters=filters, use_batch_norm=use_batch_norm, dropout=dropout)
+    x = conv2d_block(inputs=x, filters=filters, use_batch_norm=use_batch_norm, dropout=dropout, activation=activation)
 
     if not use_dropout_on_upsampling:
         dropout = 0.0

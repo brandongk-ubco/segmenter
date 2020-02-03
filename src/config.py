@@ -21,7 +21,7 @@ def get_config():
         "FILTERS": int(os.environ.get("FILTERS", 16)),
         "L1_REG": float(os.environ.get("L1_REG", 3e-5)),
         "L2_REG": float(os.environ.get("L2_REG", 3e-5)),
-        "LR": float(os.environ.get("LR", 0.002)),
+        "LR": float(os.environ.get("LR", 0.001)),
         "BETA_1": float(os.environ.get("BETA_1", 0.9)),
         "BETA_2": float(os.environ.get("BETA_2", 0.999)),
         "AMSGRAD": os.environ.get("AMSGRAD", "true").lower() == "true",

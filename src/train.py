@@ -7,6 +7,7 @@ from tensorflow.keras import backend
 from segmentation_models.metrics import f1_score
 import numpy as np
 
+from activations import CosActivation
 from models import unet
 from config import get_config
 from loss import NormalizedFocalLoss
@@ -18,7 +19,6 @@ import sys
 import hashlib
 import json
 import os
-
 
 def hash(in_string):
     return hashlib.md5(str(in_string).encode()).hexdigest()
@@ -62,6 +62,8 @@ def get_callbacks(output_folder, job_config, val_loss, train_generator):
 
     tensorboard = TensorBoard(
         log_dir=os.path.join(log_folder, "tenboard"),
+        histogram_freq=1,
+        embeddings_freq=1,
         profile_batch=0
     )
 
@@ -75,7 +77,7 @@ def get_callbacks(output_folder, job_config, val_loss, train_generator):
 
     time_limit = EarlyStoppingByTime(
         limit_seconds=int(os.environ.get("LIMIT_SECONDS", 60 * 60)),
-        verbose=1
+        verbose=0
     )
 
     return [lr_reducer, model_autosave, TerminateOnNaN(), early_stopping, logger, tensorboard, train_shuffler, time_limit]
@@ -126,7 +128,15 @@ def train_fold(clazz, fold):
                     print("Resuming training from %s" % best_weight)
                     model = tf.keras.models.load_model(best_weight, custom_objects={'NormalizedFocalLoss': NormalizedFocalLoss(), 'f1-score': f1_score})
                 else:
-                    model = unet(input_shape=image_size, use_batch_norm=job_config["BATCH_NORM"], filters=job_config["FILTERS"], dropout=job_config["DROPOUT"], dropout_change_per_layer=0, use_dropout_on_upsampling=True)
+                    model = unet(
+                        input_shape=image_size,
+                        use_batch_norm=job_config["BATCH_NORM"],
+                        filters=job_config["FILTERS"],
+                        dropout=job_config["DROPOUT"],
+                        dropout_change_per_layer=0,
+                        use_dropout_on_upsampling=True,
+                        activation=CosActivation
+                    )
 
                     regularizer = l1_l2(l1=job_config["L1_REG"], l2=job_config["L2_REG"])
 

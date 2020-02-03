@@ -21,7 +21,7 @@ class SavableEarlyStopping(EarlyStopping):
     def save(self):
         state = {
             "monitor": self.monitor,
-            "baseline": self.baseline,
+            "baseline": self.best,
             "best": self.best,
             "patience": self.patience,
             "verbose": self.verbose,
