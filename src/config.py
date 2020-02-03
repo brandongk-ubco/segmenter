@@ -16,8 +16,11 @@ def get_config():
         "BATCH_SIZE": get_batch_size(),
         "PATIENCE": int(os.environ.get("PATIENCE", 20)),
         "MIN_LR": float(os.environ.get("MIN_LR", 1e-8)),
-        "DROPOUT": float(os.environ.get("DROPOUT", 0.2)),
+        "DROPOUT": float(os.environ.get("DROPOUT", 0.1)),
+        "USE_DROPOUT_ON_UPSAMPLE": os.environ.get("AMSGRAD", "true").lower() == "true",
+        "DROPOUT_CHANGE_PER_LAYER": float(os.environ.get("DROPOUT_CHANGE_PER_LAYER", 0.0)),
         "LR_REDUCTION_FACTOR": float(os.environ.get("LR_REDUCTION_FACTOR", 0.1)),
+        "ACTIVATION": os.environ.get("ACTIVATION", "cos"),
         "FILTERS": int(os.environ.get("FILTERS", 16)),
         "L1_REG": float(os.environ.get("L1_REG", 3e-5)),
         "L2_REG": float(os.environ.get("L2_REG", 3e-5)),
@@ -26,4 +29,5 @@ def get_config():
         "BETA_2": float(os.environ.get("BETA_2", 0.999)),
         "AMSGRAD": os.environ.get("AMSGRAD", "true").lower() == "true",
         "BATCH_NORM": os.environ.get("BATCH_NORM", "true").lower() == "true",
+        "ELASTIC_TRANSFORM_PR": float(os.environ.get("ELASTIC_TRANSFORM_PR", 0.5)),
     }

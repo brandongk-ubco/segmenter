@@ -5,7 +5,7 @@ import numpy as np
 
 class DataGenerator:
 
-    def __init__(self, clazz, fold, mode="train", path="../data", augmentations=None):
+    def __init__(self, clazz, fold, mode="train", path="../data", augmentations=None, job_config=None):
         with open(os.path.join(path, "folds.json"), "r") as json_file:
             data = json.load(json_file)
 
@@ -14,6 +14,7 @@ class DataGenerator:
         self.fold_data = sorted(data["folds"][fold][clazz][mode])
         self.shuffle()
         self.mask_index = data["class_order"].index(clazz)
+        self.job_config = job_config
 
     def shuffle(self):
         random.shuffle(self.fold_data)
@@ -36,10 +37,8 @@ class DataGenerator:
                     mask_coverage_before = np.sum(mask)
                     mask_coverage_after = 0
                     while mask_coverage_after / mask_coverage_before < 0.5:
-                        augmented = self.augmentations(img.shape)(image=img, mask=mask)
+                        augmented = self.augmentations(self.job_config, img.shape)(image=img, mask=mask)
                         mask_coverage_after = np.sum(augmented['mask'])
-                    img = augmented['image'] / np.max(augmented['image'])
-                    mask = augmented['mask'] / np.max(augmented['mask'])
 
                 yield img, mask
 
