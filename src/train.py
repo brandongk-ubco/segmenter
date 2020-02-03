@@ -5,13 +5,14 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.regularizers import l1_l2
 from tensorflow.keras import backend
 from segmentation_models.metrics import f1_score
+from segmentation_models.losses import binary_focal_loss, dice_loss, binary_crossentropy
 import numpy as np
 
 from activations import CosActivation
 from models import unet
 from config import get_config
 from loss import NormalizedFocalLoss
-from callbacks import EarlyStoppingByTime, SavableEarlyStopping, SavableReduceLROnPlateau
+from callbacks import EarlyStoppingByTime, SavableEarlyStopping, SavableReduceLROnPlateau, AdamSaver
 from DataGenerator import DataGenerator
 from augmentations import augment
 
@@ -24,7 +25,7 @@ def hash(in_string):
     return hashlib.md5(str(in_string).encode()).hexdigest()
 
 def find_best_weight(folder):
-    files = [os.path.join(folder, f) for f in os.listdir(folder) if os.path.isdir(os.path.join(folder, f)) and f != "logs"]
+    files = [os.path.join(folder, f) for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f)) if f.endswith(".h5")]
     if len(files) == 0:
         return None
     return max(files, key=os.path.getctime)
@@ -47,8 +48,9 @@ def get_callbacks(output_folder, job_config, val_loss, train_generator):
     )
 
     model_autosave = ModelCheckpoint(
-        os.path.join(output_folder, "{epoch:04d}-{val_loss:.4f}-{val_f1-score:.4f}"),
-        save_best_only=False
+        os.path.join(output_folder, "{epoch:04d}-{val_loss:.4f}-{val_f1-score:.4f}.h5"),
+        save_best_only=False,
+        save_weights_only=True
     )
     model_autosave.best = val_loss
 
@@ -80,7 +82,11 @@ def get_callbacks(output_folder, job_config, val_loss, train_generator):
         verbose=0
     )
 
-    return [lr_reducer, model_autosave, TerminateOnNaN(), early_stopping, logger, tensorboard, train_shuffler, time_limit]
+    optimizer_saver = AdamSaver(
+        os.path.join(output_folder, "optimizer.pkl")
+    )
+
+    return [optimizer_saver, lr_reducer, model_autosave, TerminateOnNaN(), early_stopping, logger, tensorboard, train_shuffler, time_limit]
      
 
 def train_fold(clazz, fold):
@@ -121,32 +127,36 @@ def train_fold(clazz, fold):
 
             best_weight = find_best_weight(output_folder)
 
+            backend.clear_session()
+
             strategy = tf.distribute.MirroredStrategy()
             with strategy.scope():
 
+                model = unet(
+                    input_shape=image_size,
+                    use_batch_norm=job_config["BATCH_NORM"],
+                    filters=job_config["FILTERS"],
+                    dropout=job_config["DROPOUT"],
+                    dropout_change_per_layer=0,
+                    use_dropout_on_upsampling=True,
+                    activation=CosActivation
+                )
+
+                regularizer = l1_l2(l1=job_config["L1_REG"], l2=job_config["L2_REG"])
+
+                for layer in model.layers:
+                    for attr in ['kernel_regularizer']:
+                        if hasattr(layer, attr):
+                            setattr(layer, attr, regularizer)
+
+                model.compile(
+                    optimizer=Adam(learning_rate=job_config["LR"], beta_1=job_config["BETA_1"], beta_2=job_config["BETA_2"], amsgrad=job_config["AMSGRAD"]),
+                    loss=NormalizedFocalLoss(),
+                    metrics=[f1_score]
+                )
+
                 if best_weight is not None:
-                    print("Resuming training from %s" % best_weight)
-                    model = tf.keras.models.load_model(best_weight, custom_objects={'NormalizedFocalLoss': NormalizedFocalLoss(), 'f1-score': f1_score})
-                else:
-                    model = unet(
-                        input_shape=image_size,
-                        use_batch_norm=job_config["BATCH_NORM"],
-                        filters=job_config["FILTERS"],
-                        dropout=job_config["DROPOUT"],
-                        dropout_change_per_layer=0,
-                        use_dropout_on_upsampling=True,
-                        activation=CosActivation
-                    )
-
-                    regularizer = l1_l2(l1=job_config["L1_REG"], l2=job_config["L2_REG"])
-
-                    for layer in model.layers:
-                        for attr in ['kernel_regularizer']:
-                            if hasattr(layer, attr):
-                                setattr(layer, attr, regularizer)
-
-                    model.compile(optimizer=Adam(learning_rate=job_config["LR"], beta_1=job_config["BETA_1"], beta_2=job_config["BETA_2"], amsgrad=job_config["AMSGRAD"]),
-                            loss=NormalizedFocalLoss(), metrics=[f1_score])
+                    model.load_weights(best_weight)
 
             initial_epoch = 0
             val_loss = np.Inf

@@ -6,11 +6,10 @@ import sys
 class EarlyStoppingByTime(Callback):
 
     def __init__(self, limit_seconds, verbose=0):
-        super(Callback, self).__init__()
+        super(EarlyStoppingByTime, self).__init__()
         self.start = time.time()
         self.limit_seconds = limit_seconds
         self.verbose = verbose
-        self.callbacks = []
 
     def on_epoch_end(self, epoch, logs={}):
         current = time.time()

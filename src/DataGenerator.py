@@ -11,7 +11,7 @@ class DataGenerator:
 
         self.augmentations = augmentations
         self.path = path
-        self.fold_data = data["folds"][fold][clazz][mode]
+        self.fold_data = sorted(data["folds"][fold][clazz][mode])
         self.shuffle()
         self.mask_index = data["class_order"].index(clazz)
 
@@ -35,7 +35,7 @@ class DataGenerator:
                 if self.augmentations is not None:
                     mask_coverage_before = np.sum(mask)
                     mask_coverage_after = 0
-                    while mask_coverage_after / mask_coverage_before < 0.3:
+                    while mask_coverage_after / mask_coverage_before < 0.5:
                         augmented = self.augmentations(img.shape)(image=img, mask=mask)
                         mask_coverage_after = np.sum(augmented['mask'])
                     img = augmented['image'] / np.max(augmented['image'])
@@ -46,10 +46,10 @@ class DataGenerator:
 if __name__ == "__main__":
     from augmentations import augment
     from matplotlib import pyplot as plt
-    generator = DataGenerator("1", 0, mode="val", augmentations=augment)
+    generator = DataGenerator("1", 0, mode="train", augmentations=augment)
     for img, mask in generator.generate():
         plt.subplot(2,1,1)
-        plt.imshow(img[:,:,0])
+        plt.imshow(img[:,:,0], cmap='gray')
         plt.subplot(2,1,2)
-        plt.imshow(mask[:,:,0])
+        plt.imshow(mask[:,:,0], cmap='gray')
         plt.show()
