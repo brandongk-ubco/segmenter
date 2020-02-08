@@ -40,7 +40,7 @@ class DataGenerator:
                         augmented = self.augmentations(self.job_config, img.shape)(image=img, mask=mask)
                         mask_coverage_after = np.sum(augmented['mask'])
 
-                yield img, mask
+                yield img.astype('float16'), mask.astype('float16')
 
 if __name__ == "__main__":
     from augmentations import augment

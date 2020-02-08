@@ -3,19 +3,18 @@ import tensorflow as tf
 from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard, TerminateOnNaN, TerminateOnNaN, CSVLogger, LambdaCallback
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.regularizers import l1_l2
-from tensorflow.keras.layers import LeakyReLU, ReLU
 from tensorflow.keras import backend
 from segmentation_models.metrics import f1_score
 from segmentation_models.losses import binary_focal_loss, dice_loss, binary_crossentropy
 import numpy as np
 
-from activations import CosActivation
+from activations import get_activation
 from models import unet
 from config import get_config
 from loss import NormalizedFocalLoss
 from callbacks import EarlyStoppingByTime, SavableEarlyStopping, SavableReduceLROnPlateau, AdamSaver
 from DataGenerator import DataGenerator
-from augmentations import augment
+from augmentations import train_augment, val_augment
 
 import sys
 import hashlib
@@ -89,16 +88,6 @@ def get_callbacks(output_folder, job_config, val_loss, train_generator):
 
     return [optimizer_saver, lr_reducer, model_autosave, TerminateOnNaN(), early_stopping, logger, tensorboard, train_shuffler, time_limit]
 
-def get_activation(activation):
-    if activation == "cos":
-        return CosActivation
-    if activation == "sinc":
-        return CosActivation
-    if activation == "leaky_relu":
-        return LeakyReLU
-    if activation == "relu":
-        return ReLU
-    raise ValueError("Activation %s not defined" % activation)
 
 def train_fold(clazz, fold):
             job_config = get_config()
@@ -111,13 +100,13 @@ def train_fold(clazz, fold):
             train_folder = '/data/%s/fold%s/train/' % (clazz, fold)
             val_folder = '/data/%s/fold%s/val/' % (clazz, fold)
 
-            train_generator = DataGenerator(clazz, fold, augmentations=augment, job_config=job_config)
-            train_dataset = tf.data.Dataset.from_generator(train_generator.generate, (tf.float32,tf.float32),
+            train_generator = DataGenerator(clazz, fold, augmentations=train_augment, job_config=job_config)
+            train_dataset = tf.data.Dataset.from_generator(train_generator.generate, (tf.float16,tf.float16),
                 output_shapes=(tf.TensorShape((None, None, None)), tf.TensorShape((None, None, None))))
             train_dataset = train_dataset.batch(job_config["BATCH_SIZE"], drop_remainder=False)
 
-            val_generator = DataGenerator(clazz, fold, mode="val")
-            val_dataset = tf.data.Dataset.from_generator(val_generator.generate, (tf.float32,tf.float32),
+            val_generator = DataGenerator(clazz, fold, augmentations=val_augment, mode="val")
+            val_dataset = tf.data.Dataset.from_generator(val_generator.generate, (tf.float16,tf.float16),
                 output_shapes=(tf.TensorShape((None, None, None)), tf.TensorShape((None, None, None))))
             val_dataset = val_dataset.batch(job_config["BATCH_SIZE"], drop_remainder=False)
 
@@ -183,14 +172,20 @@ def train_fold(clazz, fold):
             train_steps = int(num_training_images/job_config["BATCH_SIZE"])
             val_steps = int(num_val_images/job_config["BATCH_SIZE"])
 
-            history = model.fit(initial_epoch=initial_epoch, x=train_dataset, validation_data=val_dataset,
-                                        epochs=1000, steps_per_epoch=train_steps,
-                                        validation_steps=val_steps, callbacks=get_callbacks(output_folder, job_config, val_loss, train_generator), verbose=1)
+            history = model.fit(
+                initial_epoch=initial_epoch,
+                x=train_dataset,
+                validation_data=val_dataset,
+                epochs=1000,
+                steps_per_epoch=train_steps,
+                validation_steps=val_steps,
+                callbacks=get_callbacks(output_folder, job_config, val_loss, train_generator),
+                verbose=1
+            )
 
 if __name__ == "__main__":
     if os.environ.get("TRAIN_CLASS") is not None and os.environ.get("TRAIN_FOLD") is not None:
         train_fold(os.environ.get("TRAIN_CLASS"), int(os.environ.get("TRAIN_FOLD")))
     else:
         for clazz in ["1", "2", "3", "4"]:
-            for fold in range(5):
-                train_fold(clazz, fold)
+            train_fold(clazz, 0)
