@@ -8,3 +8,4 @@
 !train_all.py
 !train_each.py
 !image.def
+!job.sh
