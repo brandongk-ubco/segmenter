@@ -8,7 +8,7 @@ def get_available_gpus():
 def get_batch_size():
     # This needs to be evenly distributed by the number of GPUs, otherwise you get NaN losses
     num_gpus = get_available_gpus()
-    BATCH_SIZE = int(os.environ.get("BATCH_SIZE", 4))
+    BATCH_SIZE = int(os.environ.get("BATCH_SIZE", 8))
     return int(BATCH_SIZE / num_gpus) * num_gpus
 
 def get_config():

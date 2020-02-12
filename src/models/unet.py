@@ -5,8 +5,8 @@ from tensorflow.keras.layers import BatchNormalization, Conv2D, Conv2DTranspose,
 from tensorflow.keras import backend as K
 import tensorflow as tf
 
-def upsample_conv(inputs, filters, kernel_size, strides, padding, dropout=0.3, use_batch_norm=True, activation=LeakyReLU):
-    c = Conv2DTranspose(filters, kernel_size, strides=strides, padding=padding, activation='linear')(inputs)
+def upsample_conv(inputs, filters, kernel_size, strides, padding, dropout=0.3, use_batch_norm=True, activation=LeakyReLU, kernel_initializer='he_normal'):
+    c = Conv2DTranspose(filters, kernel_size, strides=strides, padding=padding, activation='linear', kernel_initializer=kernel_initializer)(inputs)
     if use_batch_norm:
         c = BatchNormalization(scale=True)(c)
     c = activation()(c)
@@ -54,7 +54,8 @@ def custom_unet(
     filters=16,
     num_layers=4,
     activation=LeakyReLU,
-    output_activation='sigmoid'): # 'sigmoid' or 'softmax'
+    output_activation='sigmoid', # 'sigmoid' or 'softmax'
+    kernel_initializer='he_normal'):
     
     if upsample_mode=='deconv':
         upsample=upsample_conv
@@ -81,10 +82,10 @@ def custom_unet(
         dropout = 0.0
         dropout_change_per_layer = 0.0
 
-    for conv in reversed(down_layers):        
+    for conv in reversed(down_layers):
         filters //= 2 # decreasing number of filters with each layer 
         dropout -= dropout_change_per_layer
-        x = upsample(inputs=x, filters=filters, kernel_size=(2, 2), strides=(2, 2), padding='same', use_batch_norm=use_batch_norm, dropout=dropout, activation=activation)
+        x = upsample(inputs=x, filters=filters, kernel_size=(2, 2), strides=(2, 2), padding='same', use_batch_norm=use_batch_norm, dropout=dropout, activation=activation, kernel_initializer=kernel_initializer)
         x = concatenate([x, conv])
         x = conv2d_block(inputs=x, filters=filters, use_batch_norm=use_batch_norm, dropout=dropout, activation=activation)
     

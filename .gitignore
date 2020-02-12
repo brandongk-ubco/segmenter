@@ -1,5 +1,7 @@
-output
+**
+!src
 **/__pycache__
-*.pyc
-backup
-data
+!combine.py
+!Dockerfile
+!.dockerignore
+!README.md

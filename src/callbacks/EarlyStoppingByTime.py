@@ -12,6 +12,9 @@ class EarlyStoppingByTime(Callback):
         self.verbose = verbose
 
     def on_epoch_end(self, epoch, logs={}):
+        if self.limit_seconds < 0:
+            return
+
         current = time.time()
         elapsed = current - self.start
 

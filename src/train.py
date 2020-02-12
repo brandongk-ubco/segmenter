@@ -4,6 +4,7 @@ from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard, TerminateOn
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.regularizers import l1_l2
 from tensorflow.keras import backend
+from tensorflow.keras.initializers import RandomNormal, RandomUniform
 from segmentation_models.metrics import f1_score
 from segmentation_models.losses import binary_focal_loss, dice_loss, binary_crossentropy
 import numpy as np
@@ -15,11 +16,12 @@ from loss import NormalizedFocalLoss
 from callbacks import EarlyStoppingByTime, SavableEarlyStopping, SavableReduceLROnPlateau, AdamSaver
 from DataGenerator import DataGenerator
 from augmentations import train_augment, val_augment
-
 import sys
 import hashlib
 import json
 import os
+import psutil
+import pprint
 
 def hash(in_string):
     return hashlib.md5(str(in_string).encode()).hexdigest()
@@ -43,7 +45,6 @@ def get_callbacks(output_folder, job_config, val_loss, train_generator):
         min_lr=job_config["MIN_LR"],
         monitor='val_loss',
         mode='min',
-        min_delta=1e-2,
         verbose=2
     )
 
@@ -78,7 +79,7 @@ def get_callbacks(output_folder, job_config, val_loss, train_generator):
     train_shuffler = LambdaCallback(on_epoch_end= lambda epoch, logs: train_generator.shuffle())
 
     time_limit = EarlyStoppingByTime(
-        limit_seconds=int(os.environ.get("LIMIT_SECONDS", 60 * 60)),
+        limit_seconds=int(os.environ.get("LIMIT_SECONDS", -1)),
         verbose=0
     )
 
@@ -88,12 +89,18 @@ def get_callbacks(output_folder, job_config, val_loss, train_generator):
 
     return [optimizer_saver, lr_reducer, model_autosave, TerminateOnNaN(), early_stopping, logger, tensorboard, train_shuffler, time_limit]
 
+def make_shape(image, mask):
+    image.set_shape([None, None, None])
+    mask.set_shape([None, None, None])
+    return image, mask
+
+# Do two calls per CPU
+parallel_data_calls= 2 * max(psutil.cpu_count(logical=False) - 1, 1)
 
 def train_fold(clazz, fold):
             job_config = get_config()
 
-            print("Using BATCH_SIZE: %s" % job_config["BATCH_SIZE"])
-            print("Using PATIENCE: %s" % job_config["PATIENCE"])
+            pprint.pprint(job_config)
 
             print("Training class %s, fold %s" % (clazz, fold))
 
@@ -101,13 +108,31 @@ def train_fold(clazz, fold):
             val_folder = '/data/%s/fold%s/val/' % (clazz, fold)
 
             train_generator = DataGenerator(clazz, fold, augmentations=train_augment, job_config=job_config)
-            train_dataset = tf.data.Dataset.from_generator(train_generator.generate, (tf.float16,tf.float16),
-                output_shapes=(tf.TensorShape((None, None, None)), tf.TensorShape((None, None, None))))
+            train_dataset = tf.data.Dataset.from_generator(train_generator.generate, (tf.float16,tf.float16))
+            train_dataset = train_dataset.map(
+                lambda image, mask: tf.numpy_function(train_generator.augment, [image, mask], [tf.float16, tf.float16]),
+                num_parallel_calls=parallel_data_calls
+            )
+            train_dataset = train_dataset.map(
+                lambda image, mask: tf.numpy_function(train_generator.recenter, [image, mask], [tf.float16, tf.float16]),
+                num_parallel_calls=parallel_data_calls
+            )
+            train_dataset = train_dataset.map(
+                lambda image, mask: make_shape(image, mask),
+                num_parallel_calls=parallel_data_calls
+            )
             train_dataset = train_dataset.batch(job_config["BATCH_SIZE"], drop_remainder=False)
 
-            val_generator = DataGenerator(clazz, fold, augmentations=val_augment, mode="val")
-            val_dataset = tf.data.Dataset.from_generator(val_generator.generate, (tf.float16,tf.float16),
-                output_shapes=(tf.TensorShape((None, None, None)), tf.TensorShape((None, None, None))))
+            val_generator = DataGenerator(clazz, fold, mode="val")
+            val_dataset = tf.data.Dataset.from_generator(val_generator.generate, (tf.float16,tf.float16))
+            val_dataset = val_dataset.map(
+                lambda image, mask: tf.numpy_function(train_generator.recenter, [image, mask], [tf.float16, tf.float16]),
+                num_parallel_calls=parallel_data_calls
+            )
+            val_dataset = val_dataset.map(
+                lambda image, mask: make_shape(image, mask),
+                num_parallel_calls=parallel_data_calls
+            )
             val_dataset = val_dataset.batch(job_config["BATCH_SIZE"], drop_remainder=False)
 
             num_training_images = train_generator.size()
@@ -138,8 +163,9 @@ def train_fold(clazz, fold):
                     filters=job_config["FILTERS"],
                     dropout=job_config["DROPOUT"],
                     dropout_change_per_layer=job_config["DROPOUT_CHANGE_PER_LAYER"],
-                    use_dropout_on_upsampling=job_config["DROPOUT_CHANGE_PER_LAYER"],
-                    activation=get_activation(job_config["ACTIVATION"])
+                    use_dropout_on_upsampling=job_config["USE_DROPOUT_ON_UPSAMPLE"],
+                    activation=get_activation(job_config["ACTIVATION"]),
+                    kernel_initializer='he_normal'
                 )
 
                 regularizer = l1_l2(l1=job_config["L1_REG"], l2=job_config["L2_REG"])
