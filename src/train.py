@@ -165,7 +165,8 @@ def train_fold(clazz, fold):
                     dropout_change_per_layer=job_config["DROPOUT_CHANGE_PER_LAYER"],
                     use_dropout_on_upsampling=job_config["USE_DROPOUT_ON_UPSAMPLE"],
                     activation=get_activation(job_config["ACTIVATION"]),
-                    kernel_initializer='he_normal'
+                    kernel_initializer='he_normal',
+                    layers=job_config["LAYERS"]
                 )
 
                 regularizer = l1_l2(l1=job_config["L1_REG"], l2=job_config["L2_REG"])

@@ -5,3 +5,5 @@
 !Dockerfile
 !.dockerignore
 !README.md
+!train_all.py
+!train_each.py

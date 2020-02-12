@@ -30,4 +30,5 @@ def get_config():
         "AMSGRAD": os.environ.get("AMSGRAD", "true").lower() == "true",
         "BATCH_NORM": os.environ.get("BATCH_NORM", "true").lower() == "true",
         "ELASTIC_TRANSFORM_PR": float(os.environ.get("ELASTIC_TRANSFORM_PR", 0.5)),
+        "LAYERS": int(os.environ.get("LAYERS", 4)),
     }
