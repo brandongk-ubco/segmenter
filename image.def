@@ -1,0 +1,26 @@
+Bootstrap: docker
+From: tensorflow/tensorflow:nightly-gpu-py3
+
+%post
+    pip install albumentations segmentation-models psutil
+
+%post
+  #Post setup, runs inside the image
+
+  #Default mount point used in Shef Uni's ShARC cluster
+  mkdir /scratch /data /shared /fastdata
+
+  #Nvidia driver file mount paths
+  mkdir /nvlib /nvbin
+
+  #Add nvidia driver paths to the environment variables
+  echo "\n #Nvidia driver paths \n" >> /environment
+  echo 'export PATH="/nvbin:$PATH"' >> /environment
+  echo 'export LD_LIBRARY_PATH="/nvlib:$LD_LIBRARY_PATH"' >> /environment
+
+  #Add CUDA paths
+  echo "\n #Cuda paths \n" >> /environment
+  echo 'export CPATH="/usr/local/cuda/include:$CPATH"' >> /environment
+  echo 'export PATH="/usr/local/cuda/bin:$PATH"' >> /environment
+  echo 'export LD_LIBRARY_PATH="/usr/local/cuda/lib64:$LD_LIBRARY_PATH"' >> /environment
+  echo 'export CUDA_HOME="/usr/local/cuda"' >> /environment
