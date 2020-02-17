@@ -25,6 +25,21 @@ def get_classes():
         data = json.load(json_file)
         return data["class_order"]
 
+def get_model():
+    model = {
+        "NAME": os.environ.get("MODEL", "unet")
+    }
+
+    if model["NAME"] == "unet":
+        model["FILTERS"] = int(os.environ.get("FILTERS", 16))
+        model["ACTIVATION"] = os.environ.get("ACTIVATION", "cos")
+        model["LAYERS"] = int(os.environ.get("LAYERS", 4))
+
+    if model["NAME"] == "segmentations_unet":
+        model["BACKBONE"] = os.environ.get("BACKBONE", "efficientnetb0")
+
+    return model
+
 def get_config():
     return {
         "BATCH_SIZE": get_batch_size(),
@@ -34,8 +49,6 @@ def get_config():
         "USE_DROPOUT_ON_UPSAMPLE": os.environ.get("USE_DROPOUT_ON_UPSAMPLE", "true").lower() == "true",
         "DROPOUT_CHANGE_PER_LAYER": float(os.environ.get("DROPOUT_CHANGE_PER_LAYER", 0.0)),
         "LR_REDUCTION_FACTOR": float(os.environ.get("LR_REDUCTION_FACTOR", 0.1)),
-        "ACTIVATION": os.environ.get("ACTIVATION", "cos"),
-        "FILTERS": int(os.environ.get("FILTERS", 16)),
         "L1_REG": float(os.environ.get("L1_REG", 3e-5)),
         "L2_REG": float(os.environ.get("L2_REG", 3e-5)),
         "LR": float(os.environ.get("LR", 0.001)),
@@ -44,10 +57,11 @@ def get_config():
         "AMSGRAD": os.environ.get("AMSGRAD", "true").lower() == "true",
         "BATCH_NORM": os.environ.get("BATCH_NORM", "true").lower() == "true",
         "ELASTIC_TRANSFORM_PR": float(os.environ.get("ELASTIC_TRANSFORM_PR", 0.0)),
-        "LAYERS": int(os.environ.get("LAYERS", 4)),
         "FSCORE_THRESHOLD": float(os.environ.get("FSCORE_THRESHOLD", 0.5)),
         "TRAIN_BEHIND": int(os.environ.get("TRAIN_BEHIND", 1)),
         "NUM_FOLDS": int(os.environ.get("NUM_FOLDS", 10)),
         "CLASSES": get_classes(),
         "RESCALE_PERCENTAGE": float(os.environ.get("RESCALE_PERCENTAGE", 0.15)),
+        "RESCALE_PR": float(os.environ.get("RESCALE_PR", 0.0)),
+        "MODEL": get_model()
     }

@@ -2,7 +2,6 @@
 import tensorflow as tf
 from tensorflow.keras.callbacks import TensorBoard, TerminateOnNaN, TerminateOnNaN, CSVLogger, LambdaCallback
 from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.regularizers import l1_l2
 from tensorflow.keras import backend
 from tensorflow.keras.initializers import RandomNormal, RandomUniform
 from tensorflow.keras.layers import Input, Conv2D, Concatenate, Average, Activation
@@ -11,8 +10,7 @@ from segmentation_models.metrics import f1_score, FScore
 from segmentation_models.losses import binary_focal_loss, dice_loss, binary_crossentropy
 import numpy as np
 
-from activations import get_activation
-from models import unet
+from models import get_model
 from config import get_config
 from loss import NormalizedFocalLoss
 from callbacks import EarlyStoppingByTime, SavableEarlyStopping, SavableReduceLROnPlateau, AdamSaver, SubModelCheckpoint
@@ -24,8 +22,6 @@ import json
 import os
 import psutil
 import pprint
-
-from segmentation_models import Unet
 
 def hash(in_string):
     return hashlib.md5(str(in_string).encode()).hexdigest()
@@ -107,37 +103,6 @@ def make_shape(image, mask):
 
 # Do two calls per CPU
 parallel_data_calls= 2 * max(psutil.cpu_count(logical=False) - 1, 1)
-
-def get_model(image_size, job_config):
-
-    regularizer = l1_l2(l1=job_config["L1_REG"], l2=job_config["L2_REG"])
-
-    model = unet(
-        input_shape=image_size,
-        use_batch_norm=job_config["BATCH_NORM"],
-        filters=job_config["FILTERS"],
-        dropout=job_config["DROPOUT"],
-        dropout_change_per_layer=job_config["DROPOUT_CHANGE_PER_LAYER"],
-        use_dropout_on_upsampling=job_config["USE_DROPOUT_ON_UPSAMPLE"],
-        activation=get_activation(job_config["ACTIVATION"]),
-        kernel_initializer='he_normal',
-        num_layers=job_config["LAYERS"]
-    )
-
-    # base_model = Unet(
-    #     backbone_name='efficientnetb0'
-    # )
-    # inp = Input(shape=(None, None, 1))
-    # l1 = Conv2D(3, (1, 1))(inp) # map N channels data to 3 channels
-    # out = base_model(l1)
-    # model = Model(inp, out, name=base_model.name)
-
-    for layer in model.layers:
-        for attr in ['kernel_regularizer']:
-            if hasattr(layer, attr):
-                setattr(layer, attr, regularizer)
-
-    return model
 
 job_config = get_config()
 
@@ -255,7 +220,9 @@ def train_fold(clazz, fold):
             )
 
 if __name__ == "__main__":
-    if os.environ.get("TRAIN_CLASS") is not None:
+    if os.environ.get("TRAIN_CLASS") is not None and os.environ.get("TRAIN_FOLD") is not None:
+        train_fold(os.environ.get("TRAIN_CLASS"), int(os.environ.get("TRAIN_FOLD")))
+    elif os.environ.get("TRAIN_CLASS") is not None:
         for fold in range(job_config["NUM_FOLDS"]):
             train_fold(os.environ.get("TRAIN_CLASS"), fold)
     else:
