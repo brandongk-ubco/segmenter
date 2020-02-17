@@ -38,12 +38,13 @@ class DataGenerator:
     def size(self):
         return len(self.data)
 
-    def recenter(self, img, mask):
-        img = img - np.mean(img)
+    def postprocess(self, img, mask):
+        if self.job_config["RECENTER"]:
+            img = img - np.mean(img)
         return img.astype('float16'), mask.astype('float16')
 
     def augment(self, img, mask):
-        if self.augmentations is None:
+        if self.augmentations(self.job_config, img.shape) is None:
             return img, mask
         mask_coverage_before = np.sum(mask)
         mask_coverage_after = 0
@@ -73,20 +74,38 @@ class DataGenerator:
             yield img, mask
 
 if __name__ == "__main__":
-    from augmentations import train_augment, val_augments
+    from augmentations import train_augments, val_augments
     from matplotlib import pyplot as plt
     from config import get_config
+    from helpers import generate_for_augments
+    import os
 
-    for val_augment in val_augments():
+    os.environ["CUDA_VISIBLE_DEVICES"] = "-1" 
 
-        generator = DataGenerator("1", 0, mode="val", path=os.environ.get("DATA_PATH"), augmentations=val_augment, job_config=get_config())
-        img, mask = next(generator.generate())
-        img = img[:,:,0]
-        mask = mask[:,:,0]
+    job_config = get_config()
+    clazz = os.environ.get("CLASS", job_config["CLASSES"][0])
+    fold = int(os.environ.get("FOLD", 0))
+    path = os.environ.get("DATA_PATH")
 
-        augmented, mask = generator.augment(img, mask)
+    val_generators, val_dataset, num_val_images = generate_for_augments(clazz, fold, val_augments, job_config, path=path, mode="val", repeat=True)
+    train_generators, train_dataset, num_train_images = generate_for_augments(clazz, fold, val_augments, job_config, path=path, mode="train", shuffle=True, repeat=True)
+
+    seen_imgs = []
+    for i, (img, mask) in enumerate(train_dataset.as_numpy_iterator()):
+        print(i)
+        if i > num_train_images:
+            break
+        img = img[:,:,0].astype('float32')
+        mask = mask[:,:,0].astype('float32')
+
+        for seen in seen_imgs:
+            if (seen==img).all():
+                print("We've seen this before!")
+            else:
+                seen_imgs.append(img)
+
         plt.subplot(2,1,1)
         plt.imshow(img, cmap='gray')
         plt.subplot(2,1,2)
-        plt.imshow(augmented, cmap='gray')
+        plt.imshow(mask, cmap='gray')
         plt.show()

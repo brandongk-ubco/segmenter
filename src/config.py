@@ -65,5 +65,6 @@ def get_config():
         "CLASSES": get_classes(),
         "RESCALE_PERCENTAGE": float(os.environ.get("RESCALE_PERCENTAGE", 0.15)),
         "RESCALE_PR": float(os.environ.get("RESCALE_PR", 0.0)),
-        "MODEL": get_model()
+        "MODEL": get_model(),
+        "RECENTER": os.environ.get("RECENTER", "false").lower() == "true",
     }

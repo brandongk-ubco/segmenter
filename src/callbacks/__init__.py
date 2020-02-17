@@ -13,7 +13,7 @@ def get_prediction_callbacks():
 def get_evaluation_callbacks():
     return []
 
-def get_callbacks(output_folder, job_config, fold, val_loss, train_generators):
+def get_callbacks(output_folder, job_config, fold, val_loss):
 
     log_folder = os.path.join(output_folder, "logs")
     os.makedirs(log_folder, exist_ok=True)

@@ -31,16 +31,18 @@ parallel_data_calls = get_parallel_calls()
 
 def generator_to_dataset(generator, repeat, shuffle):
     dataset = tf.data.Dataset.from_generator(generator.generate, (tf.float32,tf.float32))
+
     if shuffle:
         dataset = dataset.shuffle(generator.size(), reshuffle_each_iteration=repeat)
     if repeat:
         dataset = dataset.repeat()
+
     dataset = dataset.map(
         lambda image, mask: tf.numpy_function(generator.augment, [image, mask], [tf.float32, tf.float32]),
         num_parallel_calls=parallel_data_calls
     )
     dataset = dataset.map(
-        lambda image, mask: tf.numpy_function(generator.recenter, [image, mask], [tf.float16, tf.float16]),
+        lambda image, mask: tf.numpy_function(generator.postprocess, [image, mask], [tf.float16, tf.float16]),
         num_parallel_calls=parallel_data_calls
     )
     dataset = dataset.map(
@@ -49,17 +51,9 @@ def generator_to_dataset(generator, repeat, shuffle):
     )
     return dataset
 
-def generate_for_all_augments(clazz, fold, augments, job_config, mode, shuffle=False, repeat=False):
-    combined_dataset = None
-    generators = []
-    for augment in augments():
-        generator = DataGenerator(clazz, fold, augmentations=augment, job_config=job_config, mode=mode)
-        generators.append(generator)
-        dataset = generator_to_dataset(generator, repeat, shuffle)
-        if combined_dataset is None:
-            combined_dataset = dataset
-        else:
-            combined_dataset = combined_dataset.concatenate(dataset)
-    num_images = sum([g.size() for g in generators])
+def generate_for_augments(clazz, fold, augments, job_config, mode, path="/data", shuffle=False, repeat=False):
+    generator = DataGenerator(clazz, fold, path=path, augmentations=augments, job_config=job_config, mode=mode)
+    dataset = generator_to_dataset(generator, repeat, shuffle)
+    num_images = generator.size()
 
-    return generators, combined_dataset, num_images
+    return generator, dataset, num_images

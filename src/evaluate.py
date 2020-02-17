@@ -26,7 +26,7 @@ def evaluate(clazz):
 
     print("Evaluating class %s" % clazz)
 
-    generators, dataset = generate_for_all_augments(clazz, None, predict_augments, job_config, mode="evaluate")
+    generators, dataset = generate_for_augments(clazz, None, predict_augments, job_config, mode="evaluate")
     num_images = sum([g.size() for g in generators])
     image_size = next(generators[0].generate())[0].shape
     print("Found %s images" % num_images)

@@ -30,7 +30,7 @@ def train_fold(clazz, fold):
 
             print("Training class %s, fold %s of %s" % (clazz, fold, job_config["FOLDS"]))
 
-            train_generators, train_dataset, num_training_images = generate_for_all_augments(
+            train_generator, train_dataset, num_training_images = generate_for_augments(
                 clazz,
                 fold,
                 train_augments,
@@ -39,10 +39,10 @@ def train_fold(clazz, fold):
                 shuffle=True,
                 repeat=True
             )
-            image_size = next(train_generators[0].generate())[0].shape
+            image_size = next(train_generator.generate())[0].shape
             train_dataset = train_dataset.batch(job_config["BATCH_SIZE"], drop_remainder=False)
 
-            val_generators, val_dataset, num_val_images = generate_for_all_augments(clazz, fold, val_augments, job_config, mode="val", repeat=True)
+            val_generator, val_dataset, num_val_images = generate_for_augments(clazz, fold, val_augments, job_config, mode="val", repeat=True)
             val_dataset = val_dataset.batch(job_config["BATCH_SIZE"], drop_remainder=False)
 
             print("Found %s training images" % num_training_images)
@@ -115,7 +115,7 @@ def train_fold(clazz, fold):
                 epochs=1000,
                 steps_per_epoch=train_steps,
                 validation_steps=val_steps,
-                callbacks=get_callbacks(output_folder, job_config, fold, val_loss, train_generators),
+                callbacks=get_callbacks(output_folder, job_config, fold, val_loss),
                 verbose=1
             )
 
