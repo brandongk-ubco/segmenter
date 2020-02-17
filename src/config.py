@@ -43,7 +43,7 @@ def get_model():
 def get_config():
     return {
         "BATCH_SIZE": get_batch_size(),
-        "PATIENCE": int(os.environ.get("PATIENCE", 20)),
+        "PATIENCE": int(os.environ.get("PATIENCE", 5)),
         "MIN_LR": float(os.environ.get("MIN_LR", 1e-8)),
         "DROPOUT": float(os.environ.get("DROPOUT", 0.0)),
         "USE_DROPOUT_ON_UPSAMPLE": os.environ.get("USE_DROPOUT_ON_UPSAMPLE", "true").lower() == "true",

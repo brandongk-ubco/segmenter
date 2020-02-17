@@ -1,11 +1,11 @@
 from albumentations import *
 import cv2
 
-def train_augment(job_config, image_size):
+def train_augment(job_config, image_size, hflip=0.5, vflip=0.5):
     box_scale = min(image_size)
     return Compose([
-        HorizontalFlip(p=0.5),
-        VerticalFlip(p=0.5),
+        HorizontalFlip(p=hflip),
+        VerticalFlip(p=vflip),
         RandomResizedCrop(
             image_size[0], image_size[1],
             scale=(1, 1 + job_config["RESCALE_PERCENTAGE"]),
@@ -21,8 +21,21 @@ def train_augment(job_config, image_size):
         )
     ], p=1)
 
-def val_augment(job_config, image_size):
-    return Compose([
-        HorizontalFlip(p=0.5),
-        VerticalFlip(p=0.5),
-    ], p=1)
+def train_augments():
+    return [
+        lambda job_config, image_size: train_augment(job_config, image_size, hflip=1.0, vflip=0.0),
+        lambda job_config, image_size: train_augment(job_config, image_size, hflip=1.0, vflip=1.0),
+        lambda job_config, image_size: train_augment(job_config, image_size, hflip=0.0, vflip=1.0),
+        lambda job_config, image_size: train_augment(job_config, image_size, hflip=0.0, vflip=0.0)
+    ]
+
+def val_augments():
+    return [
+        None,
+        lambda job_config, image_size : HorizontalFlip(p=1),
+        lambda job_config, image_size : VerticalFlip(p=1),
+        lambda job_config, image_size : Compose([
+            HorizontalFlip(p=1),
+            VerticalFlip(p=1),
+        ], p=1)
+    ]

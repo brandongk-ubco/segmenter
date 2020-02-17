@@ -71,15 +71,20 @@ class DataGenerator:
                 yield img, mask
 
 if __name__ == "__main__":
-    from augmentations import train_augment as augment
+    from augmentations import train_augment, val_augments
     from matplotlib import pyplot as plt
     from config import get_config
 
-    generator = DataGenerator("1", 0, mode="train", path=os.environ.get("DATA_PATH"), augmentations=augment, job_config=get_config())
-    for img, mask in generator.generate():
+    for val_augment in val_augments():
+
+        generator = DataGenerator("1", 0, mode="val", path=os.environ.get("DATA_PATH"), augmentations=val_augment, job_config=get_config())
+        img, mask = next(generator.generate())
+        img = img[:,:,0]
+        mask = mask[:,:,0]
+
         augmented, mask = generator.augment(img, mask)
         plt.subplot(2,1,1)
-        plt.imshow(img[:,:,0], cmap='gray')
+        plt.imshow(img, cmap='gray')
         plt.subplot(2,1,2)
-        plt.imshow(augmented[:,:,0], cmap='gray')
+        plt.imshow(augmented, cmap='gray')
         plt.show()

@@ -17,11 +17,10 @@ class NormalizedFocalLoss(Loss):
         dl = dice_loss(gt, pr, **kwargs)
 
         f_score = FScore(threshold=self.threshold)(gt, pr, **kwargs)
-        dl_thresh = 1 - f_score
 
         bfl = BinaryFocalLoss(alpha=self.alpha, gamma=self.gamma)(gt, pr, **kwargs)
         bce = binary_crossentropy(gt, pr, **kwargs)
 
         ce_loss = bfl + bce
         
-        return ce_loss + ce_loss * (dl + dl_thresh) / backend.mean(ce_loss)
+        return ce_loss + ce_loss * (dl + 1 - f_score) / (2 * backend.mean(ce_loss))

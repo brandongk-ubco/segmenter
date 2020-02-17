@@ -15,7 +15,7 @@ from config import get_config
 from loss import NormalizedFocalLoss
 from callbacks import EarlyStoppingByTime, SavableEarlyStopping, SavableReduceLROnPlateau, AdamSaver, SubModelCheckpoint
 from DataGenerator import DataGenerator
-from augmentations import train_augment, val_augment
+from augmentations import train_augments, val_augments
 import sys
 import hashlib
 import json
@@ -38,7 +38,7 @@ def find_best_weight(folder):
         return None
     return min(files, key=lambda x: float(x.split("-")[1]))
 
-def get_callbacks(output_folder, job_config, fold, val_loss, train_generator):
+def get_callbacks(output_folder, job_config, fold, val_loss, train_generators):
 
     log_folder = os.path.join(output_folder, "logs")
     os.makedirs(log_folder, exist_ok=True)
@@ -83,7 +83,7 @@ def get_callbacks(output_folder, job_config, fold, val_loss, train_generator):
         append=True
     )
 
-    train_shuffler = LambdaCallback(on_epoch_end= lambda epoch, logs: train_generator.shuffle())
+    train_shuffler = LambdaCallback(on_epoch_end= lambda epoch, logs: [g.shuffle() for g in train_generators])
 
     time_limit = EarlyStoppingByTime(
         limit_seconds=int(os.environ.get("LIMIT_SECONDS", -1)),
@@ -106,46 +106,52 @@ parallel_data_calls= 2 * max(psutil.cpu_count(logical=False) - 1, 1)
 
 job_config = get_config()
 
+def generator_to_dataset(generator):
+    dataset = tf.data.Dataset.from_generator(generator.generate, (tf.float32,tf.float32))
+    dataset = dataset.map(
+        lambda image, mask: tf.numpy_function(generator.augment, [image, mask], [tf.float32, tf.float32]),
+        num_parallel_calls=parallel_data_calls
+    )
+    dataset = dataset.map(
+        lambda image, mask: tf.numpy_function(generator.recenter, [image, mask], [tf.float16, tf.float16]),
+        num_parallel_calls=parallel_data_calls
+    )
+    dataset = dataset.map(
+        lambda image, mask: make_shape(image, mask),
+        num_parallel_calls=parallel_data_calls
+    )
+    return dataset
+
+def generate_for_all_augments(augments, mode):
+    combined_dataset = None
+    generators = []
+    for augment in augments():
+        generator = DataGenerator(clazz, fold, augmentations=augment, job_config=job_config, mode=mode)
+        generators.append(generator)
+        dataset = generator_to_dataset(generator)
+        if combined_dataset is None:
+            combined_dataset = dataset
+        else:
+            combined_dataset.concatenate(dataset)
+    return generators, combined_dataset
+
 def train_fold(clazz, fold):
             pprint.pprint(job_config)
 
             print("Training class %s, fold %s of %s" % (clazz, fold, job_config["NUM_FOLDS"]))
 
-            train_generator = DataGenerator(clazz, fold, augmentations=train_augment, job_config=job_config)
-            train_dataset = tf.data.Dataset.from_generator(train_generator.generate, (tf.float32,tf.float32))
-            train_dataset = train_dataset.map(
-                lambda image, mask: tf.numpy_function(train_generator.augment, [image, mask], [tf.float32, tf.float32]),
-                num_parallel_calls=parallel_data_calls
-            )
-            train_dataset = train_dataset.map(
-                lambda image, mask: tf.numpy_function(train_generator.recenter, [image, mask], [tf.float16, tf.float16]),
-                num_parallel_calls=parallel_data_calls
-            )
-            train_dataset = train_dataset.map(
-                lambda image, mask: make_shape(image, mask),
-                num_parallel_calls=parallel_data_calls
-            )
+            train_generators, train_dataset = generate_for_all_augments(train_augments, mode="train")
+            image_size = next(train_generators[0].generate())[0].shape
+            num_training_images = sum([g.size() for g in train_generators])
             train_dataset = train_dataset.batch(job_config["BATCH_SIZE"], drop_remainder=False)
 
-            val_generator = DataGenerator(clazz, fold, mode="val", job_config=job_config)
-            val_dataset = tf.data.Dataset.from_generator(val_generator.generate, (tf.float32,tf.float32))
-            val_dataset = val_dataset.map(
-                lambda image, mask: tf.numpy_function(train_generator.recenter, [image, mask], [tf.float16, tf.float16]),
-                num_parallel_calls=parallel_data_calls
-            )
-            val_dataset = val_dataset.map(
-                lambda image, mask: make_shape(image, mask),
-                num_parallel_calls=parallel_data_calls
-            )
+            val_generators, val_dataset = generate_for_all_augments(val_augments, mode="val")
+            num_val_images = sum([g.size() for g in val_generators])
             val_dataset = val_dataset.batch(job_config["BATCH_SIZE"], drop_remainder=False)
-
-            num_training_images = train_generator.size()
-            num_val_images = val_generator.size()
 
             print("Found %s training images" % num_training_images)
             print("Found %s validation images" % num_val_images)
 
-            image_size = next(val_generator.generate())[0].shape
             job_hash = hash(job_config)
 
             output_folder = "/output/%s/%s/fold%s/" % (job_hash, clazz, fold)
@@ -215,7 +221,7 @@ def train_fold(clazz, fold):
                 epochs=1000,
                 steps_per_epoch=train_steps,
                 validation_steps=val_steps,
-                callbacks=get_callbacks(output_folder, job_config, fold, val_loss, train_generator),
+                callbacks=get_callbacks(output_folder, job_config, fold, val_loss, train_generators),
                 verbose=1
             )
 
