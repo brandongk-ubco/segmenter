@@ -3,6 +3,8 @@ import json
 import random
 import numpy as np
 import io
+from glob import glob
+
 class CachedFilereader:
 
     cache = {}
@@ -14,26 +16,27 @@ class CachedFilereader:
 
         return io.BytesIO(self.cache[filename])
 
+cache = CachedFilereader()
 
 class DataGenerator:
 
     def __init__(self, clazz, fold, mode="train", path="/data", augmentations=None, job_config=None):
-        with open(os.path.join(path, "%s-trainbehind-%s-folds.json" % (job_config["TRAIN_BEHIND"], job_config["NUM_FOLDS"])), "r") as json_file:
+        with open(os.path.join(path, "%s-trainbehind-%s-folds.json" % (job_config["TRAIN_BEHIND"], job_config["FOLDS"])), "r") as json_file:
             data = json.load(json_file)
 
-        self.cache = CachedFilereader()
         self.augmentations = augmentations
         self.path = path
-        self.fold_data = sorted(data["folds"][fold][clazz][mode])
-        self.shuffle()
+        if fold is None and mode in ["predict", "evaluate"]:
+            self.data = [f for f in  glob(os.path.join(path, '*')) if os.path.isfile(f) and f.endswith(".npz")]
+        elif fold is not None and mode in ["train", "val"]:
+            self.data = sorted(data["folds"][fold][clazz][mode])
+        else:
+            raise ValueError("Invalid combination: mode %s / fold %s" % (mode, fold))
         self.mask_index = data["class_order"].index(clazz)
         self.job_config = job_config
 
-    def shuffle(self):
-        random.shuffle(self.fold_data)
-
     def size(self):
-        return len(self.fold_data)
+        return len(self.data)
 
     def recenter(self, img, mask):
         img = img - np.mean(img)
@@ -58,17 +61,16 @@ class DataGenerator:
         return img[keep_idx], mask[keep_idx]
 
     def generate(self):
-        while True:
-            for i in range(len(self.fold_data)):
-                filename = os.path.join(self.path, self.fold_data[i])
-                i_data = np.load(self.cache.read(os.path.join(self.path, self.fold_data[i])))
-                img = i_data["image"]
-                mask = i_data["mask"][:, :, self.mask_index]
-                if len(img.shape) == 2:
-                    img = np.reshape(img, (img.shape[0], img.shape[1], 1))
-                mask = np.reshape(mask, (mask.shape[0], mask.shape[1], 1))
+        for i in range(len(self.data)):
+            filename = os.path.join(self.path, self.data[i])
+            i_data = np.load(cache.read(os.path.join(self.path, self.data[i])))
+            img = i_data["image"]
+            mask = i_data["mask"][:, :, self.mask_index]
+            if len(img.shape) == 2:
+                img = np.reshape(img, (img.shape[0], img.shape[1], 1))
+            mask = np.reshape(mask, (mask.shape[0], mask.shape[1], 1))
 
-                yield img, mask
+            yield img, mask
 
 if __name__ == "__main__":
     from augmentations import train_augment, val_augments

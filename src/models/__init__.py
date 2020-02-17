@@ -2,6 +2,8 @@ from .unet import custom_unet as unet
 from segmentation_models import Unet as segmentations_unet
 from tensorflow.keras.regularizers import l1_l2
 from activations import get_activation
+from tensorflow.keras.layers import Input, Conv2D
+from tensorflow.keras.models import Model
 
 def get_model(image_size, job_config):
 

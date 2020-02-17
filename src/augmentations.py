@@ -23,10 +23,7 @@ def train_augment(job_config, image_size, hflip=0.5, vflip=0.5):
 
 def train_augments():
     return [
-        lambda job_config, image_size: train_augment(job_config, image_size, hflip=1.0, vflip=0.0),
-        lambda job_config, image_size: train_augment(job_config, image_size, hflip=1.0, vflip=1.0),
-        lambda job_config, image_size: train_augment(job_config, image_size, hflip=0.0, vflip=1.0),
-        lambda job_config, image_size: train_augment(job_config, image_size, hflip=0.0, vflip=0.0)
+        lambda job_config, image_size: train_augment(job_config, image_size)
     ]
 
 def val_augments():
@@ -38,4 +35,9 @@ def val_augments():
             HorizontalFlip(p=1),
             VerticalFlip(p=1),
         ], p=1)
+    ]
+
+def predict_augments():
+    return [
+        None
     ]
