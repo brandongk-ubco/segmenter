@@ -17,6 +17,8 @@ class SavableEarlyStopping(EarlyStopping):
     def on_train_begin(self, logs=None):
         super(SavableEarlyStopping, self).on_train_begin(logs)
         self.restore()
+        if self.wait >= self.patience:
+            self.model.stop_training = True
 
     def save(self):
         state = {

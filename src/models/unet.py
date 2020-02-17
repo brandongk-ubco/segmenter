@@ -1,7 +1,7 @@
 # https://github.com/karolzak/keras-unet/blob/master/keras_unet/models/custom_unet.py
 
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import BatchNormalization, Conv2D, Conv2DTranspose, MaxPooling2D, Dropout, UpSampling2D, Input, concatenate, LeakyReLU
+from tensorflow.keras.layers import BatchNormalization, Conv2D, Conv2DTranspose, MaxPooling2D, SpatialDropout2D, UpSampling2D, Input, concatenate, LeakyReLU
 from tensorflow.keras import backend as K
 import tensorflow as tf
 
@@ -11,7 +11,7 @@ def upsample_conv(inputs, filters, kernel_size, strides, padding, dropout=0.3, u
         c = BatchNormalization(scale=True)(c)
     c = activation()(c)
     if dropout > 0.0:
-        c = Dropout(dropout)(c)
+        c = SpatialDropout2D(dropout)(c)
     return c
 
 
@@ -33,14 +33,14 @@ def conv2d_block(
         c = BatchNormalization(scale=True)(c)
     c = activation()(c)
     if dropout > 0.0:
-        c = Dropout(dropout)(c)
+        c = SpatialDropout2D(dropout)(c)
 
     c = Conv2D(filters, kernel_size, activation='linear', kernel_initializer=kernel_initializer, padding=padding) (c)
     if use_batch_norm:
         c = BatchNormalization(scale=True)(c)
     c = activation()(c)
     if dropout > 0.0:
-        c = Dropout(dropout)(c)
+        c = SpatialDropout2D(dropout)(c)
     return c
 
 def custom_unet(
