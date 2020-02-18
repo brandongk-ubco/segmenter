@@ -17,6 +17,7 @@ for root, dirs, files in os.walk(outdir):
    confighash = logstoken[0]
    if confighash not in configs:
      configpath = os.path.join(outdir, confighash, "config.json")
+     print(configpath)
      with open(configpath, "r") as configfile:
         config = json.load(configfile)
      configs[confighash] = config
@@ -36,7 +37,7 @@ for root, dirs, files in os.walk(outdir):
          for header in row.keys():
             headers.add(header)
 
-with open("./combined.csv", "w") as outfile:
+with open("%s.csv" % outdir, "w") as outfile:
   writer = csv.DictWriter(outfile, fieldnames=sorted(headers))
   writer.writeheader()
   for row in rows:

@@ -11,16 +11,18 @@ export LIMIT_SECONDS=3600
 module load singularity
 
 if [ -z ${OUTDIR+x} ]; then
-  export OUTDIR=$(pwd)/output
+  export OUTDIR=output
 fi
 
+export OUTDIR="/scratch/bgk/results/${OUTDIR}"
+export INDIR=/scratch/bgk/datasets/severstal
 mkdir -p "$OUTDIR"
 
 singularity exec \
   -B ./src:/src \
   -B ~/nvidiadriver:/nvlib \
   -B ~/nvidiadriver:/nvbin \
-  -B /project/def-lasserre/bgk/datasets/severstal:/data \
+  -B "$INDIR":/data \
   -B "$OUTDIR":/output \
   --pwd /src image.sif \
   python train.py
