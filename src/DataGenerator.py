@@ -61,17 +61,20 @@ class DataGenerator:
         keep_idx = np.ix_(keep.any(1)[:,0], keep.any(0)[:,0])
         return img[keep_idx], mask[keep_idx]
 
+    def _generate(self, idx):
+        filename = os.path.join(self.path, self.data[idx])
+        i_data = np.load(cache.read(os.path.join(self.path, self.data[idx])))
+        img = i_data["image"]
+        mask = i_data["mask"][:, :, self.mask_index]
+        if len(img.shape) == 2:
+            img = np.reshape(img, (img.shape[0], img.shape[1], 1))
+        mask = np.reshape(mask, (mask.shape[0], mask.shape[1], 1))
+
+        return img, mask
+
     def generate(self):
         for i in range(len(self.data)):
-            filename = os.path.join(self.path, self.data[i])
-            i_data = np.load(cache.read(os.path.join(self.path, self.data[i])))
-            img = i_data["image"]
-            mask = i_data["mask"][:, :, self.mask_index]
-            if len(img.shape) == 2:
-                img = np.reshape(img, (img.shape[0], img.shape[1], 1))
-            mask = np.reshape(mask, (mask.shape[0], mask.shape[1], 1))
-
-            yield img, mask
+            yield self._generate(i)
 
 if __name__ == "__main__":
     from augmentations import train_augments, val_augments
@@ -80,32 +83,52 @@ if __name__ == "__main__":
     from helpers import generate_for_augments
     import os
 
-    os.environ["CUDA_VISIBLE_DEVICES"] = "-1" 
+    os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
+    import tensorflow as tf
 
     job_config = get_config()
     clazz = os.environ.get("CLASS", job_config["CLASSES"][0])
     fold = int(os.environ.get("FOLD", 0))
     path = os.environ.get("DATA_PATH")
 
-    val_generators, val_dataset, num_val_images = generate_for_augments(clazz, fold, val_augments, job_config, path=path, mode="val", repeat=True)
-    train_generators, train_dataset, num_train_images = generate_for_augments(clazz, fold, val_augments, job_config, path=path, mode="train", shuffle=True, repeat=True)
+    val_generators, augmented_val_dataset, num_val_images = generate_for_augments(clazz, fold, val_augments, job_config, path=path, mode="val", repeat=True)
+    train_generators, augmented_train_dataset, num_train_images = generate_for_augments(clazz, fold, train_augments, job_config, path=path, mode="train", shuffle=True, repeat=True)
 
     seen_imgs = []
-    for i, (img, mask) in enumerate(train_dataset.as_numpy_iterator()):
-        print(i)
-        if i > num_train_images:
+    repeated = 0
+    for i, (augmented_img, augmented_mask) in enumerate(augmented_train_dataset.as_numpy_iterator()):
+        if i >= 2*num_train_images:
             break
-        img = img[:,:,0].astype('float32')
-        mask = mask[:,:,0].astype('float32')
 
+        augmented_img = augmented_img[:,:,0].astype('float32')
+        augmented_mask = augmented_mask[:,:,0].astype('float32')
+
+        been_seen = False
         for seen in seen_imgs:
-            if (seen==img).all():
-                print("We've seen this before!")
-            else:
-                seen_imgs.append(img)
+            if (seen==augmented_img).all():
+                been_seen = True
+                break
 
-        plt.subplot(2,1,1)
-        plt.imshow(img, cmap='gray')
-        plt.subplot(2,1,2)
-        plt.imshow(mask, cmap='gray')
-        plt.show()
+        if not been_seen:
+            seen_imgs.append(augmented_img)
+
+        if not been_seen and i > num_train_images:
+            print("New image in 2nd iteration!")
+
+        if been_seen and i < num_train_images:
+            print("Repeated image in 1st iteration!")
+
+        if been_seen and i > num_train_images:
+            repeated += 1
+            print("Repeated image in 2nd iteration!")
+
+        # plt.subplot(2,1,1)
+        # plt.imshow(augmented_img, cmap='gray')
+        # plt.subplot(2,1,2)
+        # plt.imshow(augmented_mask, cmap='gray')
+        # plt.show()
+
+    # This should be roughly 25% for 50% rotation augments
+    # This should be 100% for val augments
+    print("%s/%s" % (repeated, num_train_images))

@@ -28,7 +28,7 @@ job_hash = hash(job_config)
 def train_fold(clazz, fold):
             pprint.pprint(job_config)
 
-            print("Training class %s, fold %s of %s" % (clazz, fold, job_config["FOLDS"]))
+            print("Training class %s, fold %s (NUM_FOLDS = %s)" % (clazz, fold, job_config["FOLDS"]))
 
             train_generator, train_dataset, num_training_images = generate_for_augments(
                 clazz,
@@ -40,10 +40,10 @@ def train_fold(clazz, fold):
                 repeat=True
             )
             image_size = next(train_generator.generate())[0].shape
-            train_dataset = train_dataset.batch(job_config["BATCH_SIZE"], drop_remainder=False)
+            train_dataset = train_dataset.batch(job_config["BATCH_SIZE"], drop_remainder=True)
 
             val_generator, val_dataset, num_val_images = generate_for_augments(clazz, fold, val_augments, job_config, mode="val", repeat=True)
-            val_dataset = val_dataset.batch(job_config["BATCH_SIZE"], drop_remainder=False)
+            val_dataset = val_dataset.batch(job_config["BATCH_SIZE"], drop_remainder=True)
 
             print("Found %s training images" % num_training_images)
             print("Found %s validation images" % num_val_images)
@@ -64,7 +64,9 @@ def train_fold(clazz, fold):
 
                 inputs = Input(shape=image_size)
 
-                for previous_fold in range(max(0, fold - job_config["TRAIN_BEHIND"]), fold):
+                train_behind_start = max(0, fold - job_config["TRAIN_BEHIND"])
+
+                for previous_fold in range(train_behind_start, fold):
                     previous_fold_model = get_model(image_size, job_config)
                     best_weight = find_best_weight("/output/%s/%s/fold%s/" % (job_hash, clazz, previous_fold))
                     print("Loading weight %s" % best_weight)
@@ -83,7 +85,7 @@ def train_fold(clazz, fold):
                     fold_model.load_weights(latest_weight)
 
                 out = fold_model(inputs)
-                if fold > 0:
+                if len(previous_models) > 0:
                     out = Average()(previous_models + [out])
                 model = Model(inputs, out)
                 model.summary()

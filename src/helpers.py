@@ -49,11 +49,12 @@ def generator_to_dataset(generator, repeat, shuffle):
         lambda image, mask: make_shape(image, mask),
         num_parallel_calls=parallel_data_calls
     )
+
     return dataset
 
 def generate_for_augments(clazz, fold, augments, job_config, mode, path="/data", shuffle=False, repeat=False):
     generator = DataGenerator(clazz, fold, path=path, augmentations=augments, job_config=job_config, mode=mode)
-    dataset = generator_to_dataset(generator, repeat, shuffle)
+    augmented = generator_to_dataset(generator, repeat, shuffle)
     num_images = generator.size()
 
-    return generator, dataset, num_images
+    return generator, augmented, num_images
