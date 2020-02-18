@@ -21,18 +21,21 @@ cache = CachedFilereader()
 class DataGenerator:
 
     def __init__(self, clazz, fold, mode="train", path="/data", augmentations=None, job_config=None):
-        with open(os.path.join(path, "%s-trainbehind-%s-folds.json" % (job_config["TRAIN_BEHIND"], job_config["FOLDS"])), "r") as json_file:
-            data = json.load(json_file)
 
         self.augmentations = augmentations
         self.path = path
         if fold is None and mode in ["predict", "evaluate"]:
-            self.data = [f for f in  glob(os.path.join(path, '*')) if os.path.isfile(f) and f.endswith(".npz")]
+            with open(os.path.join(path, "classes.json"), "r") as json_file:
+                data = json.load(json_file)
+                self.data = data["classes"][clazz]
+                self.mask_index = data["class_order"].index(clazz)
         elif fold is not None and mode in ["train", "val"]:
-            self.data = sorted(data["folds"][fold][clazz][mode])
+            with open(os.path.join(path, "%s-trainbehind-%s-folds.json" % (job_config["TRAIN_BEHIND"], job_config["FOLDS"])), "r") as json_file:
+                data = json.load(json_file)
+                self.data = sorted(data["folds"][fold][clazz][mode])
+                self.mask_index = data["class_order"].index(clazz)
         else:
             raise ValueError("Invalid combination: mode %s / fold %s" % (mode, fold))
-        self.mask_index = data["class_order"].index(clazz)
         self.job_config = job_config
 
     def size(self):
