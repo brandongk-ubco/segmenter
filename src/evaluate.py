@@ -7,6 +7,7 @@ from helpers import *
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.layers import Input, Average
 from tensorflow.keras.models import Model
+from tensorflow.keras import backend as K
 
 from models import get_model
 from augmentations import predict_augments
@@ -23,6 +24,7 @@ job_hash = hash(job_config)
 
 def evaluate(clazz):
     pprint.pprint(job_config)
+    K.clear_session()
 
     print("Evaluating class %s" % clazz)
 
@@ -38,6 +40,9 @@ def evaluate(clazz):
     for fold in range(job_config["FOLDS"]):
         fold_model = get_model(image_size, job_config)
         best_weight = find_best_weight("/output/%s/%s/fold%s/" % (job_hash, clazz, fold))
+        if best_weight is None:
+            print("Could not find weight for fold %s - skipping" % fold)
+            continue
         print("Loading weight %s" % best_weight)
         fold_model.load_weights(best_weight)
         fold_model.trainable = False
@@ -46,9 +51,16 @@ def evaluate(clazz):
         out = fold_model(inputs)
         models.append(out)
 
+    if len(models) == 0:
+        print("No models found for class %s - skipping" % clazz)
+        return None
+
     out = Average()(models)
     model = Model(inputs, out)
     model.summary()
+
+    model_memory_usage = get_model_memory_usage(1, model)
+    print("Estimated Model Memory Usage: %sg" % model_memory_usage)
 
     model.compile(
         optimizer=Adam(
@@ -61,17 +73,16 @@ def evaluate(clazz):
         metrics=[FScore(threshold=job_config["FSCORE_THRESHOLD"])]
     )
 
-    history = model.evaluate(
+    return model.evaluate(
         x=dataset,
         callbacks=get_evaluation_callbacks(),
         verbose=1,
         steps=num_images
     )
 
-
 if __name__ == "__main__":
     if os.environ.get("CLASS") is not None:
         evaluate(os.environ.get("CLASS"))
     else:
         for clazz in job_config["CLASSES"]:
-            evaluate(clazz)
+            pprint.pprint(evaluate(clazz))

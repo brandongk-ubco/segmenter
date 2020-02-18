@@ -24,13 +24,11 @@ def get_model(image_size, job_config):
         )
 
     if job_config["MODEL"]["NAME"] == "segmentations_unet":
-        base_model = segmentations_unet(
-            backbone_name=job_config["MODEL"]["BACKBONE"]
+        model = segmentations_unet(
+            backbone_name=job_config["MODEL"]["BACKBONE"],
+            encoder_weights=None,
+            input_shape=image_size
         )
-        inp = Input(shape=(None, None, 1))
-        l1 = Conv2D(3, (1, 1))(inp) # map N channels data to 3 channels
-        out = base_model(l1)
-        model = Model(inp, out)
 
     if model is None:
         raise ValueError("Model %s not defined" % job_config["MODEL"]["NAME"])

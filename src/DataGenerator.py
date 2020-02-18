@@ -4,6 +4,7 @@ import random
 import numpy as np
 import io
 from glob import glob
+from tensorflow.keras import backend as K
 
 class CachedFilereader:
 
@@ -44,7 +45,7 @@ class DataGenerator:
     def postprocess(self, img, mask):
         if self.job_config["RECENTER"]:
             img = img - np.mean(img)
-        return img.astype('float16'), mask.astype('float16')
+        return img.astype(K.floatx()), mask.astype(K.floatx())
 
     def augment(self, img, mask):
         if self.augmentations(self.job_config, img.shape) is None:

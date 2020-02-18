@@ -67,4 +67,5 @@ def get_config():
         "RESCALE_PR": float(os.environ.get("RESCALE_PR", 0.0)),
         "MODEL": get_model(),
         "RECENTER": os.environ.get("RECENTER", "false").lower() == "true",
+        "PRECISION": os.environ.get("PRECISION", "float32")
     }

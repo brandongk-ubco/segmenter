@@ -3,17 +3,23 @@ import os
 import psutil
 import tensorflow as tf
 from DataGenerator import DataGenerator
+import numpy as np
+from tensorflow.keras import backend as K
 
 def hash(in_string):
     return hashlib.md5(str(in_string).encode()).hexdigest()
 
 def find_latest_weight(folder):
+    if not os.path.isdir(folder):
+        return None
     files = [os.path.join(folder, f) for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f)) if f.endswith(".h5")]
     if len(files) == 0:
         return None
     return max(files, key=os.path.getctime)
 
 def find_best_weight(folder):
+    if not os.path.isdir(folder):
+        return None
     files = [os.path.join(folder, f) for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f)) if f.endswith(".h5")]
     if len(files) == 0:
         return None
@@ -42,7 +48,7 @@ def generator_to_dataset(generator, repeat, shuffle):
         num_parallel_calls=parallel_data_calls
     )
     dataset = dataset.map(
-        lambda image, mask: tf.numpy_function(generator.postprocess, [image, mask], [tf.float16, tf.float16]),
+        lambda image, mask: tf.numpy_function(generator.postprocess, [image, mask], [K.floatx(), K.floatx()]),
         num_parallel_calls=parallel_data_calls
     )
     dataset = dataset.map(
@@ -58,3 +64,32 @@ def generate_for_augments(clazz, fold, augments, job_config, mode, path="/data",
     num_images = generator.size()
 
     return generator, augmented, num_images
+
+def get_model_memory_usage(batch_size, model):
+    shapes_mem_count = 0
+    internal_model_mem_count = 0
+    for l in model.layers:
+        layer_type = l.__class__.__name__
+        if layer_type == 'Model':
+            internal_model_mem_count += get_model_memory_usage(batch_size, l)
+        if layer_type == 'InputLayer':
+            continue
+        single_layer_mem = 1
+        for s in l.output_shape:
+            if s is None:
+                continue
+            single_layer_mem *= s
+        shapes_mem_count += single_layer_mem
+
+    trainable_count = np.sum([K.count_params(p) for p in model.trainable_weights])
+    non_trainable_count = np.sum([K.count_params(p) for p in model.non_trainable_weights])
+
+    number_size = 4.0
+    if K.floatx() == 'float16':
+         number_size = 2.0
+    if K.floatx() == 'float64':
+         number_size = 8.0
+
+    total_memory = number_size*(batch_size*shapes_mem_count + trainable_count + non_trainable_count)
+    gbytes = np.round(total_memory / (1024.0 ** 3), 3) + internal_model_mem_count
+    return gbytes
