@@ -92,6 +92,7 @@ if __name__ == "__main__":
     import tensorflow as tf
 
     job_config = get_config()
+    K.set_floatx(job_config["PRECISION"])
     clazz = os.environ.get("CLASS", job_config["CLASSES"][0])
     fold = int(os.environ.get("FOLD", 0))
     path = os.environ.get("DATA_PATH")
@@ -105,8 +106,9 @@ if __name__ == "__main__":
         if i >= 2*num_train_images:
             break
 
-        augmented_img = augmented_img[:,:,0].astype('float32')
-        augmented_mask = augmented_mask[:,:,0].astype('float32')
+        print(mask.dtype)
+        augmented_img = augmented_img[:,:,0]
+        augmented_mask = augmented_mask[:,:,0]
 
         been_seen = False
         for seen in seen_imgs:
@@ -128,9 +130,9 @@ if __name__ == "__main__":
             print("Repeated image in 2nd iteration!")
 
         # plt.subplot(2,1,1)
-        # plt.imshow(augmented_img, cmap='gray')
+        # plt.imshow(augmented_img.astype('float32'), cmap='gray')
         # plt.subplot(2,1,2)
-        # plt.imshow(augmented_mask, cmap='gray')
+        # plt.imshow(augmented_mask.astype('float32'), cmap='gray')
         # plt.show()
 
     # This should be roughly 25% for 50% rotation augments

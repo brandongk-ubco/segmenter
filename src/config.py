@@ -42,6 +42,7 @@ def get_model():
 
     return model
 
+# WARNING when setting precision - larger images need higher precision to evaluate the Loss function.  The sum can overflow and give all 0 for loss.
 def get_config():
     return {
         "BATCH_SIZE": get_batch_size(),

@@ -1,4 +1,4 @@
-from tensorflow.keras import backend
+from tensorflow.keras import backend as K
 from segmentation_models.metrics import f1_score
 from segmentation_models.losses import binary_focal_loss, dice_loss, binary_crossentropy, DiceLoss, BinaryFocalLoss
 from segmentation_models.base import Loss
@@ -22,5 +22,4 @@ class NormalizedFocalLoss(Loss):
         bce = binary_crossentropy(gt, pr, **kwargs)
 
         ce_loss = bfl + bce
-        
-        return ce_loss + ce_loss * (dl + 1 - f_score) / (2 * backend.mean(ce_loss))
+        return ce_loss + ce_loss * (dl + 1 - f_score) / (2 * K.mean(ce_loss))

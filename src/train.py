@@ -25,6 +25,9 @@ from helpers import *
 job_config = get_config()
 job_hash = hash(job_config)
 
+# Turn this on when debugging functions.
+# tf.config.experimental_run_functions_eagerly(True)
+
 def train_fold(clazz, fold):
     pprint.pprint(job_config)
     K.clear_session()
