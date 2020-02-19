@@ -5,26 +5,32 @@
 #SBATCH --mem=16G
 #SBATCH --cpus-per-task=2
 
-export LIMIT_SECONDS=3600 
+export LIMIT_SECONDS=3600
 
 module load singularity
 
 if [ -z ${OUTDIR+x} ]; then
-  export OUTDIR="/scratch/${USER}/results/severstal"
+  export OUTDIR="/scratch/${USER}/results/severstal/"
 fi
 
 if [ -z ${INDIR+x} ]; then
-  export INDIR="/scratch/${USER}/datasets/severstal"
+  export INDIR="/scratch/${USER}/datasets/severstal/"
 fi
 
-mkdir -p "$OUTDIR"
+if [ -z ${OUTFOLDER+x} ]; then
+  export OUTFOLDER="output"
+fi
+
+mkdir -p "${OUTDIR}${OUTFOLDER}"
+
+echo "Using output directory ${OUTDIR}${OUTFOLDER}"
 
 singularity exec \
   -B ./src:/src \
   -B ~/nvidiadriver:/nvlib \
   -B ~/nvidiadriver:/nvbin \
   -B "$INDIR":/data \
-  -B "$OUTDIR":/output \
+  -B "${OUTDIR}${OUTFOLDER}":/output \
   --pwd /src image.sif \
   python train.py
 
