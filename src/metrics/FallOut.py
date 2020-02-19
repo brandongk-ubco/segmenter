@@ -1,21 +1,7 @@
 from segmentation_models.base import Metric, functional as F
+from .Specificity import specificity
 
-def specificity(gt, pr, class_weights=1, class_indexes=None, per_image=False, threshold=None, **kwargs):
-    backend = kwargs['backend']
-
-    gt, pr = F.gather_channels(gt, pr, indexes=class_indexes, **kwargs)
-    pr = F.round_if_needed(pr, threshold, **kwargs)
-    axes = F.get_reduce_axes(per_image, **kwargs)
-
-    tp = backend.sum(gt * pr, axis=axes)
-    fp = backend.sum(pr, axis=axes) - tp
-    n = backend.sum(1 - gt, axis=axes)
-
-    score = 1 - fp / n
-
-    return score
-
-class Specificity(Metric):
+class FallOut(Metric):
     def __init__(
             self,
             class_weights=None,
@@ -24,7 +10,7 @@ class Specificity(Metric):
             per_image=False,
             name=None,
     ):
-        name = name or 'specificity'
+        name = name or 'fallout'
         super().__init__(name=name)
         self.class_weights = class_weights if class_weights is not None else 1
         self.class_indexes = class_indexes
@@ -32,7 +18,7 @@ class Specificity(Metric):
         self.per_image = per_image
 
     def __call__(self, gt, pr):
-        return specificity(
+        return 1 - specificity(
             gt,
             pr,
             class_weights=self.class_weights,

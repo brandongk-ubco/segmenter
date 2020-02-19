@@ -7,7 +7,7 @@ from tensorflow.keras.layers import Input, Average
 from tensorflow.keras.models import Model
 
 from segmentation_models.metrics import FScore, Precision, Recall
-from metrics import Specificity
+from metrics import Specificity, FallOut
 import numpy as np
 
 from models import get_model
