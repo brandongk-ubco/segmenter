@@ -6,7 +6,8 @@
 !Dockerfile
 !.dockerignore
 !README.md
-!train_all.py
+!train_all_serial.py
+!train_all_parallel.py
 !train_each.py
 !image.def
 !job.sh

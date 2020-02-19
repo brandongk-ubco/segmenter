@@ -1,6 +1,5 @@
 #!/bin/bash
 #SBATCH --time=01:20:00
-#SBATCH --account=def-lasserre
 #SBATCH --gres=gpu:1
 #SBATCH --nodes=1
 #SBATCH --mem=16G
@@ -11,11 +10,13 @@ export LIMIT_SECONDS=3600
 module load singularity
 
 if [ -z ${OUTDIR+x} ]; then
-  export OUTDIR=output
+  export OUTDIR="/scratch/${USER}/results/severstal"
 fi
 
-export OUTDIR="/scratch/bgk/results/${OUTDIR}"
-export INDIR=/scratch/bgk/datasets/severstal
+if [ -z ${INDIR+x} ]; then
+  export INDIR="/scratch/${USER}/datasets/severstal"
+fi
+
 mkdir -p "$OUTDIR"
 
 singularity exec \
