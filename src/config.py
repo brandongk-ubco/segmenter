@@ -1,7 +1,8 @@
 import os
 import json
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
+if os.environ.get("DEBUG", "false").lower() != "true":
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 
 def get_available_gpus():
     try:

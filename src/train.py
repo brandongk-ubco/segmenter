@@ -6,7 +6,8 @@ from tensorflow.keras import backend as K
 from tensorflow.keras.layers import Input, Average
 from tensorflow.keras.models import Model
 
-from segmentation_models.metrics import FScore
+from segmentation_models.metrics import FScore, Precision, Recall
+from metrics import Specificity
 import numpy as np
 
 from models import get_model
@@ -26,7 +27,8 @@ job_config = get_config()
 job_hash = hash(job_config)
 
 # Turn this on when debugging functions.
-# tf.config.experimental_run_functions_eagerly(True)
+if os.environ.get("DEBUG", "false").lower() == "true":
+    tf.config.experimental_run_functions_eagerly(True)
 
 def train_fold(clazz, fold):
     pprint.pprint(job_config)
@@ -97,6 +99,8 @@ def train_fold(clazz, fold):
         model_memory_usage = get_model_memory_usage(job_config["BATCH_SIZE"], model)
         print("Estimated Training GPU Memory Usage: {:.2f} Gb".format(model_memory_usage))
 
+        threshold = job_config["FSCORE_THRESHOLD"]
+
         model.compile(
             optimizer=Adam(
                 learning_rate=job_config["LR"],
@@ -104,8 +108,13 @@ def train_fold(clazz, fold):
                 beta_2=job_config["BETA_2"],
                 amsgrad=job_config["AMSGRAD"]
             ),
-            loss=NormalizedFocalLoss(threshold=job_config["FSCORE_THRESHOLD"]),
-            metrics=[FScore(threshold=job_config["FSCORE_THRESHOLD"])]
+            loss=NormalizedFocalLoss(threshold=threshold),
+            metrics=[
+                FScore(threshold=threshold),
+                Precision(threshold=threshold),
+                Recall(threshold=threshold),
+                Specificity(threshold=threshold)
+            ]
         )
 
     initial_epoch = 0
