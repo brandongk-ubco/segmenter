@@ -5,11 +5,12 @@ import pprint
 from helpers import *
 
 from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.layers import Input, Average
-from tensorflow.keras.models import Model
-from tensorflow.keras import backend as K
+from tensorflow.keras.models import load_model
 
-from models import get_model
+from segmentation_models.metrics import FScore, Precision, Recall
+from metrics import Specificity, FallOut
+
+from models import model_for_folds
 from augmentations import predict_augments
 from loss import NormalizedFocalLoss
 
@@ -18,49 +19,42 @@ from segmentation_models.metrics import FScore
 
 from callbacks import get_evaluation_callbacks
 from math import ceil
+import json
 
 job_config = get_config()
 job_hash = hash(job_config)
 
-def evaluate(clazz):
-    pprint.pprint(job_config)
+outdir = os.environ.get("DIRECTORY", "/output")
+outdir = os.path.abspath(outdir)
+
+def evaluate(clazz, folds=None, method="include", overwrite=False):
     K.clear_session()
 
-    print("Evaluating class %s" % clazz)
-
-    generators, dataset, num_images = generate_for_augments(clazz, None, predict_augments, job_config, mode="evaluate")
+    generators, dataset, num_images = generate_for_augments(clazz, None, predict_augments, job_config, method=method, mode="evaluate")
     dataset = dataset.batch(1, drop_remainder=True)
-    image_size = next(generators.generate())[0].shape
-    print("Found %s images" % num_images)
 
-    inputs = Input(shape=image_size)
+    if folds is None:
+        folds = range(job_config["FOLDS"])
 
-    models = []
+    model_dir = os.path.join(outdir, job_hash, clazz, "results", "-".join([str("fold%s" % f) for f in folds]))
 
-    for fold in range(job_config["FOLDS"]):
-        fold_model = get_model(image_size, job_config)
-        best_weight = find_best_weight("/output/%s/%s/fold%s/" % (job_hash, clazz, fold))
-        if best_weight is None:
-            print("Could not find weight for fold %s - skipping" % fold)
-            continue
-        print("Loading weight %s" % best_weight)
-        fold_model.load_weights(best_weight)
-        fold_model.trainable = False
-        fold_model._name = "fold%s" % fold
+    threshold = job_config["FSCORE_THRESHOLD"]
 
-        out = fold_model(inputs)
-        models.append(out)
+    loss = NormalizedFocalLoss(threshold=threshold)
+    metrics = {
+        "f1-score": FScore(threshold=threshold),
+        "precision": Precision(threshold=threshold),
+        "recall": Recall(threshold=threshold),
+        "specificity": Specificity(threshold=threshold)
+    }
 
-    if len(models) == 0:
-        print("No models found for class %s - skipping" % clazz)
-        return None
-
-    out = Average()(models)
-    model = Model(inputs, out)
-    model.summary()
-
-    model_memory_usage = get_model_memory_usage(1, model)
-    print("Estimated Model Memory Usage: %sg" % model_memory_usage)
+    if not os.path.isdir(model_dir) or overwrite:
+        print("Creating new model for %s" % model_dir)
+        model = model_for_folds(clazz, outdir, job_config, job_hash, folds=folds)
+    else:
+        print("Loading existing model from %s" % model_dir)
+        model = model_for_folds(clazz, outdir, job_config, job_hash, folds=folds, load_weights=False)
+        model.load_weights(os.path.join(model_dir, "weights.h5"))
 
     model.compile(
         optimizer=Adam(
@@ -69,20 +63,37 @@ def evaluate(clazz):
             beta_2=job_config["BETA_2"],
             amsgrad=job_config["AMSGRAD"]
         ),
-        loss=NormalizedFocalLoss(threshold=job_config["FSCORE_THRESHOLD"]),
-        metrics=[FScore(threshold=job_config["FSCORE_THRESHOLD"])]
+        loss=loss,
+        metrics=list(metrics.values())
     )
 
-    return model.evaluate(
+    if not os.path.isdir(model_dir) or overwrite:
+        os.makedirs(model_dir, exist_ok=True)
+        model.save_weights(os.path.join(model_dir, "weights.h5"))
+
+    results = model.evaluate(
         x=dataset,
         callbacks=get_evaluation_callbacks(),
         verbose=1,
         steps=num_images
     )
 
+    eval_type = "out_of_class" if method == "exclude" else "in_class"
+    with open(os.path.join(model_dir, "%s_results.json" % eval_type), "w") as results_json:
+        results_dict = dict(zip(['loss'] + list(metrics.keys()), [float(r) for r in results]))
+        json.dump(results_dict, results_json)
+
+    return results
+
 if __name__ == "__main__":
-    if os.environ.get("CLASS") is not None:
-        evaluate(os.environ.get("CLASS"))
-    else:
-        for clazz in job_config["CLASSES"]:
-            pprint.pprint(evaluate(clazz))
+    classes = job_config["CLASSES"] if os.environ.get("CLASS") is None else [os.environ.get("CLASS")]
+    folds = range(job_config["FOLDS"]) if os.environ.get("EVAL_FOLDS") is None else [int(f.strip()) for f in os.environ.get("EVAL_FOLDS").split(",")]
+    print(folds)
+    evaluations = {}
+    for clazz in classes:
+        evaluations[clazz] = {}
+        print("In-Class evaluation for %s" % clazz)
+        evaluations[clazz]["in_class"] = evaluate(clazz, folds=folds, method="include")
+        print("Out-Of-Class evaluation for %s" % clazz)
+        evaluations[clazz]["out_of_class"] = evaluate(clazz, folds=folds, method="exclude")
+    pprint.pprint(evaluations)

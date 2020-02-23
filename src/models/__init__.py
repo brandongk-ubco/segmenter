@@ -2,8 +2,26 @@ from .unet import custom_unet as unet
 from segmentation_models import Unet as segmentations_unet
 from tensorflow.keras.regularizers import l1_l2
 from activations import get_activation
-from tensorflow.keras.layers import Input, Conv2D
+from tensorflow.keras.layers import Input, Conv2D, Average
 from tensorflow.keras.models import Model
+
+import os
+
+def find_latest_weight(folder):
+    if not os.path.isdir(folder):
+        return None
+    files = [os.path.join(folder, f) for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f)) if f.endswith(".h5")]
+    if len(files) == 0:
+        return None
+    return max(files, key=os.path.getctime)
+
+def find_best_weight(folder):
+    if not os.path.isdir(folder):
+        return None
+    files = [os.path.join(folder, f) for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f)) if f.endswith(".h5")]
+    if len(files) == 0:
+        return None
+    return min(files, key=lambda x: float(x.split("-")[1]))
 
 def get_model(image_size, job_config):
 
@@ -37,5 +55,42 @@ def get_model(image_size, job_config):
         for attr in ['kernel_regularizer']:
             if hasattr(layer, attr):
                 setattr(layer, attr, regularizer)
+
+    return model
+
+def model_for_folds(clazz, modeldir, job_config, job_hash, folds=None, load_weights=True):
+
+    inputs = Input(shape=(None, None, 1))
+
+    models = []
+
+    if folds is None:
+        folds = range(job_config["FOLDS"])
+
+    for fold in folds:
+        fold_model = get_model((None, None, 1), job_config)
+        if load_weights:
+            best_weight = find_best_weight( os.path.join(modeldir, job_hash, clazz, "fold%s" % fold))
+            if best_weight is None:
+                print("Could not find weight for fold %s - skipping" % fold)
+                continue
+            print("Loading weight %s" % best_weight)
+            fold_model.load_weights(best_weight)
+        fold_model.trainable = False
+        fold_model._name = "fold%s" % fold
+
+        out = fold_model(inputs)
+        models.append(out)
+
+    if len(models) == 0:
+        print("No models found for class %s - skipping" % clazz)
+        return None
+
+    if len(models) == 1:
+        out = models[0]
+    else:
+        out = Average()(models)
+
+    model = Model(inputs, out)
 
     return model

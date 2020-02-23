@@ -26,6 +26,9 @@ from helpers import *
 job_config = get_config()
 job_hash = hash(job_config)
 
+outdir = os.environ.get("DIRECTORY", "/output")
+outdir = os.path.abspath(outdir)
+
 # Turn this on when debugging functions.
 if os.environ.get("DEBUG", "false").lower() == "true":
     tf.config.experimental_run_functions_eagerly(True)
@@ -36,6 +39,9 @@ def train_fold(clazz, fold):
     K.set_floatx(job_config["PRECISION"])
 
     print("Training class %s, fold %s (%s folds)" % (clazz, fold, job_config["FOLDS"]))
+
+    output_folder = os.path.join(outdir, "/%s/%s/fold%s/" % (job_hash, clazz, fold))
+    print("Using diretory %s" % output_folder)
 
     train_generator, train_dataset, num_training_images = generate_for_augments(
         clazz,
@@ -55,10 +61,9 @@ def train_fold(clazz, fold):
     print("Found %s training images" % num_training_images)
     print("Found %s validation images" % num_val_images)
 
-    output_folder = "/output/%s/%s/fold%s/" % (job_hash, clazz, fold)
     os.makedirs(output_folder, exist_ok=True)
 
-    with open(os.path.join("/output/%s" % job_hash, "config.json"), "w") as outfile:
+    with open(os.path.join(output_folder, "/%s/" % job_hash, "config.json"), "w") as outfile:
         json.dump(job_config, outfile, indent=4)
 
     latest_weight = find_latest_weight(output_folder)
@@ -74,7 +79,7 @@ def train_fold(clazz, fold):
 
         for previous_fold in range(train_behind_start, fold):
             previous_fold_model = get_model(image_size, job_config)
-            best_weight = find_best_weight("/output/%s/%s/fold%s/" % (job_hash, clazz, previous_fold))
+            best_weight = find_best_weight(os.path.join(output_folder, "/%s/%s/fold%s/" % (job_hash, clazz, previous_fold)))
             print("Loading weight %s" % best_weight)
             previous_fold_model.load_weights(best_weight)
             previous_fold_model.trainable = False

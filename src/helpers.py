@@ -9,22 +9,6 @@ from tensorflow.keras import backend as K
 def hash(in_string):
     return hashlib.md5(str(in_string).encode()).hexdigest()
 
-def find_latest_weight(folder):
-    if not os.path.isdir(folder):
-        return None
-    files = [os.path.join(folder, f) for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f)) if f.endswith(".h5")]
-    if len(files) == 0:
-        return None
-    return max(files, key=os.path.getctime)
-
-def find_best_weight(folder):
-    if not os.path.isdir(folder):
-        return None
-    files = [os.path.join(folder, f) for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f)) if f.endswith(".h5")]
-    if len(files) == 0:
-        return None
-    return min(files, key=lambda x: float(x.split("-")[1]))
-
 def get_parallel_calls():
     4 * max(psutil.cpu_count(logical=False) - 1, 1)
 
@@ -58,8 +42,8 @@ def generator_to_dataset(generator, repeat, shuffle):
 
     return dataset
 
-def generate_for_augments(clazz, fold, augments, job_config, mode, path="/data", shuffle=False, repeat=False):
-    generator = DataGenerator(clazz, fold, path=path, augmentations=augments, job_config=job_config, mode=mode)
+def generate_for_augments(clazz, fold, augments, job_config, mode, method="include", path="/data", shuffle=False, repeat=False):
+    generator = DataGenerator(clazz, fold, method=method, path=path, augmentations=augments, job_config=job_config, mode=mode)
     augmented = generator_to_dataset(generator, repeat, shuffle)
     num_images = generator.size()
 

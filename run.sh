@@ -1,9 +1,6 @@
 #!/bin/bash
-#SBATCH --time=01:20:00
-#SBATCH --gres=gpu:1
-#SBATCH --nodes=1
-#SBATCH --mem=16G
-#SBATCH --cpus-per-task=2
+
+set -euo pipefail
 
 export LIMIT_SECONDS=3600
 
@@ -21,6 +18,10 @@ if [ -z ${OUTFOLDER+x} ]; then
   export OUTFOLDER="output"
 fi
 
+if [ -z ${COMMAND+x} ]; then
+  export COMMAND="train"
+fi
+
 mkdir -p "${OUTDIR}${OUTFOLDER}"
 
 echo "Using output directory ${OUTDIR}${OUTFOLDER}"
@@ -32,7 +33,7 @@ singularity exec \
   -B "$INDIR":/data \
   -B "${OUTDIR}${OUTFOLDER}":/output \
   --pwd /src image.sif \
-  python train.py
+  python "${COMMAND}.py"
 
 if [ $? -eq 123 ]; then
   echo "Restarting job."

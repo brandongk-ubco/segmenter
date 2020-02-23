@@ -12,7 +12,7 @@ def specificity(gt, pr, class_weights=1, class_indexes=None, per_image=False, th
     n = backend.sum(1 - gt, axis=axes)
 
     score = 1 - fp / n
-
+    score = F.average(score, per_image, class_weights, **kwargs)
     return score
 
 class Specificity(Metric):

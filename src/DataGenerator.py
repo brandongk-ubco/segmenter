@@ -3,7 +3,7 @@ import json
 import random
 import numpy as np
 import io
-from glob import glob
+import glob
 from tensorflow.keras import backend as K
 
 class CachedFilereader:
@@ -21,26 +21,31 @@ cache = CachedFilereader()
 
 class DataGenerator:
 
-    def __init__(self, clazz, fold, mode="train", path="/data", augmentations=None, job_config=None):
+    def __init__(self, clazz, fold, method="include", mode="train", path="/data", augmentations=None, job_config=None):
 
         self.augmentations = augmentations
         self.path = path
         if fold is None and mode in ["predict", "evaluate"]:
             with open(os.path.join(path, "classes.json"), "r") as json_file:
-                data = json.load(json_file)
-                self.data = data["classes"][clazz]
-                self.mask_index = data["class_order"].index(clazz)
+                self.data = json.load(json_file)
+                self.image_files = sorted(self.data["classes"][clazz])
         elif fold is not None and mode in ["train", "val"]:
             with open(os.path.join(path, "%s-trainbehind-%s-folds.json" % (job_config["TRAIN_BEHIND"], job_config["FOLDS"])), "r") as json_file:
-                data = json.load(json_file)
-                self.data = sorted(data["folds"][fold][clazz][mode])
-                self.mask_index = data["class_order"].index(clazz)
+                self.data = json.load(json_file)
+                self.image_files = sorted(self.data["folds"][fold][clazz][mode])
         else:
             raise ValueError("Invalid combination: mode %s / fold %s" % (mode, fold))
+            
+        if method == "exclude":
+            all_files = [ f for f in os.listdir(path) if f.endswith(".npz") ]
+            self.image_files = list(filter(lambda f: f not in self.image_files, all_files))
+            
+        self.image_files = list(map(lambda f: os.path.abspath(os.path.join(self.path, f)), self.image_files))
+        self.mask_index = self.data["class_order"].index(clazz)
         self.job_config = job_config
 
     def size(self):
-        return len(self.data)
+        return len(self.image_files)
 
     def postprocess(self, img, mask):
         if self.job_config["RECENTER"]:
@@ -66,8 +71,8 @@ class DataGenerator:
         return img[keep_idx], mask[keep_idx]
 
     def _generate(self, idx):
-        filename = os.path.join(self.path, self.data[idx])
-        i_data = np.load(cache.read(os.path.join(self.path, self.data[idx])))
+        filename = os.path.join(self.path, self.image_files[idx])
+        i_data = np.load(cache.read(filename))
         img = i_data["image"]
         mask = i_data["mask"][:, :, self.mask_index]
         if len(img.shape) == 2:
@@ -77,7 +82,7 @@ class DataGenerator:
         return img, mask
 
     def generate(self):
-        for i in range(len(self.data)):
+        for i in range(len(self.image_files)):
             yield self._generate(i)
 
 if __name__ == "__main__":

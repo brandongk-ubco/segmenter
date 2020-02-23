@@ -6,9 +6,11 @@
 !Dockerfile
 !.dockerignore
 !README.md
-!train_all_serial.py
-!train_all_parallel.py
-!train_each.py
+!run_all_serial.py
+!run_all_parallel.py
+!run_each.py
 !image.def
-!job.sh
+!run.sh
 !requirements.txt
+!evaluate.sh
+!args.py
