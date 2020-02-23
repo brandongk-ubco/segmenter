@@ -98,7 +98,7 @@ if __name__ == "__main__":
         folds = range(job_config["FOLDS"])
 
     folds = list(folds)
-    print("Evaluating folds %s" % folds)
+    print("Evaluating classes %s and folds %s" % (classes, folds))
     evaluations = {}
     for clazz in classes:
         evaluations[clazz] = {}
