@@ -86,6 +86,8 @@ def evaluate(clazz, folds=None, method="include", overwrite=False):
     return results
 
 if __name__ == "__main__":
+    pprint.pprint(job_config)
+
     classes = job_config["CLASSES"] if os.environ.get("CLASS") is None else [os.environ.get("CLASS")]
 
     if os.environ.get("EVAL_FOLDS") is not None:

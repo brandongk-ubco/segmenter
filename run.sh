@@ -3,6 +3,7 @@
 set -euo pipefail
 
 module load singularity
+export PYTHONUNBUFFERED=true
 
 if [ -z ${OUTDIR+x} ]; then
   export OUTDIR="/scratch/${USER}/results/severstal/"

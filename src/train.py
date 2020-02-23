@@ -36,7 +36,6 @@ if os.environ.get("DEBUG", "false").lower() == "true":
     tf.config.experimental_run_functions_eagerly(True)
 
 def train_fold(clazz, fold):
-    pprint.pprint(job_config)
     K.clear_session()
     K.set_floatx(job_config["PRECISION"])
 
@@ -145,6 +144,7 @@ def train_fold(clazz, fold):
     )
 
 if __name__ == "__main__":
+    pprint.pprint(job_config)
     if os.environ.get("CLASS") is not None and os.environ.get("FOLD") is not None:
         train_fold(os.environ.get("CLASS"), int(os.environ.get("FOLD")))
     elif os.environ.get("CLASS") is not None:
