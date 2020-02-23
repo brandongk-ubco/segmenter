@@ -21,7 +21,7 @@ cache = CachedFilereader()
 
 class DataGenerator:
 
-    def __init__(self, clazz, fold, method="include", mode="train", path="/data", augmentations=None, job_config=None):
+    def __init__(self, clazz, fold, shuffle=False, method="include", mode="train", path="/data", augmentations=None, job_config=None):
 
         self.augmentations = augmentations
         self.path = path
@@ -41,6 +41,10 @@ class DataGenerator:
             self.image_files = list(filter(lambda f: f not in self.image_files, all_files))
             
         self.image_files = list(map(lambda f: os.path.abspath(os.path.join(self.path, f)), self.image_files))
+
+        if shuffle:
+            random.shuffle(self.image_files)
+
         self.mask_index = self.data["class_order"].index(clazz)
         self.job_config = job_config
 

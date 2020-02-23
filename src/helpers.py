@@ -43,7 +43,7 @@ def generator_to_dataset(generator, repeat, shuffle, buffer_size=500):
     return dataset
 
 def generate_for_augments(clazz, fold, augments, job_config, mode, method="include", path="/data", shuffle=False, repeat=False):
-    generator = DataGenerator(clazz, fold, method=method, path=path, augmentations=augments, job_config=job_config, mode=mode)
+    generator = DataGenerator(clazz, fold, shuffle=shuffle, method=method, path=path, augmentations=augments, job_config=job_config, mode=mode)
     augmented = generator_to_dataset(generator, repeat, shuffle)
     num_images = generator.size()
 
