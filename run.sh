@@ -2,8 +2,6 @@
 
 set -euo pipefail
 
-export LIMIT_SECONDS=3600
-
 module load singularity
 
 if [ -z ${OUTDIR+x} ]; then
