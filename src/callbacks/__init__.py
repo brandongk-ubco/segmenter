@@ -13,7 +13,7 @@ def get_prediction_callbacks():
 def get_evaluation_callbacks():
     return []
 
-def get_callbacks(output_folder, job_config, fold, val_loss):
+def get_callbacks(output_folder, job_config, fold, val_loss, start_time):
 
     log_folder = os.path.join(output_folder, "logs")
     os.makedirs(log_folder, exist_ok=True)
@@ -60,6 +60,7 @@ def get_callbacks(output_folder, job_config, fold, val_loss):
 
     time_limit = EarlyStoppingByTime(
         limit_seconds=int(os.environ.get("LIMIT_SECONDS", -1)),
+        start_time=start_time,
         verbose=0
     )
 

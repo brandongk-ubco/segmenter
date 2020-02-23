@@ -10,7 +10,7 @@ from segmentation_models.metrics import FScore, Precision, Recall
 from metrics import Specificity, FallOut
 import numpy as np
 
-from models import get_model
+from models import get_model, find_latest_weight, find_best_weight
 from loss import NormalizedFocalLoss
 from callbacks import get_callbacks
 from DataGenerator import DataGenerator
@@ -20,6 +20,7 @@ import sys
 import json
 import os
 import pprint
+import time
 
 from helpers import *
 
@@ -28,6 +29,7 @@ job_hash = hash(job_config)
 
 outdir = os.environ.get("DIRECTORY", "/output")
 outdir = os.path.abspath(outdir)
+start_time = time.time()
 
 # Turn this on when debugging functions.
 if os.environ.get("DEBUG", "false").lower() == "true":
@@ -40,8 +42,8 @@ def train_fold(clazz, fold):
 
     print("Training class %s, fold %s (%s folds)" % (clazz, fold, job_config["FOLDS"]))
 
-    output_folder = os.path.join(outdir, "/%s/%s/fold%s/" % (job_hash, clazz, fold))
-    print("Using diretory %s" % output_folder)
+    output_folder = os.path.join(outdir, job_hash, clazz, "fold%s" % fold)
+    print("Using directory %s" % output_folder)
 
     train_generator, train_dataset, num_training_images = generate_for_augments(
         clazz,
@@ -63,7 +65,7 @@ def train_fold(clazz, fold):
 
     os.makedirs(output_folder, exist_ok=True)
 
-    with open(os.path.join(output_folder, "/%s/" % job_hash, "config.json"), "w") as outfile:
+    with open(os.path.join(output_folder, "config.json"), "w") as outfile:
         json.dump(job_config, outfile, indent=4)
 
     latest_weight = find_latest_weight(output_folder)
@@ -138,7 +140,7 @@ def train_fold(clazz, fold):
         epochs=1000,
         steps_per_epoch=train_steps,
         validation_steps=val_steps,
-        callbacks=get_callbacks(output_folder, job_config, fold, val_loss),
+        callbacks=get_callbacks(output_folder, job_config, fold, val_loss, start_time),
         verbose=1
     )
 

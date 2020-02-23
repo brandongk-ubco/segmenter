@@ -6,8 +6,8 @@
 !Dockerfile
 !.dockerignore
 !README.md
-!run_all_serial.py
-!run_all_parallel.py
+!run_all_classes.py
+!run_all_classes_and_folds.py
 !run_each.py
 !image.def
 !run.sh

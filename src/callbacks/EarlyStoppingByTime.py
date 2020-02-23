@@ -5,9 +5,11 @@ import os
 
 class EarlyStoppingByTime(Callback):
 
-    def __init__(self, limit_seconds, verbose=0):
+    def __init__(self, limit_seconds, start_time=None, verbose=0):
         super(EarlyStoppingByTime, self).__init__()
-        self.start = time.time()
+        if start_time is None:
+            start_time = time.time()
+        self.start = start_time
         self.limit_seconds = limit_seconds
         self.verbose = verbose
 

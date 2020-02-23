@@ -87,7 +87,14 @@ def evaluate(clazz, folds=None, method="include", overwrite=False):
 
 if __name__ == "__main__":
     classes = job_config["CLASSES"] if os.environ.get("CLASS") is None else [os.environ.get("CLASS")]
-    folds = range(job_config["FOLDS"]) if os.environ.get("EVAL_FOLDS") is None else [int(f.strip()) for f in os.environ.get("EVAL_FOLDS").split(",")]
+
+    if os.environ.get("EVAL_FOLDS") is not None:
+        folds = [int(f.strip()) for f in os.environ.get("EVAL_FOLDS").split(",")]
+    elif os.environ.get("FOLD") is not None:
+        folds = [int(os.environ.get("FOLD").strip())]
+    else:
+        folds = range(job_config["FOLDS"])
+
     print(folds)
     evaluations = {}
     for clazz in classes:
