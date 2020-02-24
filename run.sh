@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -euo pipefail
-
 module load singularity
 export PYTHONUNBUFFERED=true
 
