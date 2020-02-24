@@ -1,4 +1,9 @@
 #!/bin/bash
+#SBATCH --time=01:20:00
+#SBATCH --gres=gpu:1
+#SBATCH --nodes=1
+#SBATCH --mem=16G
+#SBATCH --cpus-per-task=2
 
 module load singularity
 export PYTHONUNBUFFERED=true
