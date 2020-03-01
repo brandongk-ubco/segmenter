@@ -11,7 +11,7 @@ from metrics import Specificity, FallOut
 import numpy as np
 
 from models import get_model, find_latest_weight, find_best_weight
-from loss import NormalizedFocalLoss
+from loss import get_loss
 from callbacks import get_callbacks
 from DataGenerator import DataGenerator
 from augmentations import train_augments, val_augments
@@ -64,7 +64,7 @@ def train_fold(clazz, fold):
 
     os.makedirs(output_folder, exist_ok=True)
 
-    with open(os.path.join(output_folder, "config.json"), "w") as outfile:
+    with open(os.path.join(os.path.join(outdir, job_hash), "config.json"), "w") as outfile:
         json.dump(job_config, outfile, indent=4)
 
     latest_weight = find_latest_weight(output_folder)
@@ -114,7 +114,7 @@ def train_fold(clazz, fold):
                 beta_2=job_config["BETA_2"],
                 amsgrad=job_config["AMSGRAD"]
             ),
-            loss=NormalizedFocalLoss(threshold=threshold),
+            loss=get_loss(job_config["LOSS"]),
             metrics=[
                 FScore(threshold=threshold),
                 Precision(threshold=threshold),

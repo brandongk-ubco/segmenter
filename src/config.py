@@ -1,6 +1,8 @@
 import os
 import json
 
+if os.environ.get("COMMAND", "train") == "evaluate":
+    os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 if os.environ.get("DEBUG", "false").lower() != "true":
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 
@@ -69,5 +71,6 @@ def get_config():
         "RESCALE_PR": float(os.environ.get("RESCALE_PR", 0.0)),
         "MODEL": get_model(),
         "RECENTER": os.environ.get("RECENTER", "false").lower() == "true",
-        "PRECISION": os.environ.get("PRECISION", "float32")
+        "PRECISION": os.environ.get("PRECISION", "float32"),
+        "LOSS": os.environ.get("LOSS", "combined")
     }
