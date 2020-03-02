@@ -12,13 +12,11 @@ from metrics import Specificity, FallOut
 
 from models import model_for_folds
 from augmentations import predict_augments
-from loss import NormalizedFocalLoss
+from loss import get_loss
 
 from DataGenerator import DataGenerator
-from segmentation_models.metrics import FScore
 
 from callbacks import get_evaluation_callbacks
-from math import ceil
 import json
 
 job_config = get_config()
@@ -40,7 +38,7 @@ def evaluate(clazz, folds=None, method="include", overwrite=False):
 
     threshold = job_config["FSCORE_THRESHOLD"]
 
-    loss = NormalizedFocalLoss(threshold=threshold)
+    loss = get_loss(job_config["LOSS"])
     metrics = {
         "f1-score": FScore(threshold=threshold),
         "precision": Precision(threshold=threshold),
