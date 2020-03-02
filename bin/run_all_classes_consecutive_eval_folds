@@ -2,6 +2,7 @@
 
 import subprocess
 import os
+import sys
 
 path = os.path.dirname(os.path.realpath(__file__))
 
@@ -11,10 +12,10 @@ limitSeconds = int(os.environ.get("LIMIT_SECONDS", "3600"))
 desired_length = int(sys.argv[1]) if len(sys.argv) > 1 else 1
 
 for clazz in ["1", "2", "3", "4"]:
-  for start in range(len(folds)):
-        for end in range(start, len(folds) ):
+  for start in range(folds):
+        for end in range(start, folds):
             length = end - start + 1
             if length != desired_length:
                 continue
             eval_folds = ",".join([str(r) for r in range(start,end+1)])
-            subprocess.check_call("CLASS=%s FOLDS=%s EVAL_FOLDS=%s LIMIT_SECONDS=%s sbatch run.sh" % (clazz, fold, eval_folds, limitSeconds), shell=True, cwd=os.path.join(path, ".."))
+            subprocess.check_call("CLASS=%s FOLDS=%s EVAL_FOLDS=%s LIMIT_SECONDS=%s sbatch run.sh" % (clazz, folds, eval_folds, limitSeconds), shell=True, cwd=os.path.join(path, ".."))
