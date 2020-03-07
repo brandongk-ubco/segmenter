@@ -105,7 +105,7 @@ def train_fold(clazz, fold):
         print("Estimated Training GPU Memory Usage: {:.2f} Gb".format(model_memory_usage))
 
         threshold = job_config["FSCORE_THRESHOLD"]
-        metrics = get_metrics(threshold)
+        metrics = get_metrics(threshold, job_config["LOSS"])
 
         model.compile(
             optimizer=Adam(
