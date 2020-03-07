@@ -7,8 +7,8 @@ from helpers import *
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.models import load_model
 
-from segmentation_models.metrics import FScore, Precision, Recall
-from metrics import Specificity, FallOut
+from metrics import get_metrics
+
 
 from models import model_for_folds
 from augmentations import predict_augments
@@ -39,12 +39,7 @@ def evaluate(clazz, folds=None, method="include", overwrite=False):
     threshold = job_config["FSCORE_THRESHOLD"]
 
     loss = get_loss(job_config["LOSS"])
-    metrics = {
-        "f1-score": FScore(threshold=threshold),
-        "precision": Precision(threshold=threshold),
-        "recall": Recall(threshold=threshold),
-        "specificity": Specificity(threshold=threshold)
-    }
+    metrics = get_metrics(threshold)
 
     if not os.path.isdir(model_dir) or overwrite:
         print("Creating new model for %s" % model_dir)

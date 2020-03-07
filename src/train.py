@@ -6,10 +6,9 @@ from tensorflow.keras import backend as K
 from tensorflow.keras.layers import Input, Average
 from tensorflow.keras.models import Model
 
-from segmentation_models.metrics import FScore, Precision, Recall
-from metrics import Specificity, FallOut
 import numpy as np
 
+from metrics import get_metrics
 from models import get_model, find_latest_weight, find_best_weight
 from loss import get_loss
 from callbacks import get_callbacks
@@ -106,6 +105,7 @@ def train_fold(clazz, fold):
         print("Estimated Training GPU Memory Usage: {:.2f} Gb".format(model_memory_usage))
 
         threshold = job_config["FSCORE_THRESHOLD"]
+        metrics = get_metrics(threshold)
 
         model.compile(
             optimizer=Adam(
@@ -115,12 +115,7 @@ def train_fold(clazz, fold):
                 amsgrad=job_config["AMSGRAD"]
             ),
             loss=get_loss(job_config["LOSS"]),
-            metrics=[
-                FScore(threshold=threshold),
-                Precision(threshold=threshold),
-                Recall(threshold=threshold),
-                Specificity(threshold=threshold)
-            ]
+            metrics=list(metrics.values())
         )
 
     initial_epoch = 0
