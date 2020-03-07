@@ -12,5 +12,7 @@
 !args.py
 !bin
 !bin/**/*
+!datasets
+!datasets/**/*
 
 **/__pycache__

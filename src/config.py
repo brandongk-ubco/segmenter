@@ -24,9 +24,9 @@ def get_batch_size():
 
 def get_classes():
     folds = int(os.environ.get("FOLDS", 10))
-    train_behind = int(os.environ.get("TRAIN_BEHIND", 0))
+    boost_folds = int(os.environ.get("BOOST_FOLDS", 0))
 
-    with open(os.path.join(os.environ.get("DATA_PATH", "/data"), "%s-trainbehind-%s-folds.json" % (train_behind, folds)), "r") as json_file:
+    with open(os.path.join(os.environ.get("DATA_PATH", "/data"), "%s-boost_folds-%s-folds.json" % (boost_folds, folds)), "r") as json_file:
         data = json.load(json_file)
         return data["class_order"]
 
@@ -64,7 +64,7 @@ def get_config():
         "BATCH_NORM": os.environ.get("BATCH_NORM", "true").lower() == "true",
         "ELASTIC_TRANSFORM_PR": float(os.environ.get("ELASTIC_TRANSFORM_PR", 0.0)),
         "FSCORE_THRESHOLD": float(os.environ.get("FSCORE_THRESHOLD", 0.5)),
-        "TRAIN_BEHIND": int(os.environ.get("TRAIN_BEHIND", 0)),
+        "BOOST_FOLDS": int(os.environ.get("BOOST_FOLDS", 0)),
         "FOLDS": int(os.environ.get("FOLDS", 10)),
         "CLASSES": get_classes(),
         "RESCALE_PERCENTAGE": float(os.environ.get("RESCALE_PERCENTAGE", 0.15)),
@@ -72,5 +72,6 @@ def get_config():
         "MODEL": get_model(),
         "RECENTER": os.environ.get("RECENTER", "false").lower() == "true",
         "PRECISION": os.environ.get("PRECISION", "float32"),
-        "LOSS": os.environ.get("LOSS", "combined")
+        "LOSS": os.environ.get("LOSS", "combined"),
+        "RUN": int(os.environ.get("RUN", 1)),
     }

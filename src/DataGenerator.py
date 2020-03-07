@@ -25,12 +25,12 @@ class DataGenerator:
 
         self.augmentations = augmentations
         self.path = path
-        if fold is None and mode in ["predict", "evaluate"]:
+        if fold is None and mode == "evaluate":
             with open(os.path.join(path, "classes.json"), "r") as json_file:
                 self.data = json.load(json_file)
-                self.image_files = sorted(self.data["classes"][clazz])
+                self.image_files = sorted(self.data["classes"][clazz]["eval_instances"])
         elif fold is not None and mode in ["train", "val"]:
-            with open(os.path.join(path, "%s-trainbehind-%s-folds.json" % (job_config["TRAIN_BEHIND"], job_config["FOLDS"])), "r") as json_file:
+            with open(os.path.join(path, "%s-boost_folds-%s-folds.json" % (job_config["BOOST_FOLDS"], job_config["FOLDS"])), "r") as json_file:
                 self.data = json.load(json_file)
                 self.image_files = sorted(self.data["folds"][fold][clazz][mode])
         else:

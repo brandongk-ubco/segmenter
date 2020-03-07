@@ -18,4 +18,4 @@ for clazz in ["1", "2", "3", "4"]:
             if length != desired_length:
                 continue
             eval_folds = ",".join([str(r) for r in range(start,end+1)])
-            subprocess.check_call("CLASS=%s FOLDS=%s EVAL_FOLDS=%s LIMIT_SECONDS=%s sbatch run.sh" % (clazz, folds, eval_folds, limitSeconds), shell=True, cwd=os.path.join(path, ".."))
+            subprocess.check_call("COMMAND=evaluate CLASS=%s FOLDS=%s EVAL_FOLDS=%s LIMIT_SECONDS=%s sbatch run.sh" % (clazz, folds, eval_folds, limitSeconds), shell=True, cwd=os.path.join(path, ".."))

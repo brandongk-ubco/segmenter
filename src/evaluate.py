@@ -100,8 +100,8 @@ if __name__ == "__main__":
     evaluations = {}
     for clazz in classes:
         evaluations[clazz] = {}
-        print("In-Class evaluation for %s" % clazz)
-        evaluations[clazz]["in_class"] = evaluate(clazz, folds=folds, method="include")
-        print("Out-Of-Class evaluation for %s" % clazz)
-        evaluations[clazz]["out_of_class"] = evaluate(clazz, folds=folds, method="exclude")
+        # print("In-Class evaluation for %s" % clazz)
+        # evaluations[clazz]["in_class"] = evaluate(clazz, folds=folds, method="include")
+        # print("Out-Of-Class evaluation for %s" % clazz)
+        evaluations[clazz]["in_class"] = evaluate(clazz, folds=folds)
     pprint.pprint(evaluations)

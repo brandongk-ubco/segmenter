@@ -28,7 +28,7 @@ def combine_directory(directory):
       relpath = root.replace(directory, "")[1:]
       tokenized_path = relpath.split("/")
 
-      if "in_class_results.json" in files and "out_of_class_results.json" in files:
+      if "in_class_results.json" in files:
 
          key = tokenized_path[0]
          confighash = tokenized_path[1]
@@ -38,8 +38,8 @@ def combine_directory(directory):
          configrow = configs[confighash]
 
          in_class = os.path.join(root, "in_class_results.json")
-         out_of_class = os.path.join(root, "out_of_class_results.json")
-         for k, filepath in [("in_class", in_class), ("out_of_class", out_of_class)]:
+         # out_of_class = os.path.join(root, "out_of_class_results.json")
+         for k, filepath in [("in_class", in_class)]:
             with open(filepath, "r") as logfile:
                results = json.load(logfile)
                row = {}
