@@ -39,7 +39,7 @@ def evaluate(clazz, folds=None, method="include", overwrite=False):
     threshold = job_config["FSCORE_THRESHOLD"]
 
     loss = get_loss(job_config["LOSS"])
-    metrics = get_metrics(threshold)
+    metrics = get_metrics(threshold, job_config["LOSS"])
 
     if not os.path.isdir(model_dir) or overwrite:
         print("Creating new model for %s" % model_dir)
