@@ -79,7 +79,8 @@ def train_fold(clazz, fold):
 
         for previous_fold in range(boost_fold_start, fold):
             previous_fold_model = get_model(image_size, job_config)
-            best_weight = find_best_weight(os.path.join(output_folder, "/%s/%s/fold%s/" % (job_hash, clazz, previous_fold)))
+            previous_fold_dir = os.path.abspath(os.path.join(output_folder, "..", "fold%s" % previous_fold))
+            best_weight = find_best_weight(previous_fold_dir)
             print("Loading weight %s" % best_weight)
             previous_fold_model.load_weights(best_weight)
             previous_fold_model.trainable = False

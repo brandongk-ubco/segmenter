@@ -46,16 +46,13 @@ def get_model():
     return model
 
 def get_loss():
-    loss = {
-        "NAME": os.environ.get("LOSS", "dice_bce")
+    return {
+        "BETA": float(os.environ.get("DICE_BETA", 1)),
+        "GAMMA": float(os.environ.get("BFL_GAMMA", 2)),
+        "DICE_MULTIPLIER": float(os.environ.get("DICE_MULTIPLIER", 1)),
+        "BFL_MULTIPLIER": float(os.environ.get("BFL_MULTIPLIER", 2)),
+        "BCE_MULTIPLIER": float(os.environ.get("BCE_MULTIPLIER", 1)),
     }
-
-    if loss["NAME"] == "dice_bce":
-        loss["BETA"] = int(os.environ.get("DICE_BETA", 1))
-
-    if loss["NAME"] == "dice":
-        loss["BETA"] = int(os.environ.get("DICE_BETA", 1))
-    return loss
 
 # WARNING when setting precision - larger images need higher precision to evaluate the Loss function.  The sum can overflow and give all 0 for loss.
 def get_config():

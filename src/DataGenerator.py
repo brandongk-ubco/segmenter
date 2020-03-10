@@ -52,8 +52,10 @@ class DataGenerator:
         return len(self.image_files)
 
     def postprocess(self, img, mask):
-        if self.job_config["RECENTER"]:
+        if False and self.job_config["POSTPROCESS"]["RECENTER"]:
             img = img - np.mean(img)
+        if True or self.job_config["POSTPROCESS"]["ZERO_BLANKS"]:
+            img = self.zero(img, mask)
         return img.astype(K.floatx()), mask.astype(K.floatx())
 
     def augment(self, img, mask):
@@ -73,6 +75,11 @@ class DataGenerator:
         keep = img > 0.1
         keep_idx = np.ix_(keep.any(1)[:,0], keep.any(0)[:,0])
         return img[keep_idx], mask[keep_idx]
+
+    def zero(self, img, mask):
+        keep = np.logical_or(img > 0.1, mask > 0)
+        img[~keep] = 0
+        return img
 
     def _generate(self, idx):
         filename = os.path.join(self.path, self.image_files[idx])

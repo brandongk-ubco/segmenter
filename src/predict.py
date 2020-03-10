@@ -9,7 +9,6 @@ from tensorflow.keras.models import load_model
 
 from metrics import get_metrics
 
-
 from models import model_for_folds
 from augmentations import predict_augments
 from loss import get_loss
@@ -18,6 +17,7 @@ from DataGenerator import DataGenerator
 
 from callbacks import get_evaluation_callbacks
 import json
+from matplotlib import pyplot as plt
 
 job_config = get_config()
 job_hash = hash(job_config)
@@ -36,7 +36,9 @@ def evaluate(clazz, folds=None, method="include", overwrite=False):
 
     model_dir = os.path.join(outdir, job_hash, clazz, "results", "-".join([str("fold%s" % f) for f in folds]))
 
+    threshold = job_config["FSCORE_THRESHOLD"]
     loss = get_loss(job_config["LOSS"])
+    metrics = get_metrics(threshold, job_config["LOSS"])
 
     if not os.path.isdir(model_dir) or overwrite:
         print("Creating new model for %s" % model_dir)
@@ -46,35 +48,43 @@ def evaluate(clazz, folds=None, method="include", overwrite=False):
         model = model_for_folds(clazz, outdir, job_config, job_hash, folds=folds, load_weights=False)
         model.load_weights(os.path.join(model_dir, "weights.h5"))
 
+    model.compile(
+        optimizer=Adam(
+            learning_rate=job_config["LR"],
+            beta_1=job_config["BETA_1"],
+            beta_2=job_config["BETA_2"],
+            amsgrad=job_config["AMSGRAD"]
+        ),
+        loss=loss,
+        metrics=list(metrics.values())
+    )
+
     if not os.path.isdir(model_dir) or overwrite:
         os.makedirs(model_dir, exist_ok=True)
         model.save_weights(os.path.join(model_dir, "weights.h5"))
 
-    results = {}
-    for threshold in np.linspace(0.05, 0.95, num=19):
-        metrics = get_metrics(threshold, job_config["LOSS"])
-        model.compile(
-            optimizer=Adam(
-                learning_rate=job_config["LR"],
-                beta_1=job_config["BETA_1"],
-                beta_2=job_config["BETA_2"],
-                amsgrad=job_config["AMSGRAD"]
-            ),
-            loss=loss,
-            metrics=list(metrics.values())
-        )
-        results[threshold] = model.evaluate(
-            x=dataset,
-            callbacks=get_evaluation_callbacks(),
-            verbose=1,
-            steps=num_images
-        )
+    for batch, (images, masks) in enumerate(dataset):
+        predictions = model.predict_on_batch(images).numpy()
+        for i in range(predictions.shape[0]):
+            prediction = predictions[i]
+            mask = masks[i].numpy()
+            image = images[i].numpy()
+            prediction = prediction[:,:,0]
+            mask = mask[:,:,0]
+            if image.shape[2] == 1:
+                image = image[:,:,0]
+            plt.imshow(mask, cmap='gray')
+            plt.savefig(os.path.join(model_dir, "%s-%s-mask.png" % (batch, i)))
+            plt.imshow(image, cmap='gray')
+            plt.savefig(os.path.join(model_dir, "%s-%s-image.png" % (batch, i)))
 
-        with open(os.path.join(model_dir, "%0.2f-threshold-results.json" % threshold), "w") as results_json:
-            results_dict = dict(zip(['loss'] + list(metrics.keys()), [float(r) for r in results[threshold]]))
-            json.dump(results_dict, results_json)
-
-    return results
+            for threshold in np.linspace(0.05, 0.95, num=19):
+                thresholded = np.where(prediction > threshold, 1, 0).astype(prediction.dtype)
+                plt.imshow(thresholded, cmap='gray')
+                plt.savefig(os.path.join(model_dir, "%s-%s-%0.2f-threshold.png" % (batch, i, threshold)))
+    import pdb
+    pdb.set_trace()
+    return
 
 if __name__ == "__main__":
     pprint.pprint(job_config)
@@ -89,8 +99,12 @@ if __name__ == "__main__":
         folds = range(job_config["FOLDS"])
 
     folds = list(folds)
-    print("Evaluating classes %s and folds %s" % (classes, folds))
+    print("Predicting classes %s and folds %s" % (classes, folds))
     evaluations = {}
     for clazz in classes:
-        evaluations[clazz] = evaluate(clazz, folds=folds)
+        evaluations[clazz] = {}
+        # print("In-Class evaluation for %s" % clazz)
+        # evaluations[clazz]["in_class"] = evaluate(clazz, folds=folds, method="include")
+        # print("Out-Of-Class evaluation for %s" % clazz)
+        evaluations[clazz]["in_class"] = evaluate(clazz, folds=folds)
     pprint.pprint(evaluations)

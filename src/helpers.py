@@ -19,7 +19,7 @@ def make_shape(image, mask):
 
 parallel_data_calls = get_parallel_calls()
 
-def generator_to_dataset(generator, repeat, shuffle, buffer_size=500):
+def generator_to_dataset(generator, repeat, shuffle, zero=False, buffer_size=500):
     dataset = tf.data.Dataset.from_generator(generator.generate, (tf.float32,tf.float32))
 
     if shuffle:

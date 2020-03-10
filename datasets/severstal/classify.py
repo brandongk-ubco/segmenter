@@ -54,8 +54,8 @@ for clazz in sorted(filtered['ClassId'].unique()):
         "train_instances": train_instances
     }
 
-for BOOST_FOLD in [0, 1, 2]:
-    for NUM_FOLDS in range(2, 20):
+for BOOST_FOLD in range(0, 20):
+    for NUM_FOLDS in range(2, 21):
         chunked = {}
         for clazz, members in classes.items():
             chunked[str(clazz)] = chunkify(members["train_instances"], NUM_FOLDS)
