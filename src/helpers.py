@@ -32,7 +32,7 @@ def generator_to_dataset(generator, repeat, shuffle, zero=False, buffer_size=500
         num_parallel_calls=parallel_data_calls
     )
     dataset = dataset.map(
-        lambda image, mask: tf.numpy_function(generator.postprocess, [image, mask], [K.floatx(), K.floatx()]),
+        lambda image, mask: tf.numpy_function(generator.preprocess, [image, mask], [K.floatx(), K.floatx()]),
         num_parallel_calls=parallel_data_calls
     )
     dataset = dataset.map(

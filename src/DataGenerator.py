@@ -29,6 +29,14 @@ class DataGenerator:
             with open(os.path.join(path, "classes.json"), "r") as json_file:
                 self.data = json.load(json_file)
                 self.image_files = sorted(self.data["classes"][clazz]["eval_instances"])
+        elif fold is None and mode == "train":
+            with open(os.path.join(path, "classes.json"), "r") as json_file:
+                self.data = json.load(json_file)
+                self.image_files = sorted(self.data["classes"][clazz]["train_instances"])
+        elif fold is None and mode == "val":
+            with open(os.path.join(path, "classes.json"), "r") as json_file:
+                self.data = json.load(json_file)
+                self.image_files = sorted(self.data["classes"][clazz]["eval_instances"])
         elif fold is not None and mode in ["train", "val"]:
             with open(os.path.join(path, "%s-boost_folds-%s-folds.json" % (job_config["BOOST_FOLDS"], job_config["FOLDS"])), "r") as json_file:
                 self.data = json.load(json_file)
@@ -51,20 +59,21 @@ class DataGenerator:
     def size(self):
         return len(self.image_files)
 
-    def postprocess(self, img, mask):
-        if False and self.job_config["POSTPROCESS"]["RECENTER"]:
+    def preprocess(self, img, mask):
+        if False and self.job_config["PREPROCESS"]["RECENTER"]:
             img = img - np.mean(img)
-        if True or self.job_config["POSTPROCESS"]["ZERO_BLANKS"]:
+        if True or self.job_config["PREPROCESS"]["ZERO_BLANKS"]:
             img = self.zero(img, mask)
         return img.astype(K.floatx()), mask.astype(K.floatx())
 
     def augment(self, img, mask):
-        if self.augmentations(self.job_config, img.shape) is None:
+        augmentation_for_image = self.augmentations(self.job_config["AUGMENTS"], img.shape)
+        if augmentation_for_image is None:
             return img, mask
         mask_coverage_before = np.sum(mask)
         mask_coverage_after = 0
         while mask_coverage_after / mask_coverage_before < 0.5:
-            augmented = self.augmentations(self.job_config, img.shape)(image=img, mask=mask)
+            augmented = augmentation_for_image(image=img, mask=mask)
             mask_coverage_after = np.sum(augmented['mask'])
 
         return augmented["image"], augmented["mask"]

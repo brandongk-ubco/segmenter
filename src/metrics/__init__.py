@@ -18,7 +18,7 @@ def get_metrics(threshold, loss):
         "jaccard_loss": jaccard_loss
     }
 
-    if loss["BETA"] != 1.0:
+    if loss["DICE_MULTIPLIER"] > 0 and loss["BETA"] != 1.0:
         beta = loss["BETA"]
         dl_beta_loss = DiceLoss(beta=beta)
         dl_beta_loss.name = 'd{}-loss'.format(beta)
@@ -27,7 +27,7 @@ def get_metrics(threshold, loss):
         f_beta_score = FScore(beta=beta, threshold=threshold)
         metrics[f_beta_score.name] = f_beta_score
 
-    if loss["GAMMA"] != 1.0:
+    if loss["BFL_MULTIPLIER"] > 0 and loss["GAMMA"] != 1.0:
         gamma = loss["GAMMA"]
         bfl_gamma_loss = BinaryFocalLoss(gamma=gamma)
         bfl_gamma_loss.name = 'bfl{}-loss'.format(gamma)

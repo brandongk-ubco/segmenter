@@ -14,6 +14,7 @@ from loss import get_loss
 from callbacks import get_callbacks
 from DataGenerator import DataGenerator
 from augmentations import train_augments, val_augments
+from ops import AverageSingleGradient
 import sys
 
 import json
@@ -43,20 +44,36 @@ def train_fold(clazz, fold):
     output_folder = os.path.join(outdir, job_hash, clazz, "fold%s" % fold)
     print("Using directory %s" % output_folder)
 
-    train_generator, train_dataset, num_training_images = generate_for_augments(
-        clazz,
-        fold,
-        train_augments,
-        job_config,
-        mode="train",
-        shuffle=True,
-        repeat=True
-    )
-    image_size = next(train_generator.generate())[0].shape
-    train_dataset = train_dataset.batch(job_config["BATCH_SIZE"], drop_remainder=True)
+    if job_config["BOOST_FOLDS"] > 0:
+        train_generator, train_dataset, num_training_images = generate_for_augments(
+            clazz,
+            None,
+            train_augments,
+            job_config,
+            mode="train",
+            shuffle=True,
+            repeat=True
+        )
+        image_size = next(train_generator.generate())[0].shape
+        train_dataset = train_dataset.batch(job_config["BATCH_SIZE"], drop_remainder=True)
 
-    val_generator, val_dataset, num_val_images = generate_for_augments(clazz, fold, val_augments, job_config, mode="val", repeat=True)
-    val_dataset = val_dataset.batch(job_config["BATCH_SIZE"], drop_remainder=True)
+        val_generator, val_dataset, num_val_images = generate_for_augments(clazz, None, val_augments, job_config, mode="val", repeat=True)
+        val_dataset = val_dataset.batch(job_config["BATCH_SIZE"], drop_remainder=True)
+    else:
+        train_generator, train_dataset, num_training_images = generate_for_augments(
+            clazz,
+            fold,
+            train_augments,
+            job_config,
+            mode="train",
+            shuffle=True,
+            repeat=True
+        )
+        image_size = next(train_generator.generate())[0].shape
+        train_dataset = train_dataset.batch(job_config["BATCH_SIZE"], drop_remainder=True)
+
+        val_generator, val_dataset, num_val_images = generate_for_augments(clazz, fold, val_augments, job_config, mode="val", repeat=True)
+        val_dataset = val_dataset.batch(job_config["BATCH_SIZE"], drop_remainder=True)
 
     print("Found %s training images" % num_training_images)
     print("Found %s validation images" % num_val_images)
@@ -98,7 +115,7 @@ def train_fold(clazz, fold):
 
         out = fold_model(inputs)
         if len(previous_models) > 0:
-            out = Average()(previous_models + [out])
+            out = AverageSingleGradient()(previous_models + [out])
         model = Model(inputs, out)
         model.summary()
 

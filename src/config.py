@@ -54,6 +54,20 @@ def get_loss():
         "BCE_MULTIPLIER": float(os.environ.get("BCE_MULTIPLIER", 1)),
     }
 
+def get_augments():
+    return {
+        "RESCALE_PERCENTAGE": float(os.environ.get("RESCALE_PERCENTAGE", 0.15)),
+        "RESCALE_PR": float(os.environ.get("RESCALE_PR", 0.0)),
+        "ELASTIC_TRANSFORM_PR": float(os.environ.get("ELASTIC_TRANSFORM_PR", 0.0)),
+
+    }
+
+def get_preprocess():
+    return {
+        "RECENTER": os.environ.get("RECENTER", "false").lower() == "true",
+        "ZERO_BLANKS": os.environ.get("RECENTER", "true").lower() == "true",
+    }
+
 # WARNING when setting precision - larger images need higher precision to evaluate the Loss function.  The sum can overflow and give all 0 for loss.
 def get_config():
     return {
@@ -71,16 +85,14 @@ def get_config():
         "BETA_2": float(os.environ.get("BETA_2", 0.999)),
         "AMSGRAD": os.environ.get("AMSGRAD", "true").lower() == "true",
         "BATCH_NORM": os.environ.get("BATCH_NORM", "true").lower() == "true",
-        "ELASTIC_TRANSFORM_PR": float(os.environ.get("ELASTIC_TRANSFORM_PR", 0.0)),
         "FSCORE_THRESHOLD": float(os.environ.get("FSCORE_THRESHOLD", 0.5)),
         "BOOST_FOLDS": int(os.environ.get("BOOST_FOLDS", 0)),
         "FOLDS": int(os.environ.get("FOLDS", 10)),
         "CLASSES": get_classes(),
-        "RESCALE_PERCENTAGE": float(os.environ.get("RESCALE_PERCENTAGE", 0.15)),
-        "RESCALE_PR": float(os.environ.get("RESCALE_PR", 0.0)),
         "MODEL": get_model(),
-        "RECENTER": os.environ.get("RECENTER", "false").lower() == "true",
         "PRECISION": os.environ.get("PRECISION", "float32"),
         "LOSS": get_loss(),
+        "AUGMENTS": get_augments(),
+        "PREPROCESS": get_preprocess(),
         "RUN": int(os.environ.get("RUN", 1)),
     }
