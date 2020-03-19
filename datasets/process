@@ -5,6 +5,7 @@ import os
 import json
 import sys
 import importlib
+import pprint
 
 dataset_name = sys.argv[1]
 
@@ -21,7 +22,7 @@ outdir = os.path.join(dataset_dir, "out")
 os.makedirs(outdir, exist_ok=True)
 class_counts = dataset.get_class_counts()
 
-print("Class counts: %s" % class_counts)
+print("Class counts: %s" % pprint.pprint(class_counts))
 
 classes = dataset.get_classes()
 class_members = dataset.get_class_members()
