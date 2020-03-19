@@ -1,8 +1,12 @@
+import sys
+sys.path.append("..")
+
 from .Specificity import Specificity
 from .FallOut import FallOut
 
 from segmentation_models.metrics import FScore, Precision, Recall, IOUScore
 from segmentation_models.losses import DiceLoss, BinaryFocalLoss, binary_crossentropy, binary_focal_loss, jaccard_loss
+from loss import BinaryCrossentropyWithLogits
 
 def get_metrics(threshold, loss):
 
@@ -14,11 +18,12 @@ def get_metrics(threshold, loss):
         "specificity": Specificity(threshold=threshold),
         "dice_loss": DiceLoss(beta=1),
         "binary_crossentropy": binary_crossentropy,
+        "binary_crossentropy_logits_loss": BinaryCrossentropyWithLogits(),
         "binary_focal_loss": binary_focal_loss,
         "jaccard_loss": jaccard_loss
     }
 
-    if loss["DICE_MULTIPLIER"] > 0 and loss["BETA"] != 1.0:
+    if loss["DICE_MULTIPLIER"] > 0 and loss["DICE_BETA"] != 1.0:
         beta = loss["BETA"]
         dl_beta_loss = DiceLoss(beta=beta)
         dl_beta_loss.name = 'd{}-loss'.format(beta)
@@ -27,7 +32,7 @@ def get_metrics(threshold, loss):
         f_beta_score = FScore(beta=beta, threshold=threshold)
         metrics[f_beta_score.name] = f_beta_score
 
-    if loss["BFL_MULTIPLIER"] > 0 and loss["GAMMA"] != 1.0:
+    if loss["BFL_MULTIPLIER"] > 0 and loss["BFL_GAMMA"] != 1.0:
         gamma = loss["GAMMA"]
         bfl_gamma_loss = BinaryFocalLoss(gamma=gamma)
         bfl_gamma_loss.name = 'bfl{}-loss'.format(gamma)

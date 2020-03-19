@@ -31,14 +31,15 @@ def get_model(image_size, job_config):
     if job_config["MODEL"]["NAME"] == "unet":
         model = unet(
             input_shape=image_size,
-            use_batch_norm=job_config["BATCH_NORM"],
+            use_batch_norm=job_config["MODEL"]["BATCH_NORM"],
             filters=job_config["MODEL"]["FILTERS"],
-            dropout=job_config["DROPOUT"],
-            dropout_change_per_layer=job_config["DROPOUT_CHANGE_PER_LAYER"],
-            use_dropout_on_upsampling=job_config["USE_DROPOUT_ON_UPSAMPLE"],
+            dropout=job_config["MODEL"]["DROPOUT"],
+            dropout_change_per_layer=job_config["MODEL"]["DROPOUT_CHANGE_PER_LAYER"],
+            use_dropout_on_upsampling=job_config["MODEL"]["USE_DROPOUT_ON_UPSAMPLE"],
             activation=get_activation(job_config["MODEL"]["ACTIVATION"]),
             kernel_initializer='he_normal',
-            num_layers=job_config["MODEL"]["LAYERS"]
+            num_layers=job_config["MODEL"]["LAYERS"],
+            max_dropout=job_config["MODEL"]["MAX_DROPOUT"]
         )
 
     if job_config["MODEL"]["NAME"] == "segmentations_unet":

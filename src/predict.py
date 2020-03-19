@@ -25,10 +25,10 @@ job_hash = hash(job_config)
 outdir = os.environ.get("DIRECTORY", "/output")
 outdir = os.path.abspath(outdir)
 
-def evaluate(clazz, folds=None, method="include", overwrite=False):
+def evaluate(clazz, folds=None):
     K.clear_session()
 
-    generators, dataset, num_images = generate_for_augments(clazz, None, predict_augments, job_config, method=method, mode="evaluate")
+    generators, dataset, num_images = generate_for_augments(clazz, None, predict_augments, job_config, mode="evaluate")
     dataset = dataset.batch(1, drop_remainder=True)
 
     if folds is None:
@@ -40,13 +40,8 @@ def evaluate(clazz, folds=None, method="include", overwrite=False):
     loss = get_loss(job_config["LOSS"])
     metrics = get_metrics(threshold, job_config["LOSS"])
 
-    if not os.path.isdir(model_dir) or overwrite:
-        print("Creating new model for %s" % model_dir)
-        model = model_for_folds(clazz, outdir, job_config, job_hash, folds=folds)
-    else:
-        print("Loading existing model from %s" % model_dir)
-        model = model_for_folds(clazz, outdir, job_config, job_hash, folds=folds, load_weights=False)
-        model.load_weights(os.path.join(model_dir, "weights.h5"))
+    print("Creating model for %s" % model_dir)
+    model = model_for_folds(clazz, outdir, job_config, job_hash, folds=folds)
 
     model.compile(
         optimizer=Adam(
@@ -59,9 +54,8 @@ def evaluate(clazz, folds=None, method="include", overwrite=False):
         metrics=list(metrics.values())
     )
 
-    if not os.path.isdir(model_dir) or overwrite:
-        os.makedirs(model_dir, exist_ok=True)
-        model.save_weights(os.path.join(model_dir, "weights.h5"))
+    os.makedirs(model_dir, exist_ok=True)
+    model.save_weights(os.path.join(model_dir, "weights.h5"))
 
     for batch, (images, masks) in enumerate(dataset):
         predictions = model.predict_on_batch(images).numpy()
@@ -82,8 +76,6 @@ def evaluate(clazz, folds=None, method="include", overwrite=False):
                 thresholded = np.where(prediction > threshold, 1, 0).astype(prediction.dtype)
                 plt.imshow(thresholded, cmap='gray')
                 plt.savefig(os.path.join(model_dir, "%s-%s-%0.2f-threshold.png" % (batch, i, threshold)))
-    import pdb
-    pdb.set_trace()
     return
 
 if __name__ == "__main__":
@@ -103,8 +95,5 @@ if __name__ == "__main__":
     evaluations = {}
     for clazz in classes:
         evaluations[clazz] = {}
-        # print("In-Class evaluation for %s" % clazz)
-        # evaluations[clazz]["in_class"] = evaluate(clazz, folds=folds, method="include")
-        # print("Out-Of-Class evaluation for %s" % clazz)
-        evaluations[clazz]["in_class"] = evaluate(clazz, folds=folds)
+        evaluations[clazz] = evaluate(clazz, folds=folds)
     pprint.pprint(evaluations)

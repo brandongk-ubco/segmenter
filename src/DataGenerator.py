@@ -21,7 +21,7 @@ cache = CachedFilereader()
 
 class DataGenerator:
 
-    def __init__(self, clazz, fold, shuffle=False, method="include", mode="train", path="/data", augmentations=None, job_config=None):
+    def __init__(self, clazz, fold=None, shuffle=False, mode="train", path="/data", augmentations=None, job_config=None):
 
         self.augmentations = augmentations
         self.path = path
@@ -38,36 +38,41 @@ class DataGenerator:
                 self.data = json.load(json_file)
                 self.image_files = sorted(self.data["classes"][clazz]["eval_instances"])
         elif fold is not None and mode in ["train", "val"]:
-            with open(os.path.join(path, "%s-boost_folds-%s-folds.json" % (job_config["BOOST_FOLDS"], job_config["FOLDS"])), "r") as json_file:
+            with open(os.path.join(path, "%s-folds.json" % (job_config["FOLDS"])), "r") as json_file:
                 self.data = json.load(json_file)
                 self.image_files = sorted(self.data["folds"][fold][clazz][mode])
         else:
             raise ValueError("Invalid combination: mode %s / fold %s" % (mode, fold))
-            
-        if method == "exclude":
-            all_files = [ f for f in os.listdir(path) if f.endswith(".npz") ]
-            self.image_files = list(filter(lambda f: f not in self.image_files, all_files))
             
         self.image_files = list(map(lambda f: os.path.abspath(os.path.join(self.path, f)), self.image_files))
 
         if shuffle:
             random.shuffle(self.image_files)
 
-        self.mask_index = self.data["class_order"].index(clazz)
         self.job_config = job_config
+        self.mask_index = [str(c) for c in self.job_config["CLASSES"]].index(clazz)
+
 
     def size(self):
         return len(self.image_files)
 
     def preprocess(self, img, mask):
-        if False and self.job_config["PREPROCESS"]["RECENTER"]:
-            img = img - np.mean(img)
         if True or self.job_config["PREPROCESS"]["ZERO_BLANKS"]:
             img = self.zero(img, mask)
         return img.astype(K.floatx()), mask.astype(K.floatx())
 
+    def postprocess(self, img, mask):
+        if False and self.job_config["POSTPROCESS"]["RECENTER"]:
+            img = img - np.mean(img)
+        return img.astype(K.floatx()), mask.astype(K.floatx())
+
     def augment(self, img, mask):
-        augmentation_for_image = self.augmentations(self.job_config["AUGMENTS"], img.shape)
+        augmentation_for_image = self.augmentations(
+            self.job_config["AUGMENTS"],
+            self.data["properties"]["mean"],
+            self.data["properties"]["std"],
+            img.shape
+        )
         if augmentation_for_image is None:
             return img, mask
         mask_coverage_before = np.sum(mask)
@@ -91,7 +96,7 @@ class DataGenerator:
         return img
 
     def _generate(self, idx):
-        filename = os.path.join(self.path, self.image_files[idx])
+        filename = os.path.join(self.path, "{}.npz".format(self.image_files[idx]))
         i_data = np.load(cache.read(filename))
         img = i_data["image"]
         mask = i_data["mask"][:, :, self.mask_index]
@@ -109,21 +114,31 @@ if __name__ == "__main__":
     from augmentations import train_augments, val_augments
     from matplotlib import pyplot as plt
     from config import get_config
-    from helpers import generate_for_augments
+    from helpers import generate_for_augments, hash
+    import pprint
     import os
-
-    os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-
     import tensorflow as tf
 
     job_config = get_config()
+    job_hash = hash(job_config)
+
+    pprint.pprint(job_config)
+
     K.set_floatx(job_config["PRECISION"])
     clazz = os.environ.get("CLASS", job_config["CLASSES"][0])
-    fold = int(os.environ.get("FOLD", 0))
-    path = os.environ.get("DATA_PATH")
 
-    val_generators, augmented_val_dataset, num_val_images = generate_for_augments(clazz, fold, val_augments, job_config, path=path, mode="val", repeat=True)
-    train_generators, augmented_train_dataset, num_train_images = generate_for_augments(clazz, fold, train_augments, job_config, path=path, mode="train", shuffle=True, repeat=True)
+    outdir = os.environ.get("DIRECTORY", "/output")
+    outdir = os.path.abspath(outdir)
+
+    output_folder = os.path.join(outdir, job_hash, clazz, "augmented")
+    print("Using directory %s" % output_folder)
+    os.makedirs(output_folder, exist_ok=True)
+
+    val_generators, augmented_val_dataset, num_val_images = generate_for_augments(clazz, None, val_augments, job_config, mode="val", repeat=True)
+    train_generators, augmented_train_dataset, num_train_images = generate_for_augments(clazz, None, train_augments, job_config, mode="train", shuffle=True, repeat=True)
+
+    print("Found %s training images" % num_train_images)
+    print("Found %s validation images" % num_val_images)
 
     seen_imgs = []
     repeated = 0
@@ -131,7 +146,6 @@ if __name__ == "__main__":
         if i >= 2*num_train_images:
             break
 
-        print(mask.dtype)
         augmented_img = augmented_img[:,:,0]
         augmented_mask = augmented_mask[:,:,0]
 
@@ -154,11 +168,13 @@ if __name__ == "__main__":
             repeated += 1
             print("Repeated image in 2nd iteration!")
 
-        # plt.subplot(2,1,1)
-        # plt.imshow(augmented_img.astype('float32'), cmap='gray')
-        # plt.subplot(2,1,2)
-        # plt.imshow(augmented_mask.astype('float32'), cmap='gray')
-        # plt.show()
+        print(i)
+        plt.subplot(2,1,1)
+        plt.imshow(augmented_img.astype('float32'), cmap='gray')
+        plt.subplot(2,1,2)
+        plt.imshow(augmented_mask.astype('float32'), cmap='gray')
+        plt.savefig(os.path.join(output_folder, "{}.png".format(i)))
+        plt.close()
 
     # This should be roughly 25% for 50% rotation augments
     # This should be 100% for val augments

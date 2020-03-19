@@ -1,7 +1,6 @@
 from config import get_config
 
 import tensorflow as tf
-from tensorflow.keras.optimizers import Adam
 from tensorflow.keras import backend as K
 from tensorflow.keras.layers import Input, Average
 from tensorflow.keras.models import Model
@@ -12,6 +11,7 @@ from metrics import get_metrics
 from models import get_model, find_latest_weight, find_best_weight
 from loss import get_loss
 from callbacks import get_callbacks
+from optimizers import get_optimizer
 from DataGenerator import DataGenerator
 from augmentations import train_augments, val_augments
 from ops import AverageSingleGradient
@@ -44,36 +44,27 @@ def train_fold(clazz, fold):
     output_folder = os.path.join(outdir, job_hash, clazz, "fold%s" % fold)
     print("Using directory %s" % output_folder)
 
-    if job_config["BOOST_FOLDS"] > 0:
-        train_generator, train_dataset, num_training_images = generate_for_augments(
-            clazz,
-            None,
-            train_augments,
-            job_config,
-            mode="train",
-            shuffle=True,
-            repeat=True
-        )
-        image_size = next(train_generator.generate())[0].shape
-        train_dataset = train_dataset.batch(job_config["BATCH_SIZE"], drop_remainder=True)
+    train_generator, train_dataset, num_training_images = generate_for_augments(
+        clazz,
+        None if job_config["BOOST_FOLDS"] > 0 else fold,
+        train_augments,
+        job_config,
+        mode="train",
+        shuffle=True,
+        repeat=True
+    )
+    image_size = next(train_generator.generate())[0].shape
+    train_dataset = train_dataset.batch(job_config["BATCH_SIZE"], drop_remainder=True)
 
-        val_generator, val_dataset, num_val_images = generate_for_augments(clazz, None, val_augments, job_config, mode="val", repeat=True)
-        val_dataset = val_dataset.batch(job_config["BATCH_SIZE"], drop_remainder=True)
-    else:
-        train_generator, train_dataset, num_training_images = generate_for_augments(
-            clazz,
-            fold,
-            train_augments,
-            job_config,
-            mode="train",
-            shuffle=True,
-            repeat=True
-        )
-        image_size = next(train_generator.generate())[0].shape
-        train_dataset = train_dataset.batch(job_config["BATCH_SIZE"], drop_remainder=True)
-
-        val_generator, val_dataset, num_val_images = generate_for_augments(clazz, fold, val_augments, job_config, mode="val", repeat=True)
-        val_dataset = val_dataset.batch(job_config["BATCH_SIZE"], drop_remainder=True)
+    val_generator, val_dataset, num_val_images = generate_for_augments(
+        clazz,
+        None if job_config["BOOST_FOLDS"] > 0 else fold,
+        val_augments,
+        job_config,
+        mode="val",
+        repeat=True
+    )
+    val_dataset = val_dataset.batch(job_config["BATCH_SIZE"], drop_remainder=True)
 
     print("Found %s training images" % num_training_images)
     print("Found %s validation images" % num_val_images)
@@ -93,7 +84,6 @@ def train_fold(clazz, fold):
         inputs = Input(shape=image_size)
 
         boost_fold_start = max(0, fold - job_config["BOOST_FOLDS"])
-
         for previous_fold in range(boost_fold_start, fold):
             previous_fold_model = get_model(image_size, job_config)
             previous_fold_dir = os.path.abspath(os.path.join(output_folder, "..", "fold%s" % previous_fold))
@@ -126,12 +116,7 @@ def train_fold(clazz, fold):
         metrics = get_metrics(threshold, job_config["LOSS"])
 
         model.compile(
-            optimizer=Adam(
-                learning_rate=job_config["LR"],
-                beta_1=job_config["BETA_1"],
-                beta_2=job_config["BETA_2"],
-                amsgrad=job_config["AMSGRAD"]
-            ),
+            optimizer=get_optimizer(job_config["OPTIMIZER"]),
             loss=get_loss(job_config["LOSS"]),
             metrics=list(metrics.values())
         )

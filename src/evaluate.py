@@ -9,7 +9,6 @@ from tensorflow.keras.models import load_model
 
 from metrics import get_metrics
 
-
 from models import model_for_folds
 from augmentations import predict_augments
 from loss import get_loss
@@ -25,10 +24,10 @@ job_hash = hash(job_config)
 outdir = os.environ.get("DIRECTORY", "/output")
 outdir = os.path.abspath(outdir)
 
-def evaluate(clazz, folds=None, method="include", overwrite=False):
+def evaluate(clazz, folds=None):
     K.clear_session()
 
-    generators, dataset, num_images = generate_for_augments(clazz, None, predict_augments, job_config, method=method, mode="evaluate")
+    generators, dataset, num_images = generate_for_augments(clazz, None, predict_augments, job_config, mode="evaluate")
     dataset = dataset.batch(1, drop_remainder=True)
 
     if folds is None:
@@ -38,17 +37,11 @@ def evaluate(clazz, folds=None, method="include", overwrite=False):
 
     loss = get_loss(job_config["LOSS"])
 
-    if not os.path.isdir(model_dir) or overwrite:
-        print("Creating new model for %s" % model_dir)
-        model = model_for_folds(clazz, outdir, job_config, job_hash, folds=folds)
-    else:
-        print("Loading existing model from %s" % model_dir)
-        model = model_for_folds(clazz, outdir, job_config, job_hash, folds=folds, load_weights=False)
-        model.load_weights(os.path.join(model_dir, "weights.h5"))
+    print("Creating model for %s" % model_dir)
+    model = model_for_folds(clazz, outdir, job_config, job_hash, folds=folds)
 
-    if not os.path.isdir(model_dir) or overwrite:
-        os.makedirs(model_dir, exist_ok=True)
-        model.save_weights(os.path.join(model_dir, "weights.h5"))
+    os.makedirs(model_dir, exist_ok=True)
+    model.save_weights(os.path.join(model_dir, "weights.h5"))
 
     results = {}
     for threshold in np.linspace(0.05, 0.95, num=19):

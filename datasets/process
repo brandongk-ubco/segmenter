@@ -1,0 +1,51 @@
+#!/usr/bin/env python
+
+import numpy as np
+import os
+import json
+import sys
+import importlib
+
+dataset_name = sys.argv[1]
+
+dataset_dir = os.path.abspath(os.path.join(".", dataset_name))
+
+if not os.path.isdir(dataset_dir):
+    raise ValueError("Dataset {} does not exist.".format(dataset_dir))
+
+dataset_module = importlib.import_module(dataset_name)
+
+dataset = dataset_module.Dataset()
+
+outdir = os.path.join(dataset_dir, "out")
+os.makedirs(outdir, exist_ok=True)
+class_counts = dataset.get_class_counts()
+
+print("Class counts: %s" % class_counts)
+
+classes = dataset.get_classes()
+class_members = dataset.get_class_members()
+
+for num_folds in range(2, 21):
+    folds = dataset.split_folds(class_members, num_folds)
+    with open(os.path.join(outdir, "%s-folds.json" % num_folds), "w") as outfile:
+        json.dump({
+            "folds": folds
+        }, outfile, indent=4)
+
+mean, std = dataset.process_images(
+    lambda image, mask, name: np.savez_compressed(os.path.join(outdir, name), image=image, mask=mask)
+)
+
+print("Mean = {}".format(mean))
+print("Std = {}".format(std))
+
+with open(os.path.join(outdir, "classes.json"), "w") as outfile:
+    json.dump({
+        "properties": {
+            "mean": mean,
+            "std": std
+        },
+        "classes": class_members,
+        "class_order": classes
+    }, outfile, indent=4)
