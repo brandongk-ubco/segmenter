@@ -46,7 +46,7 @@ def train_fold(clazz, fold):
 
     train_generator, train_dataset, num_training_images = generate_for_augments(
         clazz,
-        None if job_config["BOOST_FOLDS"] > 0 else fold,
+        None if job_config["BOOST_FOLDS"] > 0 or job_config["FOLDS"] == 0 else fold,
         train_augments,
         job_config,
         mode="train",
@@ -58,7 +58,7 @@ def train_fold(clazz, fold):
 
     val_generator, val_dataset, num_val_images = generate_for_augments(
         clazz,
-        None if job_config["BOOST_FOLDS"] > 0 else fold,
+        None if job_config["BOOST_FOLDS"] > 0 or job_config["FOLDS"] == 0 else fold,
         val_augments,
         job_config,
         mode="val",
@@ -143,11 +143,13 @@ def train_fold(clazz, fold):
 
 if __name__ == "__main__":
     pprint.pprint(job_config)
-    if os.environ.get("CLASS") is not None and os.environ.get("FOLD") is not None:
+    if os.environ.get("CLASS") is not None and job_config["FOLDS"] > 0 and os.environ.get("FOLD") is not None:
         train_fold(os.environ.get("CLASS"), int(os.environ.get("FOLD")))
-    elif os.environ.get("CLASS") is not None:
+    elif os.environ.get("CLASS") is not None and job_config["FOLDS"] > 0:
         for fold in range(job_config["FOLDS"]):
             train_fold(os.environ.get("CLASS"), fold)
+    elif os.environ.get("CLASS") is not None and job_config["FOLDS"] == 0:
+        train_fold(os.environ.get("CLASS"), 0)
     else:
         for clazz in job_config["CLASSES"]:
             for fold in range(job_config["FOLDS"]):

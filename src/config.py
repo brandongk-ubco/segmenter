@@ -55,8 +55,8 @@ def get_loss():
         "BFL_GAMMA": float(os.environ.get("BFL_GAMMA", 2)),
         "DICE_MULTIPLIER": float(os.environ.get("DICE_MULTIPLIER", 1)),
         "BFL_MULTIPLIER": float(os.environ.get("BFL_MULTIPLIER", 0)),
-        "BCE_MULTIPLIER": float(os.environ.get("BCE_MULTIPLIER", 0)),
-        "BCE_LOGITS_MULTIPLIER": float(os.environ.get("BCE_MULTIPLIER", 1)),
+        "BCE_MULTIPLIER": float(os.environ.get("BCE_MULTIPLIER", 1)),
+        "BCE_FROM_LOGITS": os.environ.get("BCE_FROM_LOGITS", "false ").lower() == "true"
     }
 
 def get_augments():
@@ -101,7 +101,7 @@ def get_config():
         "OPTIMIZER": get_optimizer(),
         "FSCORE_THRESHOLD": float(os.environ.get("FSCORE_THRESHOLD", 0.5)),
         "BOOST_FOLDS": int(os.environ.get("BOOST_FOLDS", 0)),
-        "FOLDS": int(os.environ.get("FOLDS", 10)),
+        "FOLDS": int(os.environ.get("FOLDS", 0)),
         "CLASSES": get_classes(),
         "MODEL": get_model(),
         "PRECISION": os.environ.get("PRECISION", "float32"),

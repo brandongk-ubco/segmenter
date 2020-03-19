@@ -6,7 +6,7 @@ from .FallOut import FallOut
 
 from segmentation_models.metrics import FScore, Precision, Recall, IOUScore
 from segmentation_models.losses import DiceLoss, BinaryFocalLoss, binary_crossentropy, binary_focal_loss, jaccard_loss
-from loss import BinaryCrossentropyWithLogits
+from loss import BinaryCrossentropy
 
 def get_metrics(threshold, loss):
 
@@ -17,8 +17,7 @@ def get_metrics(threshold, loss):
         "recall": Recall(threshold=threshold),
         "specificity": Specificity(threshold=threshold),
         "dice_loss": DiceLoss(beta=1),
-        "binary_crossentropy": binary_crossentropy,
-        "binary_crossentropy_logits_loss": BinaryCrossentropyWithLogits(),
+        "binary_crossentropy_loss": BinaryCrossentropy(from_logits=loss["BCE_FROM_LOGITS"]),
         "binary_focal_loss": binary_focal_loss,
         "jaccard_loss": jaccard_loss
     }
