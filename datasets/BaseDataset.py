@@ -3,26 +3,34 @@ import numpy as np
 
 class BaseDataset:
 
+    # These need to be overriden by your base class.
     def get_classes(self):
         pass
 
-    def chunkify(self, lst,n):
-        return [lst[i::n] for i in range(n)]
-
-    def get_instances(self):
-        pass
-
-    def get_mask(self):
-        pass
-
-    def get_name(self):
-        pass
-
-    def enhance_image(self):
+    def get_class_counts(self):
         pass
 
     def get_class_members(self):
         pass
+
+    def get_instances(self):
+        pass
+
+    def get_name(self, instance):
+        pass
+
+    def get_image(self, instance)
+        pass
+
+    def get_mask(self, instance):
+        pass
+
+    def enhance_image(self, image):
+        pass
+    #Done overriding.
+
+    def chunkify(self, lst,n):
+        return [lst[i::n] for i in range(n)]
 
     def split_folds(self, class_members, num_folds):
         chunked = {}
