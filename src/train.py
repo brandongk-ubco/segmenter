@@ -150,7 +150,10 @@ if __name__ == "__main__":
             train_fold(os.environ.get("CLASS"), fold)
     elif os.environ.get("CLASS") is not None and job_config["FOLDS"] == 0:
         train_fold(os.environ.get("CLASS"), 0)
+    elif os.environ.get("CLASS") is None and job_config["FOLDS"] == 0:
+        for clazz in job_config["CLASSES"]:
+            train_fold(str(clazz), 0)
     else:
         for clazz in job_config["CLASSES"]:
             for fold in range(job_config["FOLDS"]):
-                train_fold(clazz, fold)
+                train_fold((clazz), fold)

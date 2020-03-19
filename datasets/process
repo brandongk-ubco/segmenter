@@ -47,5 +47,5 @@ with open(os.path.join(outdir, "classes.json"), "w") as outfile:
             "std": std
         },
         "classes": class_members,
-        "class_order": classes
+        "class_order": [str(s) for s in classes]
     }, outfile, indent=4)
