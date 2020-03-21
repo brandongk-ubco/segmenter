@@ -76,6 +76,9 @@ def train_fold(clazz, fold):
 
     latest_weight = find_latest_weight(output_folder)
 
+    boost_fold_start = max(0, fold - job_config["BOOST_FOLDS"])
+    boost_folds = range(boost_fold_start, fold)
+
     strategy = tf.distribute.MirroredStrategy()
     with strategy.scope():
 
@@ -83,8 +86,7 @@ def train_fold(clazz, fold):
 
         inputs = Input(shape=image_size)
 
-        boost_fold_start = max(0, fold - job_config["BOOST_FOLDS"])
-        for previous_fold in range(boost_fold_start, fold):
+        for previous_fold in boost_folds:
             previous_fold_model = get_model(image_size, job_config)
             previous_fold_dir = os.path.abspath(os.path.join(output_folder, "..", "fold%s" % previous_fold))
             best_weight = find_best_weight(previous_fold_dir)
@@ -116,7 +118,7 @@ def train_fold(clazz, fold):
         metrics = get_metrics(threshold, job_config["LOSS"])
 
         model.compile(
-            optimizer=get_optimizer(job_config["OPTIMIZER"]),
+            optimizer=get_optimizer(job_config["OPTIMIZER"], boost_folds),
             loss=get_loss(job_config["LOSS"]),
             metrics=list(metrics.values())
         )
@@ -156,4 +158,4 @@ if __name__ == "__main__":
     else:
         for clazz in job_config["CLASSES"]:
             for fold in range(job_config["FOLDS"]):
-                train_fold((clazz), fold)
+                train_fold(str(clazz), fold)

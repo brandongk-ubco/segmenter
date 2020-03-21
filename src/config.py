@@ -52,7 +52,7 @@ def get_model():
 def get_loss():
     return {
         "DICE_BETA": float(os.environ.get("DICE_BETA", 1)),
-        "BFL_GAMMA": float(os.environ.get("BFL_GAMMA", 2)),
+        "BFL_GAMMA": float(os.environ.get("BFL_GAMMA", 1)),
         "DICE_MULTIPLIER": float(os.environ.get("DICE_MULTIPLIER", 1)),
         "BFL_MULTIPLIER": float(os.environ.get("BFL_MULTIPLIER", 0)),
         "BCE_MULTIPLIER": float(os.environ.get("BCE_MULTIPLIER", 1)),

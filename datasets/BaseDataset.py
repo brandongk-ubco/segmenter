@@ -4,12 +4,6 @@ import numpy as np
 class BaseDataset:
 
     # These need to be overriden by your base class.
-    def get_classes(self):
-        pass
-
-    def get_class_counts(self):
-        pass
-
     def get_class_members(self):
         pass
 
@@ -19,7 +13,7 @@ class BaseDataset:
     def get_name(self, instance):
         pass
 
-    def get_image(self, instance)
+    def get_image(self, instance):
         pass
 
     def get_mask(self, instance):

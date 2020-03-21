@@ -62,7 +62,6 @@ def build_mask(encodings, labels):
 class SeverstalDataset(BaseDataset):
 
     def __init__(self, path=current_dir):
-        super()
         self.path = os.path.abspath(path)
         # reading in the training set
         data = pd.read_csv(os.path.join(self.path, 'train.csv'))
@@ -81,12 +80,6 @@ class SeverstalDataset(BaseDataset):
 
         self.no_defects = data[['ImageId']].drop_duplicates().set_index('ImageId').drop(self.squashed.ImageId.tolist()).index.tolist()
         print("No defect instances: %s" % len(self.no_defects))
-
-    def get_classes(self):
-        return sorted(self.filtered['ClassId'].sort_index().unique().tolist())
-
-    def get_class_counts(self):
-        return self.filtered['ClassId'].value_counts().sort_index()
 
     def get_class_members(self):
         classes = {}

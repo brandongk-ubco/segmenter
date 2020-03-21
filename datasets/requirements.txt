@@ -9,3 +9,8 @@ Pillow
 scikit-image
 imageio
 Shapely
+numpy
+nibabel
+imageio
+requests
+tqdm

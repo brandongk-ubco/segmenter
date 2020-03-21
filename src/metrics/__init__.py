@@ -32,7 +32,7 @@ def get_metrics(threshold, loss):
         metrics[f_beta_score.name] = f_beta_score
 
     if loss["BFL_MULTIPLIER"] > 0 and loss["BFL_GAMMA"] != 1.0:
-        gamma = loss["GAMMA"]
+        gamma = loss["BFL_GAMMA"]
         bfl_gamma_loss = BinaryFocalLoss(gamma=gamma)
         bfl_gamma_loss.name = 'bfl{}-loss'.format(gamma)
         metrics[bfl_gamma_loss.name] = bfl_gamma_loss
