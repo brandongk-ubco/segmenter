@@ -1,3 +1,21 @@
+# Install Anaconda or Miniconda
+
+This is a platform-specific setup.
+
+# Create a Conda environment
+
+`conda create -n segmenter python=3.8`
+
+# Install the requirements
+
+`conda activate segmenter && pip install -r requirements.txt`
+
+# View the pydocs
+
+`pydoc -b`
+
+# Install Docker Dependencies
+
 docker build . -t segmenter
 
 # Build and split the dataset

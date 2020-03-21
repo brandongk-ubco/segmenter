@@ -5,6 +5,7 @@ import os
 import json
 import sys
 import importlib
+import pprint
 
 dataset_name = sys.argv[1]
 
@@ -19,8 +20,6 @@ dataset = dataset_module.Dataset()
 
 outdir = os.path.join(dataset_dir, "out")
 os.makedirs(outdir, exist_ok=True)
-
-class_members = dataset.get_class_members()
 
 # TODO: Calculate this!
 # print("classes = dataset.get_classes()")
