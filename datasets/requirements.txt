@@ -14,3 +14,5 @@ nibabel
 imageio
 requests
 tqdm
+deepdiff
+deepdiff[murmur]

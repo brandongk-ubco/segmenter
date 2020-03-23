@@ -14,7 +14,7 @@ from augmentations import predict_augments
 from loss import get_loss
 
 from DataGenerator import DataGenerator
-
+from optimizers import get_optimizer
 from callbacks import get_evaluation_callbacks
 import json
 
@@ -47,12 +47,7 @@ def evaluate(clazz, folds=None):
     for threshold in np.linspace(0.05, 0.95, num=19):
         metrics = get_metrics(threshold, job_config["LOSS"])
         model.compile(
-            optimizer=Adam(
-                learning_rate=job_config["LR"],
-                beta_1=job_config["BETA_1"],
-                beta_2=job_config["BETA_2"],
-                amsgrad=job_config["AMSGRAD"]
-            ),
+            optimizer=get_optimizer(job_config["OPTIMIZER"]),
             loss=loss,
             metrics=list(metrics.values())
         )

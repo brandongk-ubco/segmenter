@@ -81,6 +81,9 @@ class SeverstalDataset(BaseDataset):
         self.no_defects = data[['ImageId']].drop_duplicates().set_index('ImageId').drop(self.squashed.ImageId.tolist()).index.tolist()
         print("No defect instances: %s" % len(self.no_defects))
 
+    def get_classes(self):
+        return sorted([str(c) for c in self.filtered['ClassId'].sort_index().unique().tolist()])
+
     def get_class_members(self):
         classes = {}
         for clazz in self.get_classes():
@@ -95,7 +98,7 @@ class SeverstalDataset(BaseDataset):
             }
         return classes
 
-    def get_instances(self):
+    def iter_instances(self):
         for idx, instance in self.squashed.iterrows():
             yield instance
 
@@ -105,7 +108,7 @@ class SeverstalDataset(BaseDataset):
     def get_image(self, instance):
         return imread(os.path.join(self.path, "train", instance['ImageId']), as_gray=True).astype(np.float32)
 
-    def get_mask(self, instance):
+    def get_masks(self, instance):
         return build_mask(instance['EncodedPixels'], instance['ClassId']).astype(np.float32)
 
     def enhance_image(self, image):

@@ -21,11 +21,18 @@ dataset = dataset_module.Dataset()
 outdir = os.path.join(dataset_dir, "out")
 os.makedirs(outdir, exist_ok=True)
 
-# TODO: Calculate this!
-# print("classes = dataset.get_classes()")
+class_members = dataset.get_class_members()
+classes = dataset.get_classes()
 
-# TODO: Calculate this!
-# print("Class counts: %s" % class_counts)
+for c in classes:
+    assert c in class_members.keys(), "Class %s not defined in class members" % c
+    assert isinstance(c, str), "Class %s should be a string, but found %s" % (c, type(c))
+
+for c in class_members.keys():
+    assert c in classes, "Class %s not defined in classes" % c
+
+class_counts = [len(class_members[c]["eval_instances"]) + len(class_members[c]["train_instances"]) for c in class_members.keys()]
+print("Class counts: %s" % dict(zip(classes, class_counts)))
 
 for num_folds in range(2, 21):
     folds = dataset.split_folds(class_members, num_folds)

@@ -1,5 +1,6 @@
 from math import sqrt
 import numpy as np
+from DatasetValidator import DatasetValidator
 
 class BaseDataset:
     """
@@ -13,7 +14,22 @@ class BaseDataset:
     class MylDataset(BaseDataset)```
     """
 
+    validator = DatasetValidator()
+
     # These need to be overriden by your base class.
+    def get_classes(self):
+        """
+        Defines the classes this dataset uses.
+        Class definitions in the list will be cast to String objects using:
+
+        `[str(c) for c in classes]`
+
+        Class definitions are expected to be ordered in the same way as the masks array.
+
+        :return: returns an ordered array of the classes in this dataset.
+        """
+        pass
+
     def get_class_members(self):
         """
         Defines which members exist in which class.
@@ -102,7 +118,7 @@ class BaseDataset:
         :image: np.ndarray of the image to be enhanced.
         :return: np.ndarray of the enhanced image.
         """
-        pass
+        return image
 
     #Done overriding.
 
@@ -158,12 +174,15 @@ class BaseDataset:
             masks = self.get_masks(instance)
             name = self.get_name(instance)
             image = self.get_image(instance)
-            image = self.enhance_image(image)
 
-            if np.max(mask) == 0:
+            #Validate both before and after enhancing the image
+            self.validator.validate(image, masks, name)
+            image = self.enhance_image(image)
+            self.validator.validate(image, masks, name, print_output=False)
+
+            if np.max(masks) == 0:
                 print("Mask has no values for %s" % name)
                 continue
-            print(name)
 
             process_lambda(image, masks, name)
 
