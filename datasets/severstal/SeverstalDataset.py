@@ -82,11 +82,14 @@ class SeverstalDataset(BaseDataset):
         print("No defect instances: %s" % len(self.no_defects))
 
     def get_classes(self):
-        return sorted([str(c) for c in self.filtered['ClassId'].sort_index().unique().tolist()])
+        return sorted([str(c) for c in self._get_classes()])
+
+    def _get_classes(self):
+        return sorted([c for c in self.filtered['ClassId'].sort_index().unique().tolist()])
 
     def get_class_members(self):
         classes = {}
-        for clazz in self.get_classes():
+        for clazz in self._get_classes():
             members = self.filtered[self.filtered["ClassId"] == clazz]["ImageId"].tolist()
             members = [os.path.splitext(m)[0] for m in members]
             random.shuffle(members)

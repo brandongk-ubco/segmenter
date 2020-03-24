@@ -8,5 +8,7 @@
 !requirements.txt
 !.gitignore
 !**/__init__.py
+!kits/
 !kits/kits19
+!KitsDataset.py
 !DatasetValidator.py

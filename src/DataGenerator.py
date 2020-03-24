@@ -25,22 +25,20 @@ class DataGenerator:
 
         self.augmentations = augmentations
         self.path = path
+
+        with open(os.path.join(path, "classes.json"), "r") as json_file:
+            self.data = json.load(json_file)
+
         if fold is None and mode == "evaluate":
-            with open(os.path.join(path, "classes.json"), "r") as json_file:
-                self.data = json.load(json_file)
-                self.image_files = sorted(self.data["classes"][clazz]["eval_instances"])
+            self.image_files = sorted(self.data["classes"][clazz]["eval_instances"])
         elif fold is None and mode == "train":
-            with open(os.path.join(path, "classes.json"), "r") as json_file:
-                self.data = json.load(json_file)
-                self.image_files = sorted(self.data["classes"][clazz]["train_instances"])
+            self.image_files = sorted(self.data["classes"][clazz]["train_instances"])
         elif fold is None and mode == "val":
-            with open(os.path.join(path, "classes.json"), "r") as json_file:
-                self.data = json.load(json_file)
-                self.image_files = sorted(self.data["classes"][clazz]["eval_instances"])
+            self.image_files = sorted(self.data["classes"][clazz]["eval_instances"])
         elif fold is not None and mode in ["train", "val"]:
             with open(os.path.join(path, "%s-folds.json" % (job_config["FOLDS"])), "r") as json_file:
-                self.data = json.load(json_file)
-                self.image_files = sorted(self.data["folds"][fold][clazz][mode])
+                json_data = json.load(json_file)
+                self.image_files = sorted(json_data["folds"][fold][clazz][mode])
         else:
             raise ValueError("Invalid combination: mode %s / fold %s" % (mode, fold))
             
