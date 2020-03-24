@@ -50,7 +50,6 @@ class DataGenerator:
         self.job_config = job_config
         self.mask_index = [str(c) for c in self.job_config["CLASSES"]].index(clazz)
 
-
     def size(self):
         return len(self.image_files)
 

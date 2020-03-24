@@ -1,6 +1,6 @@
 import pprint
 from deepdiff import DeepDiff
-from numpy import ndarray
+import numpy as np
 
 class DatasetValidator():
 
@@ -10,8 +10,8 @@ class DatasetValidator():
     def validate(self, image, masks, name, print_output=True):
         assert image is not None, "Got a None image for %s" % name
         assert masks is not None, "Got a None mask for %s" % name
-        assert isinstance(image, ndarray), "Image is not an ndarray, it is %s." % type(image)
-        assert isinstance(masks, ndarray), "Mask is not an ndarray, it is %s." % type(masks)
+        assert isinstance(image, np.ndarray), "Image is not an ndarray, it is %s." % type(image)
+        assert isinstance(masks, np.ndarray), "Mask is not an ndarray, it is %s." % type(masks)
 
         if self.image_size is None:
             self.image_size = image.shape
@@ -21,6 +21,8 @@ class DatasetValidator():
                 assert self.image_size[l] == self.masks_size[l], "Mask size does not match image size on axis %s." % l
         assert not DeepDiff(image.shape, self.image_size), "Image size is not consistent in %s" % name
         assert not DeepDiff(masks.shape, self.masks_size), "Mask size is not consistent in %s" % name
+        assert np.count_nonzero(masks) == np.sum(masks), "Mask should only contain zero or one values."
+        assert np.min(image) >= 0. and np.max(image) <= 1., "Image should be in the range [0,1]"
         if print_output:
             pprint.pprint({
                 "name": name,
