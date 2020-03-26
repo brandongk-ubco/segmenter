@@ -108,13 +108,17 @@ class DataGenerator:
             yield self._generate(i)
 
 if __name__ == "__main__":
+    import os
     from augmentations import train_augments, val_augments
     from matplotlib import pyplot as plt
-    from config import get_config
     from helpers import generate_for_augments, hash
     import pprint
     import os
     import tensorflow as tf
+    from config import get_config
+
+    path = os.path.abspath(os.environ.get("DATA_PATH", "/data"))
+    outdir = os.path.abspath(os.environ.get("OUTPUT_DIRECTORY", "/output"))
 
     job_config = get_config()
     job_hash = hash(job_config)
@@ -124,15 +128,13 @@ if __name__ == "__main__":
     K.set_floatx(job_config["PRECISION"])
     clazz = os.environ.get("CLASS", job_config["CLASSES"][0])
 
-    outdir = os.environ.get("DIRECTORY", "/output")
-    outdir = os.path.abspath(outdir)
 
     output_folder = os.path.join(outdir, job_hash, clazz, "augmented")
     print("Using directory %s" % output_folder)
     os.makedirs(output_folder, exist_ok=True)
 
-    val_generators, augmented_val_dataset, num_val_images = generate_for_augments(clazz, None, val_augments, job_config, mode="val", repeat=True)
-    train_generators, augmented_train_dataset, num_train_images = generate_for_augments(clazz, None, train_augments, job_config, mode="train", shuffle=True, repeat=True)
+    val_generators, augmented_val_dataset, num_val_images = generate_for_augments(clazz, None, val_augments, job_config, path=path, mode="val", repeat=True)
+    train_generators, augmented_train_dataset, num_train_images = generate_for_augments(clazz, None, train_augments, job_config, path=path, mode="train", shuffle=True, repeat=True)
 
     print("Found %s training images" % num_train_images)
     print("Found %s validation images" % num_val_images)

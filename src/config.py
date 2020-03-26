@@ -25,8 +25,9 @@ def get_batch_size():
 def get_classes():
     folds = int(os.environ.get("FOLDS", 10))
     boost_folds = int(os.environ.get("BOOST_FOLDS", 0))
+    path = os.path.abspath(os.environ.get("DATA_PATH", "/data"))
 
-    with open(os.path.join(os.environ.get("DATA_PATH", "/data"), "classes.json"), "r") as json_file:
+    with open(os.path.join(path, "classes.json"), "r") as json_file:
         data = json.load(json_file)
         return data["class_order"]
 
@@ -90,7 +91,7 @@ def get_optimizer():
     }
 
 # WARNING when setting precision - larger images need higher precision to evaluate the Loss function.  The sum can overflow and give all 0 for loss.
-def get_config():
+def get_config(path="/data"):
     return {
         "BATCH_SIZE": get_batch_size(),
         "PATIENCE": int(os.environ.get("PATIENCE", 20)),

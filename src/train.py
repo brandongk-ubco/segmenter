@@ -64,7 +64,8 @@ def train_fold(clazz, fold):
         mode="val",
         repeat=True
     )
-    val_dataset = val_dataset.batch(job_config["BATCH_SIZE"], drop_remainder=True)
+    # val_dataset = val_dataset.batch(job_config["BATCH_SIZE"], drop_remainder=True)
+    val_dataset = val_dataset.batch(1, drop_remainder=True)
 
     print("Found %s training images" % num_training_images)
     print("Found %s validation images" % num_val_images)
