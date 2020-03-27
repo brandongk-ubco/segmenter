@@ -6,7 +6,7 @@ def AverageSingleGradientOp(inputs):
 
     def custom_grad(dy):
         weighted = tf.concat(
-            [tf.zeros_like(inputs[:-1, :, :, :]),  tf.expand_dims(tf.ones_like(inputs[-1, :, :, :]), 0) / inputs.shape[0]],
+            [tf.zeros_like(inputs[:-1, :, :, :]),  tf.expand_dims(tf.ones_like(inputs[-1, :, :, :]), 0)],
             0
         )
         return dy * weighted

@@ -30,7 +30,7 @@ def get_callbacks(output_folder, job_config, fold, val_loss, start_time):
     )
 
     model_autosave = SubModelCheckpoint(
-        filepath=os.path.join(output_folder, "{epoch:04d}-{val_loss:.4f}-{val_f1-score:.4f}.h5"),
+        filepath=os.path.join(output_folder, "{epoch:04d}-{val_loss:.6f}-{val_f1-score:.4f}.h5"),
         submodel="fold%s" % fold,
         save_best_only=False,
         save_weights_only=True

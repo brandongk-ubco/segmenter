@@ -29,12 +29,10 @@ class DataGenerator:
         with open(os.path.join(path, "classes.json"), "r") as json_file:
             self.data = json.load(json_file)
 
-        if fold is None and mode == "evaluate":
+        if mode == "evaluate" or (fold is None and mode == "val"):
             self.image_files = sorted(self.data["classes"][clazz]["eval_instances"])
         elif fold is None and mode == "train":
             self.image_files = sorted(self.data["classes"][clazz]["train_instances"])
-        elif fold is None and mode == "val":
-            self.image_files = sorted(self.data["classes"][clazz]["eval_instances"])
         elif fold is not None and mode in ["train", "val"]:
             with open(os.path.join(path, "%s-folds.json" % (job_config["FOLDS"])), "r") as json_file:
                 json_data = json.load(json_file)
