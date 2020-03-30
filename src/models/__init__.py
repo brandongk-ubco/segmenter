@@ -2,10 +2,16 @@ from .unet import custom_unet as unet
 from segmentation_models import Unet as segmentations_unet
 from tensorflow.keras.regularizers import l1_l2
 from activations import get_activation
-from tensorflow.keras.layers import Input, Conv2D, Average
+from tensorflow.keras.layers import Input, Average, Lambda, Activation
 from tensorflow.keras.models import Model
-
+from tensorflow.keras.activations import linear, sigmoid
+import tensorflow as tf
+from tensorflow.keras import backend as K
 import os
+
+def logit(x):
+    """ Computes the logit function, i.e. the logistic sigmoid inverse. """
+    return - K.log(1. / (x + K.epsilon()) - 1. + K.epsilon())
 
 def find_latest_weight(folder):
     if not os.path.isdir(folder):
@@ -59,39 +65,46 @@ def get_model(image_size, job_config):
 
     return model
 
-def model_for_folds(clazz, modeldir, job_config, job_hash, folds=None, load_weights=True):
+def full_model(clazz, modeldir, job_config, job_hash, load_weights=True, fold_activation="linear", final_activation="sigmoid", aggregator=Average):
 
     inputs = Input(shape=(None, None, 1))
 
     models = []
 
-    if folds is None:
-        folds = range(job_config["FOLDS"])
+    folds = range(job_config["FOLDS"]) if job_config["FOLDS"] else [None]
+    boost_folds = range(job_config["BOOST_FOLDS"] + 1) if job_config["BOOST_FOLDS"] is not None else [None]
 
     for fold in folds:
-        fold_model = get_model((None, None, 1), job_config)
-        if load_weights:
-            best_weight = find_best_weight( os.path.join(modeldir, job_hash, clazz, "fold%s" % fold))
-            if best_weight is None:
-                print("Could not find weight for fold %s - skipping" % fold)
-                continue
-            print("Loading weight %s" % best_weight)
-            fold_model.load_weights(best_weight)
-        fold_model.trainable = False
-        fold_model._name = "fold%s" % fold
+        fold_models = []
+        fold_name = "all" if fold is None else "fold{}".format(fold)
+        for boost_fold in boost_folds:
+            boost_fold_model = get_model((None, None, 1), job_config)
+            boost_fold_name = fold_name
+            boost_fold_name += "" if boost_fold is None else "b{}".format(boost_fold)
 
-        out = fold_model(inputs)
-        models.append(out)
+            if load_weights:
+                best_weight = find_best_weight( os.path.join(modeldir, job_hash, clazz, boost_fold_name))
+                assert best_weight is not None, "Could not find weight for fold %s - skipping" % fold
+                print("Loading weight %s" % best_weight)
+                boost_fold_model.load_weights(best_weight)
+            boost_fold_model.trainable = False
+            boost_fold_model._name = boost_fold_name
+            boost_fold_model = boost_fold_model(inputs)
+            boost_fold_model = Lambda(lambda x: logit(x), name="{}_logit".format(boost_fold_name))(boost_fold_model)
+            fold_models.append(boost_fold_model)
 
-    if len(models) == 0:
-        print("No models found for class %s - skipping" % clazz)
-        return None
+        fold_model = fold_models[0] if len(fold_models) == 1 else Average(name="{}_average".format(fold_name))(fold_models)
+        fold_model = Activation(fold_activation, name="{}_{}".format(fold_name, fold_activation))(fold_model)
+        fold_model._name = fold_name
+        models.append(fold_model)
+
+    assert len(models) > 0, "No models found for class %s - skipping" % clazz
 
     if len(models) == 1:
         out = models[0]
     else:
-        out = Average()(models)
-
+        out = aggregator(name="aggregator")(models)
+    out = Activation(final_activation, name=final_activation)(out)
     model = Model(inputs, out)
-
+    model.summary()
     return model

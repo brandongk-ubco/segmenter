@@ -13,7 +13,7 @@ def get_prediction_callbacks():
 def get_evaluation_callbacks():
     return []
 
-def get_callbacks(output_folder, job_config, fold, val_loss, start_time):
+def get_callbacks(output_folder, job_config, fold, val_loss, start_time, fold_name):
 
     log_folder = os.path.join(output_folder, "logs")
     os.makedirs(log_folder, exist_ok=True)
@@ -31,7 +31,7 @@ def get_callbacks(output_folder, job_config, fold, val_loss, start_time):
 
     model_autosave = SubModelCheckpoint(
         filepath=os.path.join(output_folder, "{epoch:04d}-{val_loss:.6f}-{val_f1-score:.4f}.h5"),
-        submodel="fold%s" % fold,
+        submodel=fold_name,
         save_best_only=False,
         save_weights_only=True
     )

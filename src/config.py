@@ -53,7 +53,7 @@ def get_model():
 def get_loss():
     return {
         "DICE_BETA": float(os.environ.get("DICE_BETA", 1)),
-        "BFL_GAMMA": float(os.environ.get("BFL_GAMMA", 1)),
+        "BFL_GAMMA": float(os.environ.get("BFL_GAMMA", 2)),
         "DICE_MULTIPLIER": float(os.environ.get("DICE_MULTIPLIER", 1)),
         "BFL_MULTIPLIER": float(os.environ.get("BFL_MULTIPLIER", 0)),
         "BCE_MULTIPLIER": float(os.environ.get("BCE_MULTIPLIER", 1)),
@@ -101,8 +101,8 @@ def get_config(path="/data"):
         "L2_REG": float(os.environ.get("L2_REG", 3e-5)),
         "OPTIMIZER": get_optimizer(),
         "FSCORE_THRESHOLD": float(os.environ.get("FSCORE_THRESHOLD", 0.5)),
-        "BOOST_FOLDS": int(os.environ.get("BOOST_FOLDS", 0)),
-        "FOLDS": int(os.environ.get("FOLDS", 0)),
+        "BOOST_FOLDS": None if os.environ.get("BOOST_FOLDS") is None else int(os.environ.get("BOOST_FOLDS", 0)),
+        "FOLDS": None if os.environ.get("FOLDS") is None else int(os.environ.get("FOLDS", 0)),
         "CLASSES": get_classes(),
         "MODEL": get_model(),
         "PRECISION": os.environ.get("PRECISION", "float32"),

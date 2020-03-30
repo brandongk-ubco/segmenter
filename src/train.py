@@ -2,8 +2,9 @@ from config import get_config
 
 import tensorflow as tf
 from tensorflow.keras import backend as K
-from tensorflow.keras.layers import Input, Average
+from tensorflow.keras.layers import Input, Average, Lambda, Activation
 from tensorflow.keras.models import Model
+from tensorflow.keras.activations import sigmoid
 
 import numpy as np
 
@@ -35,18 +36,35 @@ start_time = time.time()
 if os.environ.get("DEBUG", "false").lower() == "true":
     tf.config.experimental_run_functions_eagerly(True)
 
-def train_fold(clazz, fold):
+def logit(x):
+    """ Computes the logit function, i.e. the logistic sigmoid inverse. """
+    return - K.log(1. / (x + K.epsilon()) - 1. + K.epsilon())
+
+def train(clazz, fold=None):
+    if job_config["BOOST_FOLDS"] is None:
+        train_fold(clazz, fold)
+    else:
+        for boost_fold in range(0, job_config["BOOST_FOLDS"] + 1):
+            train_fold(clazz, fold, boost_fold)
+
+def train_fold(clazz, fold=None, boost_fold=None, activation="sigmoid"):
     K.clear_session()
     K.set_floatx(job_config["PRECISION"])
 
-    print("Training class %s, fold %s (%s folds)" % (clazz, fold, job_config["FOLDS"]))
+    print("Training class {}".format(clazz))
+    if fold is not None:
+        print("Training fold {}".format(fold))
 
-    output_folder = os.path.join(outdir, job_hash, clazz, "fold%s" % fold)
+    fold_name = "all" if fold is None else "fold{}".format(fold)
+    if boost_fold is not None:
+        fold_name += "b{}".format(boost_fold)
+
+    output_folder = os.path.join(outdir, job_hash, clazz, fold_name)
     print("Using directory %s" % output_folder)
 
     train_generator, train_dataset, num_training_images = generate_for_augments(
         clazz,
-        None if job_config["BOOST_FOLDS"] > 0 or job_config["FOLDS"] == 0 else fold,
+        fold,
         train_augments,
         job_config,
         mode="train",
@@ -58,7 +76,7 @@ def train_fold(clazz, fold):
 
     val_generator, val_dataset, num_val_images = generate_for_augments(
         clazz,
-        None if job_config["BOOST_FOLDS"] > 0 or job_config["FOLDS"] == 0 else fold,
+        fold,
         val_augments,
         job_config,
         mode="val",
@@ -77,43 +95,47 @@ def train_fold(clazz, fold):
 
     latest_weight = find_latest_weight(output_folder)
 
-    boost_fold_start = max(0, fold - job_config["BOOST_FOLDS"])
-    boost_folds = range(boost_fold_start, fold)
+    boost_folds = range(0, boost_fold) if boost_fold is not None else []
 
     strategy = tf.distribute.MirroredStrategy()
     with strategy.scope():
 
-        previous_models = []
+        boost_models = []
 
         inputs = Input(shape=image_size)
 
-        for previous_fold in boost_folds:
-            previous_fold_model = get_model(image_size, job_config)
-            previous_fold_dir = os.path.abspath(os.path.join(output_folder, "..", "fold%s" % previous_fold))
-            best_weight = find_best_weight(previous_fold_dir)
-            print("Loading weight %s" % best_weight)
-            previous_fold_model.load_weights(best_weight)
-            previous_fold_model.trainable = False
-            previous_fold_model._name = "fold%s" % previous_fold
+        for boost_fold in boost_folds:
+            boost_fold_model = get_model(image_size, job_config)
 
-            out = previous_fold_model(inputs)
-            previous_models.append(out)
+            boost_fold_name = "all" if fold is None else "fold{}".format(fold)
+            boost_fold_name += "b{}".format(boost_fold)
+
+            boost_fold_dir = os.path.abspath(os.path.join(output_folder, "..", boost_fold_name))
+            best_weight = find_best_weight(boost_fold_dir)
+
+            print("Loading weight %s" % best_weight)
+            boost_fold_model.load_weights(best_weight)
+            boost_fold_model.trainable = False
+            boost_fold_model._name = boost_fold_name
+
+            out = boost_fold_model(inputs)
+            out = Lambda(lambda x: logit(x), name="{}_logit".format(boost_fold_name))(out)
+            boost_models.append(out)
 
         fold_model = get_model(image_size, job_config)
-        fold_model._name = "fold%s" % fold
+        fold_model._name = fold_name
 
         if latest_weight is not None:
             print("Loading weight %s" % latest_weight)
             fold_model.load_weights(latest_weight)
 
         out = fold_model(inputs)
-        if len(previous_models) > 0:
-            out = AverageSingleGradient()(previous_models + [out])
+        if len(boost_models) > 0:
+            out = Lambda(lambda x: logit(x), name="{}_logit".format(fold_name))(out)
+            out = AverageSingleGradient()(boost_models + [out])
+            out = Activation(activation, name=activation)(out)
         model = Model(inputs, out)
         model.summary()
-
-        model_memory_usage = get_model_memory_usage(job_config["BATCH_SIZE"], model)
-        print("Estimated Training GPU Memory Usage: {:.2f} Gb".format(model_memory_usage))
 
         threshold = job_config["FSCORE_THRESHOLD"]
         metrics = get_metrics(threshold, job_config["LOSS"])
@@ -140,23 +162,20 @@ def train_fold(clazz, fold):
         epochs=1000,
         steps_per_epoch=train_steps,
         validation_steps=val_steps,
-        callbacks=get_callbacks(output_folder, job_config, fold, val_loss, start_time),
+        callbacks=get_callbacks(output_folder, job_config, fold, val_loss, start_time, fold_name),
         verbose=1
     )
 
 if __name__ == "__main__":
     pprint.pprint(job_config)
-    if os.environ.get("CLASS") is not None and job_config["FOLDS"] > 0 and os.environ.get("FOLD") is not None:
-        train_fold(os.environ.get("CLASS"), int(os.environ.get("FOLD")))
-    elif os.environ.get("CLASS") is not None and job_config["FOLDS"] > 0:
-        for fold in range(job_config["FOLDS"]):
-            train_fold(os.environ.get("CLASS"), fold)
-    elif os.environ.get("CLASS") is not None and job_config["FOLDS"] == 0:
-        train_fold(os.environ.get("CLASS"), 0)
-    elif os.environ.get("CLASS") is None and job_config["FOLDS"] == 0:
-        for clazz in job_config["CLASSES"]:
-            train_fold(str(clazz), 0)
+
+    classes = [os.environ.get("CLASS")] if os.environ.get("CLASS") is not None else job_config["CLASSES"]
+    if job_config["FOLDS"] is not None:
+        folds = [os.environ.get("FOLD")] if os.environ.get("FOLD") is not None else range(job_config["FOLDS"])
+        for clazz in classes:
+            for fold in folds:
+                train(clazz, fold)
     else:
-        for clazz in job_config["CLASSES"]:
-            for fold in range(job_config["FOLDS"]):
-                train_fold(str(clazz), fold)
+        for clazz in classes:
+            train(clazz)
+
