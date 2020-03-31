@@ -1,5 +1,7 @@
 from segmentation_models.base import Metric, functional as F
+import tensorflow as tf
 
+@tf.function
 def specificity(gt, pr, class_weights=1, class_indexes=None, per_image=False, threshold=None, **kwargs):
     backend = kwargs['backend']
 
@@ -11,7 +13,7 @@ def specificity(gt, pr, class_weights=1, class_indexes=None, per_image=False, th
     fp = backend.sum(pr, axis=axes) - tp
     n = backend.sum(1 - gt, axis=axes)
 
-    score = 1 - fp / n
+    score = 1 - fp / (n + backend.epsilon())
     score = F.average(score, per_image, class_weights, **kwargs)
     return score
 

@@ -64,7 +64,7 @@ def evaluate(clazz):
                         image = image[:,:,0]
 
                     boolean_mask = mask.astype(bool)
-                    boolean_prediction= prediction.astype(bool)
+                    boolean_prediction= thresholded.astype(bool)
 
                     highlighted_image = np.stack([image.copy(), image.copy(), image.copy()], axis=len(image.shape))
 
