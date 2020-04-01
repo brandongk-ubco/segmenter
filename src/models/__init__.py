@@ -27,7 +27,7 @@ def find_best_weight(folder):
     files = [os.path.join(folder, f) for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f)) if f.endswith(".h5")]
     if len(files) == 0:
         return None
-    return min(files, key=lambda x: float(x.split("-")[1]))
+    return min(files, key=lambda x: float(x.split("-")[1][:-3]))
 
 def get_model(image_size, job_config):
 

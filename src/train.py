@@ -150,7 +150,7 @@ def train_fold(clazz, fold=None, boost_fold=None, activation="sigmoid"):
     val_loss = np.Inf
     if latest_weight is not None:
         initial_epoch = int(latest_weight.split("/")[-1].split("-")[0])
-        val_loss = float(latest_weight.split("/")[-1].split("-")[1])
+        val_loss = float(latest_weight.split("/")[-1].split("-")[1][:-3])
 
     train_steps = int(num_training_images/job_config["BATCH_SIZE"])
     val_steps = int(num_val_images/job_config["BATCH_SIZE"])
