@@ -1,7 +1,6 @@
 from segmentation_models.base import Metric, functional as F
 import tensorflow as tf
 
-@tf.function
 def specificity(gt, pr, class_weights=1, class_indexes=None, per_image=False, threshold=None, **kwargs):
     backend = kwargs['backend']
 

@@ -171,7 +171,7 @@ if __name__ == "__main__":
 
     classes = [os.environ.get("CLASS")] if os.environ.get("CLASS") is not None else job_config["CLASSES"]
     if job_config["FOLDS"] is not None:
-        folds = [os.environ.get("FOLD")] if os.environ.get("FOLD") is not None else range(job_config["FOLDS"])
+        folds = [int(os.environ.get("FOLD"))] if os.environ.get("FOLD") is not None else range(job_config["FOLDS"])
         for clazz in classes:
             for fold in folds:
                 train(clazz, fold)
