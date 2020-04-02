@@ -4,4 +4,3 @@ RUN pip install \
     albumentations \
     segmentation-models \
     psutil
-

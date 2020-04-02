@@ -1,27 +1,25 @@
-from .CosActivation import CosActivation
-from .BiasedCosActivation import BiasedCosActivation
-from .ShiftedCosActivation import ShiftedCosActivation
-from .SincActivation import SincActivation
-from .SinActivation import SinActivation
-from .ShiftedSinActivation import ShiftedSinActivation
-from .CubicActivation import CubicActivation
-from tensorflow.keras.layers import LeakyReLU, ReLU, PReLU
+from tensorflow.keras.layers import LeakyReLU, ReLU, PReLU, Activation
+import tensorflow as tf
+
+def sinc_activation(x):
+    x = tf.where(tf.abs(x) < 1e-20, 1e-20 * tf.ones_like(x), x)
+    return x + tf.sin(x) / x
 
 def get_activation(activation):
     if activation == "cos":
-        return CosActivation
+        return lambda: Activation(lambda x: x - tf.cos(x))
     if activation == "biased_cos":
-        return BiasedCosActivation
+        return lambda: Activation(lambda x: x + 0.70710678119 - tf.cos(x + 0.70710678119))
     if activation == "shifted_cos":
-        return ShiftedCosActivation
+        return lambda: Activation(lambda x: x + 1 - tf.cos(x))
     if activation == "sin":
-        return SinActivation
+        return lambda: Activation(lambda x: x - tf.sin(x))
     if activation == "shifted_sin":
-        return ShiftedSinActivation
+        return lambda: Activation(lambda x: x - tf.sin(x) - 1)
     if activation == "cubic":
-        return CubicActivation
+        return lambda: Activation(lambda x: tf.where(tf.abs(x) > 1, x, tf.math.pow(x,3)))
     if activation == "sinc":
-        return SincActivation
+        return lambda: Activation(lambda x: sinc_activation(x))
     if activation == "leaky_relu":
         return LeakyReLU
     if activation == "parametric_relu":

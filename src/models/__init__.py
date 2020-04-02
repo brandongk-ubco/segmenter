@@ -84,7 +84,7 @@ def full_model(clazz, modeldir, job_config, job_hash, load_weights=True, fold_ac
 
             if load_weights:
                 best_weight = find_best_weight( os.path.join(modeldir, job_hash, clazz, boost_fold_name))
-                assert best_weight is not None, "Could not find weight for fold %s - skipping" % fold
+                assert best_weight is not None, "Could not find weight for fold %s" % fold
                 print("Loading weight %s" % best_weight)
                 boost_fold_model.load_weights(best_weight)
             boost_fold_model.trainable = False
@@ -98,7 +98,7 @@ def full_model(clazz, modeldir, job_config, job_hash, load_weights=True, fold_ac
         fold_model._name = fold_name
         models.append(fold_model)
 
-    assert len(models) > 0, "No models found for class %s - skipping" % clazz
+    assert len(models) > 0, "No models found for class %s" % clazz
 
     if len(models) == 1:
         out = models[0]
