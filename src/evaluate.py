@@ -25,13 +25,13 @@ job_hash = hash(job_config)
 outdir = os.environ.get("DIRECTORY", "/output")
 outdir = os.path.abspath(outdir)    
 
-def evaluate(clazz):
+def evaluate(clazz, aggregators=None):
     K.clear_session()
 
     generators, dataset, num_images = generate_for_augments(clazz, None, predict_augments, job_config, mode="evaluate")
     dataset = dataset.batch(1, drop_remainder=True)
 
-    for aggregator_name, aggregator, fold_activation, final_activation, thresholds in get_aggregators(job_config):
+    for aggregator_name, aggregator, fold_activation, final_activation, thresholds in get_aggregators(job_config, aggregators):
         model_dir = os.path.join(outdir, job_hash, clazz, "results", aggregator_name)
         loss = get_loss(job_config["LOSS"])
         print("Creating model for %s" % model_dir)
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     pprint.pprint(job_config)
 
     classes = job_config["CLASSES"] if os.environ.get("CLASS") is None else [os.environ.get("CLASS")]
-
+    aggregators = os.environ.get("AGGREGATORS").split(",") if os.environ.get("AGGREGATORS") is not None else None
     print("Evaluating classes %s" % (classes))
     for clazz in classes:
-        evaluate(clazz)
+        evaluate(clazz, aggregators)
