@@ -14,5 +14,10 @@
 !bin/**/*
 !datasets
 !datasets/**/*
-
+!docs
+!docs/*.md
+!nvidia-drivers
+!nvidia-drivers/nvidia-job.sh
+!nvidia-drivers/extract_nvdriver.sh
+!nvidia-drivers/*.run
 **/__pycache__

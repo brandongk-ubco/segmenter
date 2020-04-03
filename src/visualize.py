@@ -112,7 +112,6 @@ def evaluate(clazz):
                     np.savez_compressed(os.path.join(threshold_dir, name), image=image, mask=mask, highlighted_image=highlighted_image, highlighted_mask=highlighted_mask)
 
 
-
 if __name__ == "__main__":
     pprint.pprint(job_config)
 
