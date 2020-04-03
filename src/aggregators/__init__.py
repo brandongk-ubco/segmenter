@@ -10,5 +10,5 @@ def get_aggregators(job_config, aggregators=None):
         ("average", Average, "linear", "sigmoid", np.linspace(0., 1., num=21))
     ]
     if aggregators is not None:
-        ag = list(filter(lambda x: x[0] in aggregators, a))
+        ag = list(filter(lambda x: x[0] in aggregators, ag))
     return ag
