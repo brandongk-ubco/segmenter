@@ -68,7 +68,7 @@ def activations(clazz):
                     hist += np.histogram(o, bins=bins)[0].astype(hist.dtype)
         results[layer_type] = hist
 
-    np.savez_compressed(os.path.join(model_dir, activation_histogram), **results)
+    np.savez_compressed(os.path.join(model_dir, "activation_histogram"), **results)
 
 if __name__ == "__main__":
     pprint.pprint(job_config)
