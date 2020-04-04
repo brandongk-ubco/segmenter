@@ -20,4 +20,5 @@
 !nvidia-drivers/nvidia-job.sh
 !nvidia-drivers/extract_nvdriver.sh
 !nvidia-drivers/*.run
+!.gitattributes
 **/__pycache__
