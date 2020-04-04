@@ -44,15 +44,15 @@ Then either logout/login or `source ~/.bashrc`.
 
 ## Add a Read-Only SSH Key
 
-Github has good (instructions)[https://help.github.com/en/github/authenticating-to-github/adding-a-new-ssh-key-to-your-github-account].  You need to:
+Github has good [instructions](https://help.github.com/en/github/authenticating-to-github/adding-a-new-ssh-key-to-your-github-account).  You need to:
 
-1. (Generate a new key)[https://help.github.com/en/github/authenticating-to-github/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent#generating-a-new-ssh-key]
-2. (Add it to the ssh agent)[https://help.github.com/en/github/authenticating-to-github/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent#adding-your-ssh-key-to-the-ssh-agent]
+1. [Generate a new key](https://help.github.com/en/github/authenticating-to-github/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent#generating-a-new-ssh-key)
+2. [Add it to the ssh agent](https://help.github.com/en/github/authenticating-to-github/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent#adding-your-ssh-key-to-the-ssh-agent)
 
 You can't install xclip on compute canada servers, so just open the file and copy and paste it.
 
 3. `cat ~/.ssh/id_rsa.pub`  The public key will begin with `ssh-rsa` and end with the e-mail address you used in step 1.
-4. Follow the rest of the instructions to (add the key to your account)[https://help.github.com/en/github/authenticating-to-github/adding-a-new-ssh-key-to-your-github-account]
+4. Follow the rest of the instructions to [add the key to your account](https://help.github.com/en/github/authenticating-to-github/adding-a-new-ssh-key-to-your-github-account)
 
 ## Clone the repo
 
