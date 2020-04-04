@@ -95,7 +95,8 @@ Sat Apr  4 13:14:20 2020
 Hopefully the .run file for NVidia Driver version exists in this repo already.  If it does not, you will need to find it and download it.  Once it's in the repo:
 
 1. `cd /project/def-<SUPERVISOR>/<USER>/segmenter/nvidia-drivers`
-2. `./extract_nvdriver.sh <VERSION> ~/nvidiadriver`
+2. `git lfs pull`
+3. `./extract_nvdriver.sh <VERSION> ~/nvidiadriver`
 
 # Build the Singularity image
 
