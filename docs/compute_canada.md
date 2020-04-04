@@ -6,7 +6,7 @@ Go to the [Registration Page](https://ccdb.computecanada.ca/account_application)
 
 The can check [status](https://status.computecanada.ca/) and view the [list of clusters](https://www.computecanada.ca/research-portal/accessing-resources/available-resources/).
 
-In general, using `Graham` or `Cedar` is good for GPU jobs.
+In general, using `graham` or `cedar` is good for GPU jobs.
 
 Connect to the cluster with `ssh <USER>@<CLUSTER>.computecanada.ca`.
 
@@ -96,3 +96,18 @@ Hopefully the .run file for NVidia Driver version exists in this repo already.  
 
 1. `cd /project/def-<SUPERVISOR>/<USER>/segmenter/nvidia-drivers`
 2. `./extract_nvdriver.sh <VERSION> ~/nvidiadriver`
+
+# Build the Singularity image
+
+1. `cd /project/def-<SUPERVISOR>/<USER>/segmenter/`
+2. `module load singularity`
+3. `singularity build --remote image.sif image.def`.  You will need to create a singularity account and it should guide you through these steps here.
+
+# Upload the dataset
+
+You should have created a [dataset](dataset.md) and processed it.
+
+The dataset should go on the `/scratch` drive.  The scratch drive has faster i/o, but is not persisted.  If the files are stale there for a certain number of weeks, they get deleted.  On your local machine:
+
+1. `cd segmenter/datasets/<DATASET_NAME>/out`
+2. `rsync --progress --delete . <USER>@<CLUSTER>.computecanada.ca:/scratch/<USER>/datasets/<DATASET_NAME>`
