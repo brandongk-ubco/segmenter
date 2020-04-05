@@ -10,7 +10,7 @@ The dataset is expected to consist of:
 
 The dataset module should export the dataset processor as `Dataset`.  This should be done in the `__init__.py` file.
 
-The dataset processor should subclass the `BaseDataset.py` file.
+The dataset processor should subclass the [BaseDataset.py](../datasets/BaseDataset.py) file.
 
 ```
 import sys
@@ -22,4 +22,4 @@ class MyDataset(BaseDataset):
     ...
 ```
 
-There are functions which need to be overridden in your dataset.  They are described using inline documentation in `BaseDataset.py`
+There are functions which need to be overridden in your dataset.  They are described using inline documentation in [BaseDataset.py](../datasets/BaseDataset.py)
