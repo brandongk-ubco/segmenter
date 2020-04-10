@@ -35,6 +35,8 @@ start_time = time.time()
 # Turn this on when debugging functions.
 if os.environ.get("DEBUG", "false").lower() == "true":
     tf.config.experimental_run_functions_eagerly(True)
+else:
+    tf.get_logger().setLevel("ERROR")
 
 def logit(x):
     """ Computes the logit function, i.e. the logistic sigmoid inverse. """
@@ -97,6 +99,11 @@ def train_fold(clazz, fold=None, boost_fold=None, activation="sigmoid"):
 
     boost_folds = range(0, boost_fold) if boost_fold is not None else []
 
+    threshold = job_config["FSCORE_THRESHOLD"]
+    metrics = get_metrics(threshold, job_config["LOSS"])
+    metrics = list(metrics.values())
+    loss = get_loss(job_config["LOSS"])
+
     strategy = tf.distribute.MirroredStrategy()
     with strategy.scope():
 
@@ -137,13 +144,10 @@ def train_fold(clazz, fold=None, boost_fold=None, activation="sigmoid"):
         model = Model(inputs, out)
         model.summary()
 
-        threshold = job_config["FSCORE_THRESHOLD"]
-        metrics = get_metrics(threshold, job_config["LOSS"])
-
         model.compile(
-            optimizer=get_optimizer(job_config["OPTIMIZER"], boost_folds),
-            loss=get_loss(job_config["LOSS"]),
-            metrics=list(metrics.values())
+            optimizer=get_optimizer(job_config["OPTIMIZER"]),
+            loss=loss,
+            metrics=metrics
         )
 
     initial_epoch = 0
@@ -162,7 +166,7 @@ def train_fold(clazz, fold=None, boost_fold=None, activation="sigmoid"):
         epochs=1000,
         steps_per_epoch=train_steps,
         validation_steps=val_steps,
-        callbacks=get_callbacks(output_folder, job_config, fold, val_loss, start_time, fold_name),
+        callbacks=get_callbacks(output_folder, job_config, fold, val_loss, start_time, fold_name, loss, metrics),
         verbose=1
     )
 

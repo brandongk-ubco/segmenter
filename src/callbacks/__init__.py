@@ -1,7 +1,7 @@
 from .EarlyStoppingByTime import EarlyStoppingByTime
 from .SavableEarlyStopping import SavableEarlyStopping
 from .SavableReduceLROnPlateau import SavableReduceLROnPlateau
-from .OptimizerSaver import AdamSaver
+from .OptimizerSaver import OptimizerSaver
 from .SubModelCheckpoint import SubModelCheckpoint
 from tensorflow.keras.callbacks import TensorBoard, TerminateOnNaN, TerminateOnNaN, CSVLogger, LambdaCallback
 
@@ -13,7 +13,7 @@ def get_prediction_callbacks():
 def get_evaluation_callbacks():
     return []
 
-def get_callbacks(output_folder, job_config, fold, val_loss, start_time, fold_name):
+def get_callbacks(output_folder, job_config, fold, val_loss, start_time, fold_name, loss, metrics):
 
     log_folder = os.path.join(output_folder, "logs")
     os.makedirs(log_folder, exist_ok=True)
@@ -47,8 +47,6 @@ def get_callbacks(output_folder, job_config, fold, val_loss, start_time, fold_na
 
     tensorboard = TensorBoard(
         log_dir=os.path.join(log_folder, "tenboard"),
-        histogram_freq=1,
-        embeddings_freq=1,
         profile_batch=0
     )
 
@@ -64,8 +62,11 @@ def get_callbacks(output_folder, job_config, fold, val_loss, start_time, fold_na
         verbose=0
     )
 
-    optimizer_saver = AdamSaver(
-        os.path.join(output_folder, "optimizer.pkl")
+    optimizer_saver = OptimizerSaver(
+        os.path.join(output_folder, "optimizer.pkl"),
+        optimizer_config=job_config["OPTIMIZER"],
+        loss=loss,
+        metrics=metrics
     )
 
     return [optimizer_saver, lr_reducer, TerminateOnNaN(), early_stopping, logger, tensorboard, model_autosave, time_limit]

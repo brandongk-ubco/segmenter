@@ -82,13 +82,22 @@ def get_postprocess():
     }
 
 def get_optimizer():
-    return {
-        "NAME": "adam",
-        "BETA_1": float(os.environ.get("BETA_1", 0.9)),
-        "BETA_2": float(os.environ.get("BETA_2", 0.999)),
-        "AMSGRAD": os.environ.get("AMSGRAD", "true").lower() == "true",
-        "LR": float(os.environ.get("LR", 0.001)),
+    optimizer = {
+        "NAME": os.environ.get("OPTIMIZER", "adam")
     }
+
+    if optimizer["NAME"] == "adam":
+        optimizer["BETA_1"]  = float(os.environ.get("BETA_1", 0.9))
+        optimizer["BETA_2"] =  float(os.environ.get("BETA_2", 0.999))
+        optimizer["AMSGRAD"] =  os.environ.get("AMSGRAD", "true").lower() == "false"
+        optimizer["LR"] = float(os.environ.get("LR", 0.001))
+
+    if optimizer["NAME"] == "sgd":
+        optimizer["LR"] = float(os.environ.get("LR", 0.001))
+        optimizer["MOMENTUM"] = float(os.environ.get("MOMENTUM", 0.5))
+        optimizer["NESTEROV"] = os.environ.get("NESTEROV", "false").lower() == "true"
+
+    return optimizer
 
 # WARNING when setting precision - larger images need higher precision to evaluate the Loss function.  The sum can overflow and give all 0 for loss.
 def get_config(path="/data"):
