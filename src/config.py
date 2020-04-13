@@ -4,7 +4,7 @@ import json
 if os.environ.get("COMMAND", "train") == "evaluate":
     os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 if os.environ.get("DEBUG", "false").lower() != "true":
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 def get_available_gpus():
     try:
@@ -45,6 +45,7 @@ def get_model():
         model["USE_DROPOUT_ON_UPSAMPLE"] = os.environ.get("USE_DROPOUT_ON_UPSAMPLE", "true").lower() == "true"
         model["DROPOUT_CHANGE_PER_LAYER"] = float(os.environ.get("DROPOUT_CHANGE_PER_LAYER", 0.0))
         model["MAX_DROPOUT"] = float(os.environ.get("DROPOUT", 0.5))
+        model["FILTER_RATIO"] = int(os.environ.get("FILTER_RATIO", 2))
     if model["NAME"] == "segmentations_unet":
         model["BACKBONE"] = os.environ.get("BACKBONE", "efficientnetb0")
 
@@ -73,7 +74,7 @@ def get_augments():
 
 def get_preprocess():
     return {
-        "ZERO_BLANKS": os.environ.get("RECENTER", "true").lower() == "true",
+        "ZERO_BLANKS": os.environ.get("ZERO_BLANKS", "true").lower() == "true",
     }
 
 def get_postprocess():
@@ -83,7 +84,7 @@ def get_postprocess():
 
 def get_optimizer():
     optimizer = {
-        "NAME": os.environ.get("OPTIMIZER", "adam")
+        "NAME": os.environ.get("OPTIMIZER", "sgd")
     }
 
     if optimizer["NAME"] == "adam":
@@ -93,9 +94,29 @@ def get_optimizer():
         optimizer["LR"] = float(os.environ.get("LR", 0.001))
 
     if optimizer["NAME"] == "sgd":
-        optimizer["LR"] = float(os.environ.get("LR", 0.001))
-        optimizer["MOMENTUM"] = float(os.environ.get("MOMENTUM", 0.5))
+        optimizer["LR"] = float(os.environ.get("LR", 0.1))
+        optimizer["MOMENTUM"] = float(os.environ.get("MOMENTUM", 0.9))
         optimizer["NESTEROV"] = os.environ.get("NESTEROV", "false").lower() == "true"
+
+    if optimizer["NAME"] == "adabound":
+        optimizer["LR"] = float(os.environ.get("LR", 0.1))
+
+    if optimizer["NAME"] == "combined":
+        optimizer = [
+            {
+                "NAME": "adam",
+                "BETA_1": float(os.environ.get("BETA_1", 0.9)),
+                "BETA_2":  float(os.environ.get("BETA_2", 0.999)),
+                "AMSGRAD":  os.environ.get("AMSGRAD", "true").lower() == "false",
+                "LR": float(os.environ.get("LR", 0.001))
+            },
+            {
+                "NAME": "sgd",
+                "LR": float(os.environ.get("LR", 0.1)),
+                "MOMENTUM": float(os.environ.get("MOMENTUM", 0.5)),
+                "NESTEROV": os.environ.get("NESTEROV", "false").lower() == "true"
+            }
+        ]
 
     return optimizer
 
@@ -106,8 +127,8 @@ def get_config(path="/data"):
         "PATIENCE": int(os.environ.get("PATIENCE", 20)),
         "MIN_LR": float(os.environ.get("MIN_LR", 1e-8)),
         "LR_REDUCTION_FACTOR": float(os.environ.get("LR_REDUCTION_FACTOR", 0.1)),
-        "L1_REG": float(os.environ.get("L1_REG", 3e-5)),
-        "L2_REG": float(os.environ.get("L2_REG", 3e-5)),
+        "L1_REG": float(os.environ.get("L1_REG", 0)),
+        "L2_REG": float(os.environ.get("L2_REG", 0)),
         "OPTIMIZER": get_optimizer(),
         "FSCORE_THRESHOLD": float(os.environ.get("FSCORE_THRESHOLD", 0.5)),
         "BOOST_FOLDS": None if os.environ.get("BOOST_FOLDS") is None else int(os.environ.get("BOOST_FOLDS", 0)),

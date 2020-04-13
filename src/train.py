@@ -15,7 +15,7 @@ from callbacks import get_callbacks
 from optimizers import get_optimizer
 from DataGenerator import DataGenerator
 from augmentations import train_augments, val_augments
-from ops import AverageSingleGradient
+from ops import AverageSingleGradient, AddSingleGradient
 import sys
 
 import json
@@ -40,7 +40,8 @@ else:
 
 def logit(x):
     """ Computes the logit function, i.e. the logistic sigmoid inverse. """
-    return - K.log(1. / (x + K.epsilon()) - 1. + K.epsilon())
+    x = K.clip(x, K.epsilon(), 1 - K.epsilon())
+    return - K.log(1. / x - 1.)
 
 def train(clazz, fold=None):
     if job_config["BOOST_FOLDS"] is None:
@@ -63,6 +64,14 @@ def train_fold(clazz, fold=None, boost_fold=None, activation="sigmoid"):
 
     output_folder = os.path.join(outdir, job_hash, clazz, fold_name)
     print("Using directory %s" % output_folder)
+
+    early_stopping_file = os.path.join(output_folder, "early_stopping.json")
+    if os.path.isfile(early_stopping_file):
+        with open(early_stopping_file, 'r') as stopping_json:
+            stopping_state = json.load(stopping_json)
+        if stopping_state["stopped_epoch"] > 0:
+            print("Fold {} already completed training.".format(fold_name))
+            return
 
     train_generator, train_dataset, num_training_images = generate_for_augments(
         clazz,
@@ -103,6 +112,7 @@ def train_fold(clazz, fold=None, boost_fold=None, activation="sigmoid"):
     metrics = get_metrics(threshold, job_config["LOSS"])
     metrics = list(metrics.values())
     loss = get_loss(job_config["LOSS"])
+    optimizers = get_optimizer(job_config["OPTIMIZER"])
 
     strategy = tf.distribute.MirroredStrategy()
     with strategy.scope():
@@ -139,13 +149,13 @@ def train_fold(clazz, fold=None, boost_fold=None, activation="sigmoid"):
         out = fold_model(inputs)
         if len(boost_models) > 0:
             out = Lambda(lambda x: logit(x), name="{}_logit".format(fold_name))(out)
-            out = AverageSingleGradient()(boost_models + [out])
+            out = AddSingleGradient()(boost_models + [out])
             out = Activation(activation, name=activation)(out)
         model = Model(inputs, out)
         model.summary()
 
         model.compile(
-            optimizer=get_optimizer(job_config["OPTIMIZER"]),
+            optimizer=optimizers[0] if isinstance(optimizers, list) else optimizers,
             loss=loss,
             metrics=metrics
         )
@@ -166,7 +176,7 @@ def train_fold(clazz, fold=None, boost_fold=None, activation="sigmoid"):
         epochs=1000,
         steps_per_epoch=train_steps,
         validation_steps=val_steps,
-        callbacks=get_callbacks(output_folder, job_config, fold, val_loss, start_time, fold_name, loss, metrics),
+        callbacks=get_callbacks(output_folder, job_config, fold, val_loss, start_time, fold_name, loss, metrics, optimizers),
         verbose=1
     )
 

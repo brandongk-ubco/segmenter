@@ -2,7 +2,7 @@ Bootstrap: docker
 From: tensorflow/tensorflow:nightly-gpu-py3
 
 %post
-    pip install albumentations segmentation-models psutil
+    pip install albumentations segmentation-models
 
 %post
   #Post setup, runs inside the image

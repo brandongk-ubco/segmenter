@@ -11,7 +11,9 @@ import os
 
 def logit(x):
     """ Computes the logit function, i.e. the logistic sigmoid inverse. """
-    return - K.log(1. / (x + K.epsilon()) - 1. + K.epsilon())
+    x = K.clip(x, K.epsilon(), 1 - K.epsilon())
+    return - K.log(1. / x - 1.)
+
 
 def find_latest_weight(folder):
     if not os.path.isdir(folder):
@@ -45,7 +47,8 @@ def get_model(image_size, job_config):
             activation=get_activation(job_config["MODEL"]["ACTIVATION"]),
             kernel_initializer='he_normal',
             num_layers=job_config["MODEL"]["LAYERS"],
-            max_dropout=job_config["MODEL"]["MAX_DROPOUT"]
+            max_dropout=job_config["MODEL"]["MAX_DROPOUT"],
+            filter_ratio=job_config["MODEL"]["FILTER_RATIO"]
         )
 
     if job_config["MODEL"]["NAME"] == "segmentations_unet":

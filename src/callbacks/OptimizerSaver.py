@@ -1,15 +1,13 @@
 from tensorflow.keras.callbacks import Callback
-from tensorflow.keras.optimizers import Adam, SGD
 
 import os
 import pickle
 
 class OptimizerSaver(Callback):
 
-    def __init__(self, stateFile, optimizer_config, loss, metrics, **kwargs):
+    def __init__(self, stateFile, loss, metrics, **kwargs):
         super(OptimizerSaver, self).__init__(**kwargs)
         self.stateFile = stateFile
-        self.optimizer_config = optimizer_config
         self.restored = False
         self.loss = loss
         self.metrics = metrics
@@ -30,12 +28,7 @@ class OptimizerSaver(Callback):
             return
 
         with open(self.stateFile, 'rb') as state_pickle:
-            if isinstance(self.model.optimizer, Adam):
-                self.model.optimizer = Adam.from_config(pickle.load(state_pickle))
-            elif isinstance(self.model.optimizer, SGD):
-                self.model.optimizer = SGD.from_config(pickle.load(state_pickle))
-            else:
-                raise ValueError("Unknown Optimizer {}".format(optimizer_config["NAME"]))
+            self.model.optimizer = self.model.optimizer.from_config(pickle.load(state_pickle))
 
         self.model.compile(
             optimizer = self.model.optimizer,

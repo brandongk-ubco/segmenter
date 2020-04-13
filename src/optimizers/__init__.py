@@ -1,6 +1,11 @@
 from tensorflow.keras.optimizers import Adam, SGD
+from .AdaBound import AdaBound
 
 def get_optimizer(optimizer_config):
+
+    if isinstance(optimizer_config, list):
+        return [get_optimizer(o) for o in optimizer_config]
+    
     if optimizer_config["NAME"] == "adam":
         return Adam(
             learning_rate=optimizer_config["LR"],
@@ -14,4 +19,9 @@ def get_optimizer(optimizer_config):
             learning_rate=optimizer_config["LR"],
             momentum=optimizer_config["MOMENTUM"],
             nesterov=optimizer_config["NESTEROV"]
+        )
+
+    if optimizer_config["NAME"] == "adabound":
+        return SGD(
+            learning_rate=optimizer_config["LR"]
         )
