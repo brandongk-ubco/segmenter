@@ -152,6 +152,7 @@ def train_fold(clazz, fold=None, boost_fold=None, activation="sigmoid"):
             out = AddSingleGradient()(boost_models + [out])
             out = Activation(activation, name=activation)(out)
         model = Model(inputs, out)
+        fold_model.summary()
         model.summary()
 
         model.compile(

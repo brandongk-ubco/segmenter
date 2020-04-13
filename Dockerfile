@@ -1,5 +1,7 @@
-FROM tensorflow/tensorflow:nightly-gpu-py3
+FROM tensorflow/tensorflow:latest-gpu-py3
 
-RUN pip install \
-    albumentations \
-    segmentation-models
+ADD requirements.txt .
+
+RUN pip install -r requirements.txt
+
+RUN rm requirements.txt

@@ -40,12 +40,12 @@ def get_model():
         model["FILTERS"] = int(os.environ.get("FILTERS", 16))
         model["ACTIVATION"] = os.environ.get("ACTIVATION", "cos")
         model["LAYERS"] = int(os.environ.get("LAYERS", 4))
-        model["BATCH_NORM"] = os.environ.get("BATCH_NORM", "true").lower() == "true"
+        model["NORM"] = os.environ.get("NORM", "none").lower()
         model["DROPOUT"] = float(os.environ.get("DROPOUT", 0.0))
         model["USE_DROPOUT_ON_UPSAMPLE"] = os.environ.get("USE_DROPOUT_ON_UPSAMPLE", "true").lower() == "true"
         model["DROPOUT_CHANGE_PER_LAYER"] = float(os.environ.get("DROPOUT_CHANGE_PER_LAYER", 0.0))
         model["MAX_DROPOUT"] = float(os.environ.get("DROPOUT", 0.5))
-        model["FILTER_RATIO"] = int(os.environ.get("FILTER_RATIO", 2))
+        model["FILTER_RATIO"] = float(os.environ.get("FILTER_RATIO", 2))
     if model["NAME"] == "segmentations_unet":
         model["BACKBONE"] = os.environ.get("BACKBONE", "efficientnetb0")
 
@@ -69,12 +69,12 @@ def get_augments():
         "GAMMA_PR": float(os.environ.get("GAMMA_PR", 0.0)),
         "HORIZONTAL_FLIP_PR": float(os.environ.get("HORIZONTAL_FLIP_PR", 0.5)),
         "VERTICAL_FLIP_PR": float(os.environ.get("VERTICAL_FLIP_PR", 0.5)),
-        "NORMALIZE_PR": float(os.environ.get("NORMALIZE_PR", 1.0)),
+        "NORMALIZE_PR": float(os.environ.get("NORMALIZE_PR", 0.0)),
     }
 
 def get_preprocess():
     return {
-        "ZERO_BLANKS": os.environ.get("ZERO_BLANKS", "true").lower() == "true",
+        "ZERO_BLANKS": os.environ.get("ZERO_BLANKS", "false").lower() == "true",
     }
 
 def get_postprocess():
@@ -94,7 +94,7 @@ def get_optimizer():
         optimizer["LR"] = float(os.environ.get("LR", 0.001))
 
     if optimizer["NAME"] == "sgd":
-        optimizer["LR"] = float(os.environ.get("LR", 0.1))
+        optimizer["LR"] = float(os.environ.get("LR", 0.001))
         optimizer["MOMENTUM"] = float(os.environ.get("MOMENTUM", 0.9))
         optimizer["NESTEROV"] = os.environ.get("NESTEROV", "false").lower() == "true"
 
@@ -112,7 +112,7 @@ def get_optimizer():
             },
             {
                 "NAME": "sgd",
-                "LR": float(os.environ.get("LR", 0.1)),
+                "LR": float(os.environ.get("LR", 0.001)),
                 "MOMENTUM": float(os.environ.get("MOMENTUM", 0.5)),
                 "NESTEROV": os.environ.get("NESTEROV", "false").lower() == "true"
             }

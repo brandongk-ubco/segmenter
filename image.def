@@ -1,14 +1,10 @@
 Bootstrap: docker
-From: tensorflow/tensorflow:nightly-gpu-py3
+From: tensorflow/tensorflow:latest-gpu-py3
 
 %post
-    pip install albumentations segmentation-models
+  pip install albumentations segmentation-models
 
-%post
-  #Post setup, runs inside the image
-
-  #Default mount point used in Shef Uni's ShARC cluster
-  mkdir /scratch /data /shared /fastdata
+  mkdir /data
 
   #Nvidia driver file mount paths
   mkdir /nvlib /nvbin

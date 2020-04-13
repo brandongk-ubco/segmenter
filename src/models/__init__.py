@@ -39,7 +39,7 @@ def get_model(image_size, job_config):
     if job_config["MODEL"]["NAME"] == "unet":
         model = unet(
             input_shape=image_size,
-            use_batch_norm=job_config["MODEL"]["BATCH_NORM"],
+            norm=job_config["MODEL"]["NORM"],
             filters=job_config["MODEL"]["FILTERS"],
             dropout=job_config["MODEL"]["DROPOUT"],
             dropout_change_per_layer=job_config["MODEL"]["DROPOUT_CHANGE_PER_LAYER"],
