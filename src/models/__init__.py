@@ -2,7 +2,7 @@ from .unet import custom_unet as unet
 from segmentation_models import Unet as segmentations_unet
 from tensorflow.keras.regularizers import l1_l2
 from activations import get_activation
-from tensorflow.keras.layers import Input, Average, Lambda, Activation
+from tensorflow.keras.layers import Input, Average, Add, Lambda, Activation
 from tensorflow.keras.models import Model
 from tensorflow.keras.activations import linear, sigmoid
 import tensorflow as tf
@@ -96,7 +96,7 @@ def full_model(clazz, modeldir, job_config, job_hash, load_weights=True, fold_ac
             boost_fold_model = Lambda(lambda x: logit(x), name="{}_logit".format(boost_fold_name))(boost_fold_model)
             fold_models.append(boost_fold_model)
 
-        fold_model = fold_models[0] if len(fold_models) == 1 else Average(name="{}_average".format(fold_name))(fold_models)
+        fold_model = fold_models[0] if len(fold_models) == 1 else Add(name="{}_add".format(fold_name))(fold_models)
         fold_model = Activation(fold_activation, name="{}_{}".format(fold_name, fold_activation))(fold_model)
         fold_model._name = fold_name
         models.append(fold_model)
