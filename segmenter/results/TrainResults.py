@@ -24,7 +24,8 @@ def combine_directory(directory):
         tokenized_path = relpath.split("/")
         trainlogs = os.path.join(root, "logs", "train.csv")
 
-        if "logs" in dirs and "early_stopping.json" in files and os.path.isfile(trainlogs):
+        if "logs" in dirs and "early_stopping.json" in files and os.path.isfile(
+                trainlogs):
             key = tokenized_path[0]
             confighash = tokenized_path[1]
             clazz = tokenized_path[2]

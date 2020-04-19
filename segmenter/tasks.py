@@ -3,7 +3,7 @@ from typing import Dict
 import pprint
 import os
 import sys
-from segmenter.config import get_config
+from segmenter.config import get_config, validate_config
 from segmenter.aggregators import get_aggregators
 from launcher import Task
 import os
@@ -40,9 +40,8 @@ class BaseTask(Task):
         except ModuleNotFoundError:
             pass
 
-        self.job_config = get_config(self.data_dir)
-        self.job_hash = hash(self.job_config)
-        pprint.pprint(self.job_config)
+        self.job_config, self.job_hash = get_config(self.data_dir,
+                                                    self.output_dir)
 
         self.classes = self.job_config["CLASSES"] if os.environ.get(
             "CLASS") is None else [os.environ.get("CLASS")]
@@ -67,9 +66,28 @@ class BaseTask(Task):
             ]
 
 
+class ConfigureTask(BaseTask):
+
+    name = 'configure'
+
+    @staticmethod
+    def arguments(parser) -> None:
+        command_parser = parser.add_parser(
+            ConfigureTask.name, help='Prepare configuration for job.')
+        BaseTask.arguments(command_parser)
+
+    def execute(self) -> None:
+        pass
+
+
 class EvaluateTask(BaseTask):
 
     name = 'evaluate'
+
+    def __init__(self, args):
+        super().__init__(args)
+        pprint.pprint(self.job_config)
+        validate_config(self.job_config)
 
     @staticmethod
     def arguments(parser) -> None:
@@ -88,6 +106,11 @@ class TrainTask(BaseTask):
 
     name = 'train'
 
+    def __init__(self, args):
+        super().__init__(args)
+        pprint.pprint(self.job_config)
+        validate_config(self.job_config)
+
     @staticmethod
     def arguments(parser) -> None:
         command_parser = parser.add_parser(TrainTask.name,
@@ -101,4 +124,4 @@ class TrainTask(BaseTask):
                            self.data_dir, self.output_dir)
 
 
-tasks = [EvaluateTask, TrainTask]
+tasks = [ConfigureTask, EvaluateTask, TrainTask]

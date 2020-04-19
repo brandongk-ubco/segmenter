@@ -4,8 +4,8 @@ from tensorflow.keras.callbacks import ReduceLROnPlateau
 import os
 import json
 
-class SavableReduceLROnPlateau(ReduceLROnPlateau):
 
+class SavableReduceLROnPlateau(ReduceLROnPlateau):
     def __init__(self, stateFile, **kwargs):
         super(SavableReduceLROnPlateau, self).__init__(**kwargs)
         self.stateFile = stateFile

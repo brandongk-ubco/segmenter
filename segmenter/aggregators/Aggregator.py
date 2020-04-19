@@ -15,27 +15,22 @@ class Aggregator:
                 and hasattr(subclass, 'final_activation')
                 and callable(subclass.final_activation))
 
-    @staticmethod
     @abstractmethod
-    def name() -> str:
+    def name(self) -> str:
         raise NotImplementedError
 
-    @staticmethod
     @abstractmethod
-    def thresholds() -> np.ndarray:
+    def thresholds(self) -> np.ndarray:
         raise NotImplementedError
 
-    @staticmethod
     @abstractmethod
-    def layer() -> Layer:
+    def layer(self) -> Layer:
         raise NotImplementedError
 
-    @staticmethod
     @abstractmethod
-    def fold_activation() -> str:
+    def fold_activation(self) -> str:
         raise NotImplementedError
 
-    @staticmethod
     @abstractmethod
-    def final_activation() -> str:
+    def final_activation(self) -> str:
         raise NotImplementedError

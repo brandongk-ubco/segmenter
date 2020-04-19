@@ -3,8 +3,8 @@ from tensorflow.keras.callbacks import Callback
 import time
 import os
 
-class EarlyStoppingByTime(Callback):
 
+class EarlyStoppingByTime(Callback):
     def __init__(self, limit_seconds, start_time=None, verbose=0):
         super(EarlyStoppingByTime, self).__init__()
         if start_time is None:
@@ -21,9 +21,11 @@ class EarlyStoppingByTime(Callback):
         elapsed = current - self.start
 
         if elapsed > self.limit_seconds:
-            print("Epoch %05d: Time limit exhausted (%s seconds)" % (epoch+1, self.limit_seconds))
+            print("Epoch %05d: Time limit exhausted (%s seconds)" %
+                  (epoch + 1, self.limit_seconds))
             time.sleep(60)
             os._exit(123)
 
         if self.verbose > 0:
-            print("Epoch %05d: %.2f seconds remaining" % (epoch+1, self.limit_seconds - elapsed))
+            print("Epoch %05d: %.2f seconds remaining" %
+                  (epoch + 1, self.limit_seconds - elapsed))

@@ -1,5 +1,7 @@
 import os
 import json
+from segmenter.helpers import hash, get_available_gpus
+from typing import Dict, Any
 
 if os.environ.get("COMMAND", "train") == "evaluate":
     os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
@@ -7,25 +9,8 @@ if os.environ.get("DEBUG", "false").lower() != "true":
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 
-def get_available_gpus():
-    try:
-        from tensorflow.python.client import device_lib
-        local_device_protos = device_lib.list_local_devices()
-        return len(
-            [x.name for x in local_device_protos if x.device_type == 'GPU'])
-    except ModuleNotFoundError:
-        return 0
-
-
 def get_batch_size():
-    # This needs to be evenly distributed by the number of GPUs, otherwise you get NaN losses
-    num_gpus = get_available_gpus()
     BATCH_SIZE = int(os.environ.get("BATCH_SIZE", 2))
-    if num_gpus > 0:
-        BATCH_SIZE == int(
-            BATCH_SIZE / num_gpus
-        ) * num_gpus, "Batch size must be an integer multiple of the number of gpus ({}).".format(
-            num_gpus)
     return BATCH_SIZE
 
 
@@ -138,47 +123,59 @@ def get_optimizer():
     return optimizer
 
 
-# WARNING when setting precision - larger images need higher precision to evaluate the Loss function.  The sum can overflow and give all 0 for loss.
-
-
-def get_config(path: str):
+# WARNING when setting precision!
+#  - larger images need higher precision to evaluate the Loss function.
+#    The sum can overflow and give all 0 for loss.
+def build_config(datadir: str):
     return {
-        "BATCH_SIZE":
-        get_batch_size(),
-        "PATIENCE":
-        int(os.environ.get("PATIENCE", 20)),
-        "MIN_LR":
-        float(os.environ.get("MIN_LR", 1e-8)),
-        "LR_REDUCTION_FACTOR":
-        float(os.environ.get("LR_REDUCTION_FACTOR", 0.1)),
-        "L1_REG":
-        float(os.environ.get("L1_REG", 0)),
-        "L2_REG":
-        float(os.environ.get("L2_REG", 0)),
-        "OPTIMIZER":
-        get_optimizer(),
-        "FSCORE_THRESHOLD":
-        float(os.environ.get("FSCORE_THRESHOLD", 0.5)),
-        "BOOST_FOLDS":
-        None if os.environ.get("BOOST_FOLDS") is None else int(
-            os.environ.get("BOOST_FOLDS", 0)),
-        "FOLDS":
-        None if os.environ.get("FOLDS") is None else int(
-            os.environ.get("FOLDS", 0)),
-        "CLASSES":
-        get_classes(path),
-        "MODEL":
-        get_model(),
-        "PRECISION":
-        os.environ.get("PRECISION", "float32"),
-        "LOSS":
-        get_loss(),
-        "AUGMENTS":
-        get_augments(),
-        "PREPROCESS":
-        get_preprocess(),
-        "POSTPROCESS":
-        get_postprocess(),
-        "RUN":
-        int(os.environ.get("RUN", 1)),
+        "BATCH_SIZE": get_batch_size(),
+        "PATIENCE": int(os.environ.get("PATIENCE", 20)),
+        "MIN_LR": float(os.environ.get("MIN_LR", 1e-8)),
+        "LR_REDUCTION_FACTOR": float(os.environ.get("LR_REDUCTION_FACTOR",
+                                                    0.1)),
+        "L1_REG": float(os.environ.get("L1_REG", 0)),
+        "L2_REG": float(os.environ.get("L2_REG", 0)),
+        "OPTIMIZER": get_optimizer(),
+        "FSCORE_THRESHOLD": float(os.environ.get("FSCORE_THRESHOLD", 0.5)),
+        "BOOST_FOLDS": int(os.environ.get("BOOST_FOLDS", 0)),
+        "FOLDS": int(os.environ.get("FOLDS", 0)),
+        "CLASSES": get_classes(datadir),
+        "MODEL": get_model(),
+        "PRECISION": os.environ.get("PRECISION", "float32"),
+        "LOSS": get_loss(),
+        "AUGMENTS": get_augments(),
+        "PREPROCESS": get_preprocess(),
+        "POSTPROCESS": get_postprocess(),
+        "RUN": int(os.environ.get("RUN", 1)),
     }
+
+
+def get_config(datadir: str, outdir: str):
+    job_config: Dict[str, Any] = {}
+
+    if "JOB_HASH" not in os.environ:
+        job_config = build_config(datadir)
+        job_hash = hash(job_config)
+    else:
+        job_hash = os.environ["JOB_HASH"]
+        config_location = os.path.join(outdir, job_hash, "config.json")
+        if os.path.isfile(config_location):
+            with open(config_location, "r") as config_file:
+                job_config = json.load(config_file)
+        else:
+            job_config = build_config(datadir)
+        assert hash(
+            job_config
+        ) == job_hash, "Expected job hash ({}) doesn't match actual ({})".format(
+            job_hash, hash(job_config))
+
+    os.environ["JOB_HASH"] = job_hash
+    return job_config, job_hash
+
+
+def validate_config(config: Dict[str, Any]):
+    num_gpus = get_available_gpus()
+    assert num_gpus == 0 or config["BATCH_SIZE"] == int(
+        config["BATCH_SIZE"] / num_gpus
+    ) * num_gpus, "Batch size must be an integer multiple of the number of gpus ({}).".format(
+        num_gpus)

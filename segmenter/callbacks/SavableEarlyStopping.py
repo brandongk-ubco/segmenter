@@ -4,8 +4,8 @@ import numpy as np
 import os
 import json
 
-class SavableEarlyStopping(EarlyStopping):
 
+class SavableEarlyStopping(EarlyStopping):
     def __init__(self, stateFile, **kwargs):
         super(SavableEarlyStopping, self).__init__(**kwargs)
         self.stateFile = stateFile
@@ -37,7 +37,6 @@ class SavableEarlyStopping(EarlyStopping):
 
         with open(self.stateFile, 'w') as state_json:
             json.dump(state, state_json, indent=4)
-
 
     def restore(self):
         if not os.path.isfile(self.stateFile):

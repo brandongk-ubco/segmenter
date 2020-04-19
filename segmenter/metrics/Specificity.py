@@ -1,7 +1,14 @@
 from segmentation_models.base import Metric, functional as F
 import tensorflow as tf
 
-def specificity(gt, pr, class_weights=1, class_indexes=None, per_image=False, threshold=None, **kwargs):
+
+def specificity(gt,
+                pr,
+                class_weights=1,
+                class_indexes=None,
+                per_image=False,
+                threshold=None,
+                **kwargs):
     backend = kwargs['backend']
 
     gt, pr = F.gather_channels(gt, pr, indexes=class_indexes, **kwargs)
@@ -16,14 +23,15 @@ def specificity(gt, pr, class_weights=1, class_indexes=None, per_image=False, th
     score = F.average(score, per_image, class_weights, **kwargs)
     return score
 
+
 class Specificity(Metric):
     def __init__(
-            self,
-            class_weights=None,
-            class_indexes=None,
-            threshold=None,
-            per_image=False,
-            name=None,
+        self,
+        class_weights=None,
+        class_indexes=None,
+        threshold=None,
+        per_image=False,
+        name=None,
     ):
         name = name or 'specificity'
         super().__init__(name=name)
@@ -33,12 +41,10 @@ class Specificity(Metric):
         self.per_image = per_image
 
     def __call__(self, gt, pr):
-        return specificity(
-            gt,
-            pr,
-            class_weights=self.class_weights,
-            class_indexes=self.class_indexes,
-            per_image=self.per_image,
-            threshold=self.threshold,
-            **self.submodules
-        )
+        return specificity(gt,
+                           pr,
+                           class_weights=self.class_weights,
+                           class_indexes=self.class_indexes,
+                           per_image=self.per_image,
+                           threshold=self.threshold,
+                           **self.submodules)

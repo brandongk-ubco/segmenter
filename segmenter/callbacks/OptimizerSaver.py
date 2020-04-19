@@ -3,8 +3,8 @@ from tensorflow.keras.callbacks import Callback
 import os
 import pickle
 
-class OptimizerSaver(Callback):
 
+class OptimizerSaver(Callback):
     def __init__(self, stateFile, loss, metrics, **kwargs):
         super(OptimizerSaver, self).__init__(**kwargs)
         self.stateFile = stateFile
@@ -28,12 +28,11 @@ class OptimizerSaver(Callback):
             return
 
         with open(self.stateFile, 'rb') as state_pickle:
-            self.model.optimizer = self.model.optimizer.from_config(pickle.load(state_pickle))
+            self.model.optimizer = self.model.optimizer.from_config(
+                pickle.load(state_pickle))
 
-        self.model.compile(
-            optimizer = self.model.optimizer,
-            loss = self.loss,
-            metrics = self.metrics
-        )
+        self.model.compile(optimizer=self.model.optimizer,
+                           loss=self.loss,
+                           metrics=self.metrics)
 
         self.restored = True

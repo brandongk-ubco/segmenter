@@ -5,7 +5,6 @@ from numpy.testing import assert_almost_equal
 
 
 class SpecificityCase(unittest.TestCase):
-
     def testNone(self):
         gt = np.zeros([1, 100, 100, 1])
         pr = np.zeros([1, 100, 100, 1])
@@ -14,7 +13,10 @@ class SpecificityCase(unittest.TestCase):
     def testAll(self):
         gt = np.zeros([1, 100, 100, 1])
         pr = np.ones([1, 100, 100, 1])
-        assert_almost_equal(Specificity()(gt, pr, ), 0)
+        assert_almost_equal(Specificity()(
+            gt,
+            pr,
+        ), 0)
 
     def testQuarter(self):
         gt = np.zeros([1, 100, 100, 1])
@@ -26,18 +28,18 @@ class SpecificityCase(unittest.TestCase):
         gt = np.zeros([1, 100, 100, 1])
         pr = np.zeros([1, 100, 100, 1])
         pr[0, 75:100, 75:100, 0] = 1.
-        assert_almost_equal(Specificity()(gt, pr),  0.9375)
+        assert_almost_equal(Specificity()(gt, pr), 0.9375)
 
     def testFew(self):
         gt = np.zeros([1, 100, 100, 1])
         pr = np.zeros([1, 100, 100, 1])
         pr[0, 99:100, 99:100, 0] = 1.
-        assert_almost_equal(Specificity()(gt, pr),  0.9999)
+        assert_almost_equal(Specificity()(gt, pr), 0.9999)
 
     def testAllMatch(self):
         gt = np.ones([1, 100, 100, 1])
         pr = np.ones([1, 100, 100, 1])
-        assert_almost_equal(Specificity()(gt, pr),  1)
+        assert_almost_equal(Specificity()(gt, pr), 1)
 
     def testQuarterPositiveNoPredictions(self):
         gt = np.zeros([1, 100, 100, 1])

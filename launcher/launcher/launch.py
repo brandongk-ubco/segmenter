@@ -14,30 +14,37 @@ from typing import Any, Dict
 
 
 def launch():
-    discover_paths = set([
-        os.path.abspath(".")
-    ])
+    discover_paths = set([os.path.abspath(".")])
 
     for discover_path in discover_paths:
         sys.path.append(discover_path)
 
     parser = argparse.ArgumentParser(
-        description='Run a task multiple times, controlled by envrironment variables.')
-    parser.add_argument(
-        "--adaptor", type=Adaptors.argparse, default="shell", choices=list(Adaptors), help='the adaptor with which to run the task.')
-    parser.add_argument("--data-dir", type=str,
-                        default="/data", help='the directory which holds the dataset.')
-    parser.add_argument("--output-dir", type=str,
-                        default="/output", help='the directory in which to output results.')
-    subparsers = parser.add_subparsers(
-        title='tasks', description='valid tasks', dest="task")
+        description=
+        'Run a task multiple times, controlled by envrironment variables.')
+    parser.add_argument("--adaptor",
+                        type=Adaptors.argparse,
+                        default="shell",
+                        choices=list(Adaptors),
+                        help='the adaptor with which to run the task.')
+    parser.add_argument("--data-dir",
+                        type=str,
+                        default="/data",
+                        help='the directory which holds the dataset.')
+    parser.add_argument("--output-dir",
+                        type=str,
+                        default="/output",
+                        help='the directory in which to output results.')
+    subparsers = parser.add_subparsers(title='tasks',
+                                       description='valid tasks',
+                                       dest="task")
 
     tasks: Dict[str, Any] = {}
     for discover_path in discover_paths:
-        for task in glob.glob("{}/**/tasks.py".format(discover_path), recursive=True):
+        for task in glob.glob("{}/**/tasks.py".format(discover_path),
+                              recursive=True):
             loader = SourceFileLoader("task", task)
-            spec = util.spec_from_loader(
-                "task", loader)
+            spec = util.spec_from_loader("task", loader)
             task = util.module_from_spec(spec)  # type: ignore
             spec.loader.exec_module(task)  # type: ignore
             for c in task.tasks:  # type: ignore
@@ -55,8 +62,9 @@ def launch():
     task = tasks[args["task"]]
 
     parallel_keys = [o[3:] for o in os.environ if o.upper().startswith("BY_")]
-    parallel_items = [os.environ.get(
-        "BY_" + o, "").strip().split(",") for o in parallel_keys]
+    parallel_items = [
+        os.environ.get("BY_" + o, "").strip().split(",") for o in parallel_keys
+    ]
 
     for k in parallel_keys:
         del os.environ["BY_" + k]
@@ -64,6 +72,8 @@ def launch():
     for parallel_combination in itertools.product(*parallel_items):
         for i, k in enumerate(parallel_keys):
             os.environ[k] = parallel_combination[i]
+        ShellAdaptor.execute(tasks["configure"],
+                             args)  # FIXME: This is a hack!
         adaptor.execute(task, args)
 
 
