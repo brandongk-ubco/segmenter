@@ -4,20 +4,22 @@ import pprint
 import os
 import sys
 from segmenter.config import get_config
+from segmenter.aggregators import get_aggregators
 from launcher import Task
 import os
 from segmenter.helpers import hash
 from segmenter.train import train_fold
+from segmenter.evaluators import metric_evaluation
+import itertools
 
 
 class BaseTask(Task):
-
     @staticmethod
-    def arguments(parser) -> None:
-        command_parser = parser.add_parser(
-            Train.name, help='Train a model.')
-        command_parser.add_argument("dataset", type=str,
-                                    help='the dataset to use when running the command.')
+    def arguments(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument(
+            "dataset",
+            type=str,
+            help='the dataset to use when running the command.')
 
     @staticmethod
     def arguments_to_cli(args) -> str:
@@ -25,10 +27,10 @@ class BaseTask(Task):
 
     def __init__(self, args):
         self.args = args
-        self.data_dir = os.path.join(
-            os.path.abspath(args["data_dir"]), args["dataset"])
-        self.output_dir = os.path.join(
-            os.path.abspath(args["output_dir"]), args["dataset"])
+        self.data_dir = os.path.join(os.path.abspath(args["data_dir"]),
+                                     args["dataset"])
+        self.output_dir = os.path.join(os.path.abspath(args["output_dir"]),
+                                       args["dataset"])
         try:
             import tensorflow as tf
             if os.environ.get("DEBUG", "false").lower() == "true":
@@ -42,34 +44,61 @@ class BaseTask(Task):
         self.job_hash = hash(self.job_config)
         pprint.pprint(self.job_config)
 
+        self.classes = self.job_config["CLASSES"] if os.environ.get(
+            "CLASS") is None else [os.environ.get("CLASS")]
 
-class Train(BaseTask):
+        if self.job_config["FOLDS"] is not None:
+            self.folds = ["fold{}".format(os.environ["FOLD"])
+                          ] if os.environ.get("FOLD") is not None else [
+                              "fold{}".format(o)
+                              for o in range(self.job_config["FOLDS"])
+                          ]
+        else:
+            self.folds = ["all"]
+
+        if self.job_config["BOOST_FOLDS"] is not None:
+            boost_folds = [
+                "b{}".format(o)
+                for o in list(range(0, self.job_config["BOOST_FOLDS"] + 1))
+            ]
+            self.folds = [
+                "".join(o)
+                for o in itertools.product(*[self.folds, boost_folds])
+            ]
+
+
+class EvaluateTask(BaseTask):
+
+    name = 'evaluate'
+
+    @staticmethod
+    def arguments(parser) -> None:
+        command_parser = parser.add_parser(EvaluateTask.name,
+                                           help='Evaluate a model.')
+        BaseTask.arguments(command_parser)
+
+    def execute(self) -> None:
+        for aggregator in get_aggregators(self.job_config):
+            for clazz in self.classes:
+                metric_evaluation(clazz, self.job_config, self.job_hash,
+                                  self.data_dir, self.output_dir, aggregator)
+
+
+class TrainTask(BaseTask):
 
     name = 'train'
 
+    @staticmethod
+    def arguments(parser) -> None:
+        command_parser = parser.add_parser(TrainTask.name,
+                                           help='Train a model.')
+        BaseTask.arguments(command_parser)
+
     def execute(self) -> None:
-        classes = [os.environ.get("CLASS")] if os.environ.get(
-            "CLASS") is not None else self.job_config["CLASSES"]
-        if self.job_config["FOLDS"] is not None:
-            folds = [int(os.environ["FOLD"])] if os.environ.get(
-                "FOLD") is not None else range(self.job_config["FOLDS"])
-            for clazz in classes:
-                for fold in folds:
-                    self.train(clazz, fold)
-        else:
-            for clazz in classes:
-                self.train(clazz)
-
-    def train(self, clazz, fold=None):
-        if self.job_config["BOOST_FOLDS"] is None:
-            train_fold(clazz, self.job_config, self.job_hash, self.data_dir,
-                       self.output_dir, fold=fold)
-        else:
-            for boost_fold in range(0, self.job_config["BOOST_FOLDS"] + 1):
-                train_fold(clazz, self.job_config, self.job_hash, self.data_dir,
-                           self.output_dir, fold=fold, boost_fold=boost_fold)
+        for clazz in self.classes:
+            for fold in self.folds:
+                train_fold(clazz, fold, self.job_config, self.job_hash,
+                           self.data_dir, self.output_dir)
 
 
-tasks = [
-    Train
-]
+tasks = [EvaluateTask, TrainTask]

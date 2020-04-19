@@ -5,4 +5,5 @@ sklearn
 pandas
 pylint
 mypy
-autopep8
+yapf
+matplotlib

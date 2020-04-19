@@ -1,25 +1,12 @@
-import hashlib
-import os
+from segmenter.data.DataGenerator import DataGenerator
 import tensorflow as tf
-from segmenter.DataGenerator import DataGenerator
-import numpy as np
 from tensorflow.keras import backend as K
-
-
-def hash(in_string):
-    return hashlib.md5(str(in_string).encode()).hexdigest()
 
 
 def make_shape(image, mask):
     image.set_shape([None, None, None])
     mask.set_shape([None, None, None])
     return image, mask
-
-
-def logit(x):
-    """ Computes the logit function, i.e. the logistic sigmoid inverse. """
-    x = K.clip(x, K.epsilon(), 1 - K.epsilon())
-    return - K.log(1. / x - 1.)
 
 
 def generator_to_dataset(generator, repeat, shuffle, zero=False, buffer_size=500):
@@ -51,7 +38,7 @@ def generator_to_dataset(generator, repeat, shuffle, zero=False, buffer_size=500
     return dataset
 
 
-def generate_for_augments(clazz, fold, augments, job_config, mode, path, shuffle=False, repeat=False):
+def augmented_generator(clazz, fold, augments, job_config, mode, path, shuffle=False, repeat=False):
     generator = DataGenerator(clazz, fold, shuffle=shuffle, path=path,
                               augmentations=augments, job_config=job_config, mode=mode)
     augmented = generator_to_dataset(generator, repeat, shuffle)

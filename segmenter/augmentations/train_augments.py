@@ -1,6 +1,7 @@
 from albumentations import *
 import cv2
 
+
 def train_augments(augments_config, mean, std, image_size):
     box_scale = min(image_size)
     return Compose([
@@ -23,15 +24,6 @@ def train_augments(augments_config, mean, std, image_size):
             gamma_limit=(80, 120),
             p=augments_config["GAMMA_PR"]
         ),
-        Normalize(max_pixel_value=1.0, mean=mean, std=std, p=augments_config["NORMALIZE_PR"])
-    ], p=1)
-
-def val_augments(augments_config, mean, std, image_size):
-    return Compose([
-        Normalize(max_pixel_value=1.0, mean=mean, std=std, p=augments_config["NORMALIZE_PR"])
-    ], p=1)
-
-def predict_augments(augments_config, mean, std, image_size):
-    return Compose([
-        Normalize(max_pixel_value=1.0, mean=mean, std=std, p=augments_config["NORMALIZE_PR"])
+        Normalize(max_pixel_value=1.0, mean=mean, std=std,
+                  p=augments_config["NORMALIZE_PR"])
     ], p=1)

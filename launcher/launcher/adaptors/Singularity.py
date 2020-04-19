@@ -13,34 +13,22 @@ class Singularity(Adaptor):
     @staticmethod
     def execute(task, args) -> None:
         os.environ["PYTHONUNBUFFERED"] = "true"
-        os.environ["OUTDIR"] = "/scratch/{}/results/{}/".format(
-            os.environ["USER"],
-            args["dataset"]
-        )
 
-        # if [-z ${OUTDIR+x}]
-        # then
-        # export OUTDIR =
-        # fi
+        data = {
+            "path": os.path.abspath("."),
+            "project": os.path.basename(os.path.abspath(".")),
+            "data_dir": args["data_dir"],
+            "output_dir": args["output_dir"],
+            "uid": os.geteuid(),
+            "gid": os.getgid(),
+            "image": args["image"],
+            "command": "launch",
+            "args": "{} {}".format(task.name, task.arguments_to_cli(args)),
+            "gpus": "--gpus all" if args["gpus"] else ""
+        }
 
-        # if [-z ${INDIR+x}]
-        # then
-        # export INDIR = "/scratch/${USER}/datasets/severstal/"
-        # fi
+        raise NotImplementedError("Not done!")
+        # command = "docker run -v {path}/{project}:/src/{project} -v {data_dir}:/data -v {output_dir}:/output -u {uid}:{gid} {gpus} --entrypoint {command} -it {image} {args}".format(
+        #     **data)
 
-        # if [-z ${OUTFOLDER+x}]
-        # then
-        # export OUTFOLDER = "output"
-        # fi
-
-        # if [-z ${COMMAND+x}]
-        # then
-        # export COMMAND = "train"
-        # fi
-
-        # mkdir - p "${OUTDIR}${OUTFOLDER}"
-
-        print("Using output directory ${OUTDIR}${OUTFOLDER}".format(
-            os.environ["OUTDIR"], os.environ["OUTFOLDER"]))
-        subprocess.check_call(
-            " ".join(args["command"]), shell=args["shell"], cwd=args["path"])
+        # subprocess.check_call(command, shell=True)

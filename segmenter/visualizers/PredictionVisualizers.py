@@ -1,8 +1,8 @@
 from visualizers import Visualizer
 from matplotlib import pyplot as plt
 
-def Mask(Visualizer):
 
+def Mask(Visualizer):
     def visualize(self):
         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
 
@@ -26,5 +26,8 @@ def Mask(Visualizer):
 
         plt.subplots_adjust(wspace=0, hspace=0)
 
-        plt.savefig(os.path.join(threshold_dir, "{}.png".format(name)), dpi=100, bbox_inches = 'tight', pad_inches = 0.5)
+        plt.savefig(os.path.join(threshold_dir, "{}.png".format(name)),
+                    dpi=100,
+                    bbox_inches='tight',
+                    pad_inches=0.5)
         plt.close()

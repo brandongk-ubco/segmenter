@@ -1,7 +1,7 @@
 from tensorflow.keras.layers import Multiply
 
-class LeakyNoisyOr(Multiply):
-        
+
+class NoisyOr(Multiply):
     def _merge_function(self, inputs):
         output = 1. - inputs[0]
         for i in range(1, len(inputs)):

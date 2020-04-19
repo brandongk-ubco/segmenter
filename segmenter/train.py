@@ -9,10 +9,10 @@ from segmenter.models import get_model, find_latest_weight, find_best_weight
 from segmenter.loss import get_loss
 from segmenter.callbacks import get_callbacks
 from segmenter.optimizers import get_optimizer
-from segmenter.DataGenerator import DataGenerator
 from segmenter.augmentations import train_augments, val_augments
-from segmenter.ops import AverageSingleGradient, AddSingleGradient
-from segmenter.helpers import generate_for_augments
+from segmenter.layers import AddSingleGradient
+from segmenter.data import augmented_generator
+from segmenter.helpers import logit
 import sys
 import json
 import os
@@ -22,17 +22,21 @@ import time
 start_time = time.time()
 
 
-def train_fold(clazz, job_config, job_hash, datadir, outdir, fold=None, boost_fold=None, activation="sigmoid"):
+def train_fold(clazz,
+               fold_name,
+               job_config,
+               job_hash,
+               datadir,
+               outdir,
+               activation="sigmoid"):
     K.clear_session()
     K.set_floatx(job_config["PRECISION"])
 
-    print("Training class {}".format(clazz))
-    if fold is not None:
-        print("Training fold {}".format(fold))
+    fold = fold_name.split("b")[0]
+    fold = int(fold.replace("fold", "")) if fold != "all" else None
+    boost_fold = int(fold_name.split("b")[1]) if "b" in fold_name else None
 
-    fold_name = "all" if fold is None else "fold{}".format(fold)
-    if boost_fold is not None:
-        fold_name += "b{}".format(boost_fold)
+    print("Training {}".format(fold_name))
 
     output_folder = os.path.join(outdir, job_hash, clazz, fold_name)
     print("Using directory %s" % output_folder)
@@ -45,7 +49,7 @@ def train_fold(clazz, job_config, job_hash, datadir, outdir, fold=None, boost_fo
             print("Fold {} already completed training.".format(fold_name))
             return
 
-    train_generator, train_dataset, num_training_images = generate_for_augments(
+    train_generator, train_dataset, num_training_images = augmented_generator(
         clazz,
         fold,
         train_augments,
@@ -53,30 +57,23 @@ def train_fold(clazz, job_config, job_hash, datadir, outdir, fold=None, boost_fo
         "train",
         datadir,
         shuffle=True,
-        repeat=True
-    )
+        repeat=True)
     image_size = next(train_generator.generate())[0].shape
-    train_dataset = train_dataset.batch(
-        job_config["BATCH_SIZE"], drop_remainder=True)
+    train_dataset = train_dataset.batch(job_config["BATCH_SIZE"],
+                                        drop_remainder=True)
 
-    val_generator, val_dataset, num_val_images = generate_for_augments(
-        clazz,
-        fold,
-        val_augments,
-        job_config,
-        "val",
-        datadir,
-        repeat=True
-    )
-    # val_dataset = val_dataset.batch(job_config["BATCH_SIZE"], drop_remainder=True)
-    val_dataset = val_dataset.batch(1, drop_remainder=True)
+    _val_generator, val_dataset, num_val_images = augmented_generator(
+        clazz, fold, val_augments, job_config, "val", datadir, repeat=True)
+    val_dataset = val_dataset.batch(job_config["BATCH_SIZE"],
+                                    drop_remainder=True)
 
     print("Found %s training images" % num_training_images)
     print("Found %s validation images" % num_val_images)
 
     os.makedirs(output_folder, exist_ok=True)
 
-    with open(os.path.join(os.path.join(outdir, job_hash), "config.json"), "w") as outfile:
+    with open(os.path.join(os.path.join(outdir, job_hash), "config.json"),
+              "w") as outfile:
         json.dump(job_config, outfile, indent=4)
 
     latest_weight = find_latest_weight(output_folder)
@@ -112,8 +109,8 @@ def train_fold(clazz, job_config, job_hash, datadir, outdir, fold=None, boost_fo
             boost_fold_model._name = boost_fold_name
 
             out = boost_fold_model(inputs)
-            out = Lambda(lambda x: logit(
-                x), name="{}_logit".format(boost_fold_name))(out)
+            out = Lambda(lambda x: logit(x),
+                         name="{}_logit".format(boost_fold_name))(out)
             boost_models.append(out)
 
         fold_model = get_model(image_size, job_config)
@@ -125,20 +122,18 @@ def train_fold(clazz, job_config, job_hash, datadir, outdir, fold=None, boost_fo
 
         out = fold_model(inputs)
         if len(boost_models) > 0:
-            out = Lambda(lambda x: logit(
-                x), name="{}_logit".format(fold_name))(out)
+            out = Lambda(lambda x: logit(x),
+                         name="{}_logit".format(fold_name))(out)
             out = AddSingleGradient()(boost_models + [out])
             out = Activation(activation, name=activation)(out)
         model = Model(inputs, out)
         fold_model.summary()
         model.summary()
 
-        model.compile(
-            optimizer=optimizers[0] if isinstance(
-                optimizers, list) else optimizers,
-            loss=loss,
-            metrics=metrics
-        )
+        model.compile(optimizer=optimizers[0]
+                      if isinstance(optimizers, list) else optimizers,
+                      loss=loss,
+                      metrics=metrics)
 
     initial_epoch = 0
     val_loss = np.Inf
@@ -146,17 +141,16 @@ def train_fold(clazz, job_config, job_hash, datadir, outdir, fold=None, boost_fo
         initial_epoch = int(latest_weight.split("/")[-1].split("-")[0])
         val_loss = float(latest_weight.split("/")[-1].split("-")[1][:-3])
 
-    train_steps = int(num_training_images/job_config["BATCH_SIZE"])
-    val_steps = int(num_val_images/job_config["BATCH_SIZE"])
+    train_steps = int(num_training_images / job_config["BATCH_SIZE"])
+    val_steps = int(num_val_images / job_config["BATCH_SIZE"])
 
-    history = model.fit(
-        initial_epoch=initial_epoch,
-        x=train_dataset,
-        validation_data=val_dataset,
-        epochs=1000,
-        steps_per_epoch=train_steps,
-        validation_steps=val_steps,
-        callbacks=get_callbacks(output_folder, job_config, fold,
-                                val_loss, start_time, fold_name, loss, metrics, optimizers),
-        verbose=1
-    )
+    model.fit(initial_epoch=initial_epoch,
+              x=train_dataset,
+              validation_data=val_dataset,
+              epochs=1000,
+              steps_per_epoch=train_steps,
+              validation_steps=val_steps,
+              callbacks=get_callbacks(output_folder, job_config, fold,
+                                      val_loss, start_time, fold_name, loss,
+                                      metrics, optimizers),
+              verbose=1)
