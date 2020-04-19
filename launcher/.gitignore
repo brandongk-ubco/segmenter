@@ -1,0 +1,11 @@
+**
+!tests
+!test/**
+!launcher
+!launcher/**
+!LICENSE
+!README.md
+!setup.py
+!.gitignore
+!requirements.txt
+**/__pycache__

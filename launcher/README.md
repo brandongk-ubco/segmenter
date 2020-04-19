@@ -1,0 +1,1 @@
+This launcher allows command discovery and launching in multiple adaptors.

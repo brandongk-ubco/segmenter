@@ -1,15 +1,10 @@
 from config import get_config
-
 import pprint
-
 from helpers import *
-
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.models import load_model
 from tensorflow.keras import backend as K
-
 from metrics import get_metrics
-
 from models import full_model
 from augmentations import predict_augments
 from loss import get_loss
@@ -18,12 +13,16 @@ from optimizers import get_optimizer
 from callbacks import get_evaluation_callbacks
 from aggregators import get_aggregators
 import json
+import os
+
+from sklearn.metrics import roc_curve
+from sklearn.metrics import roc_auc_score
 
 job_config = get_config()
 job_hash = hash(job_config)
 
 outdir = os.environ.get("DIRECTORY", "/output")
-outdir = os.path.abspath(outdir)    
+outdir = os.path.abspath(outdir) 
 
 def evaluate(clazz, aggregators=None):
     K.clear_session()

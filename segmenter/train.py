@@ -1,56 +1,28 @@
-from config import get_config
-
+import numpy as np
 import tensorflow as tf
 from tensorflow.keras import backend as K
 from tensorflow.keras.layers import Input, Average, Lambda, Activation
 from tensorflow.keras.models import Model
 from tensorflow.keras.activations import sigmoid
-
-import numpy as np
-
-from metrics import get_metrics
-from models import get_model, find_latest_weight, find_best_weight
-from loss import get_loss
-from callbacks import get_callbacks
-from optimizers import get_optimizer
-from DataGenerator import DataGenerator
-from augmentations import train_augments, val_augments
-from ops import AverageSingleGradient, AddSingleGradient
+from segmenter.metrics import get_metrics
+from segmenter.models import get_model, find_latest_weight, find_best_weight
+from segmenter.loss import get_loss
+from segmenter.callbacks import get_callbacks
+from segmenter.optimizers import get_optimizer
+from segmenter.DataGenerator import DataGenerator
+from segmenter.augmentations import train_augments, val_augments
+from segmenter.ops import AverageSingleGradient, AddSingleGradient
+from segmenter.helpers import generate_for_augments
 import sys
-
 import json
 import os
 import pprint
 import time
 
-from helpers import *
-
-job_config = get_config()
-job_hash = hash(job_config)
-
-outdir = os.environ.get("DIRECTORY", "/output")
-outdir = os.path.abspath(outdir)
 start_time = time.time()
 
-# Turn this on when debugging functions.
-if os.environ.get("DEBUG", "false").lower() == "true":
-    tf.config.experimental_run_functions_eagerly(True)
-else:
-    tf.get_logger().setLevel("ERROR")
 
-def logit(x):
-    """ Computes the logit function, i.e. the logistic sigmoid inverse. """
-    x = K.clip(x, K.epsilon(), 1 - K.epsilon())
-    return - K.log(1. / x - 1.)
-
-def train(clazz, fold=None):
-    if job_config["BOOST_FOLDS"] is None:
-        train_fold(clazz, fold)
-    else:
-        for boost_fold in range(0, job_config["BOOST_FOLDS"] + 1):
-            train_fold(clazz, fold, boost_fold)
-
-def train_fold(clazz, fold=None, boost_fold=None, activation="sigmoid"):
+def train_fold(clazz, job_config, job_hash, datadir, outdir, fold=None, boost_fold=None, activation="sigmoid"):
     K.clear_session()
     K.set_floatx(job_config["PRECISION"])
 
@@ -78,19 +50,22 @@ def train_fold(clazz, fold=None, boost_fold=None, activation="sigmoid"):
         fold,
         train_augments,
         job_config,
-        mode="train",
+        "train",
+        datadir,
         shuffle=True,
         repeat=True
     )
     image_size = next(train_generator.generate())[0].shape
-    train_dataset = train_dataset.batch(job_config["BATCH_SIZE"], drop_remainder=True)
+    train_dataset = train_dataset.batch(
+        job_config["BATCH_SIZE"], drop_remainder=True)
 
     val_generator, val_dataset, num_val_images = generate_for_augments(
         clazz,
         fold,
         val_augments,
         job_config,
-        mode="val",
+        "val",
+        datadir,
         repeat=True
     )
     # val_dataset = val_dataset.batch(job_config["BATCH_SIZE"], drop_remainder=True)
@@ -127,7 +102,8 @@ def train_fold(clazz, fold=None, boost_fold=None, activation="sigmoid"):
             boost_fold_name = "all" if fold is None else "fold{}".format(fold)
             boost_fold_name += "b{}".format(boost_fold)
 
-            boost_fold_dir = os.path.abspath(os.path.join(output_folder, "..", boost_fold_name))
+            boost_fold_dir = os.path.abspath(
+                os.path.join(output_folder, "..", boost_fold_name))
             best_weight = find_best_weight(boost_fold_dir)
 
             print("Loading weight %s" % best_weight)
@@ -136,7 +112,8 @@ def train_fold(clazz, fold=None, boost_fold=None, activation="sigmoid"):
             boost_fold_model._name = boost_fold_name
 
             out = boost_fold_model(inputs)
-            out = Lambda(lambda x: logit(x), name="{}_logit".format(boost_fold_name))(out)
+            out = Lambda(lambda x: logit(
+                x), name="{}_logit".format(boost_fold_name))(out)
             boost_models.append(out)
 
         fold_model = get_model(image_size, job_config)
@@ -148,7 +125,8 @@ def train_fold(clazz, fold=None, boost_fold=None, activation="sigmoid"):
 
         out = fold_model(inputs)
         if len(boost_models) > 0:
-            out = Lambda(lambda x: logit(x), name="{}_logit".format(fold_name))(out)
+            out = Lambda(lambda x: logit(
+                x), name="{}_logit".format(fold_name))(out)
             out = AddSingleGradient()(boost_models + [out])
             out = Activation(activation, name=activation)(out)
         model = Model(inputs, out)
@@ -156,7 +134,8 @@ def train_fold(clazz, fold=None, boost_fold=None, activation="sigmoid"):
         model.summary()
 
         model.compile(
-            optimizer=optimizers[0] if isinstance(optimizers, list) else optimizers,
+            optimizer=optimizers[0] if isinstance(
+                optimizers, list) else optimizers,
             loss=loss,
             metrics=metrics
         )
@@ -177,20 +156,7 @@ def train_fold(clazz, fold=None, boost_fold=None, activation="sigmoid"):
         epochs=1000,
         steps_per_epoch=train_steps,
         validation_steps=val_steps,
-        callbacks=get_callbacks(output_folder, job_config, fold, val_loss, start_time, fold_name, loss, metrics, optimizers),
+        callbacks=get_callbacks(output_folder, job_config, fold,
+                                val_loss, start_time, fold_name, loss, metrics, optimizers),
         verbose=1
     )
-
-if __name__ == "__main__":
-    pprint.pprint(job_config)
-
-    classes = [os.environ.get("CLASS")] if os.environ.get("CLASS") is not None else job_config["CLASSES"]
-    if job_config["FOLDS"] is not None:
-        folds = [int(os.environ.get("FOLD"))] if os.environ.get("FOLD") is not None else range(job_config["FOLDS"])
-        for clazz in classes:
-            for fold in folds:
-                train(clazz, fold)
-    else:
-        for clazz in classes:
-            train(clazz)
-

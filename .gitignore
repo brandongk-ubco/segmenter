@@ -1,6 +1,6 @@
 **
-!src/
-!src/**/*
+!segmenter/
+!segmenter/**/*
 !combine.py
 !Dockerfile
 !.dockerignore
@@ -10,10 +10,10 @@
 !requirements.txt
 !evaluate.sh
 !args.py
-!bin
-!bin/**/*
-!datasets
-!datasets/**/*
+!launcher
+!launcher/**/*
+!dataloaders
+!dataloaders/**/*
 !docs
 !docs/*.md
 !nvidia-drivers
@@ -22,3 +22,8 @@
 !nvidia-drivers/*.run
 !.gitattributes
 **/__pycache__
+!.vscode
+!.vscode/settings.json
+!commands.py
+!get_configs
+!is_complete

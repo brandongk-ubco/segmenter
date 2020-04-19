@@ -1,3 +1,9 @@
+tensorflow
 albumentations
 segmentation-models
 tensorflow-addons
+sklearn
+pandas
+pylint
+mypy
+autopep8

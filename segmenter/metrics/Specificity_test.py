@@ -1,11 +1,10 @@
 import unittest
 from .Specificity import Specificity
 import numpy as np
-from tensorflow.keras import backend as K
-from numpy.testing import *
+from numpy.testing import assert_almost_equal
+
 
 class SpecificityCase(unittest.TestCase):
-    
 
     def testNone(self):
         gt = np.zeros([1, 100, 100, 1])
@@ -21,19 +20,19 @@ class SpecificityCase(unittest.TestCase):
         gt = np.zeros([1, 100, 100, 1])
         pr = np.zeros([1, 100, 100, 1])
         pr[0, 50:100, 50:100, 0] = 1.
-        assert_almost_equal(Specificity()(gt, pr), 1 - np.sum(pr) / np.size(gt))
+        assert_almost_equal(Specificity()(gt, pr), 0.75)
 
     def testHalf(self):
         gt = np.zeros([1, 100, 100, 1])
         pr = np.zeros([1, 100, 100, 1])
         pr[0, 75:100, 75:100, 0] = 1.
-        assert_almost_equal(Specificity()(gt, pr),  1 - np.sum(pr) / np.size(gt))
+        assert_almost_equal(Specificity()(gt, pr),  0.9375)
 
     def testFew(self):
         gt = np.zeros([1, 100, 100, 1])
         pr = np.zeros([1, 100, 100, 1])
         pr[0, 99:100, 99:100, 0] = 1.
-        assert_almost_equal(Specificity()(gt, pr),  1 - np.sum(pr) / np.size(gt))
+        assert_almost_equal(Specificity()(gt, pr),  0.9999)
 
     def testAllMatch(self):
         gt = np.ones([1, 100, 100, 1])
@@ -51,7 +50,8 @@ class SpecificityCase(unittest.TestCase):
         gt[0, 50:, 50:, 0] = 1.
         pr = np.zeros([1, 100, 100, 1])
         pr[0, :50, :50, 0] = 1.
-        assert_almost_equal(Specificity()(gt, pr), 1 - np.sum(pr) / (np.size(gt) - np.sum(gt)))
+        assert_almost_equal(Specificity()(gt, pr), 0.6666666)
+
 
 if __name__ == "__main__":
     unittest.main()

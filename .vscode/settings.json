@@ -1,0 +1,20 @@
+{
+    "editor.formatOnSave": true,
+    "python.pythonPath": "~/miniconda3/envs/segmenter/bin/python",
+    "python.linting.enabled": true,
+    "python.linting.mypyEnabled": true,
+    "python.linting.pep8Enabled": true,
+    "python.testing.unittestEnabled": true,
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "./src",
+        "-p",
+        "*_test.py"
+    ],
+    "python.testing.pytestEnabled": false,
+    "python.testing.nosetestsEnabled": false,
+    "python.formatting.provider": "autopep8",
+    "telemetry.enableCrashReporter": false,
+    "telemetry.enableTelemetry": false
+}

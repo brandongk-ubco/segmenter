@@ -6,27 +6,6 @@
 #SBATCH --cpus-per-task=2
 
 module load singularity
-export PYTHONUNBUFFERED=true
-
-if [ -z ${OUTDIR+x} ]; then
-  export OUTDIR="/scratch/${USER}/results/severstal/"
-fi
-
-if [ -z ${INDIR+x} ]; then
-  export INDIR="/scratch/${USER}/datasets/severstal/"
-fi
-
-if [ -z ${OUTFOLDER+x} ]; then
-  export OUTFOLDER="output"
-fi
-
-if [ -z ${COMMAND+x} ]; then
-  export COMMAND="train"
-fi
-
-mkdir -p "${OUTDIR}${OUTFOLDER}"
-
-echo "Using output directory ${OUTDIR}${OUTFOLDER}"
 
 singularity exec \
   -B ./src:/src \

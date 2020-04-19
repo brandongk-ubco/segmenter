@@ -1,3 +1,3 @@
-[submodule "datasets/kits/kits19"]
-	path = datasets/kits/kits19
+[submodule "dataloaders/kits/kits19"]
+	path = dataloaders/kits/kits19
 	url = https://github.com/neheller/kits19

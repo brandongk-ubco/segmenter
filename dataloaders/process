@@ -18,7 +18,7 @@ dataset_module = importlib.import_module(dataset_name)
 
 dataset = dataset_module.Dataset()
 
-outdir = os.path.join(dataset_dir, "out")
+outdir = os.path.join("..", "datasets", dataset_name, "out")
 os.makedirs(outdir, exist_ok=True)
 
 class_members = dataset.get_class_members()
@@ -26,12 +26,14 @@ classes = dataset.get_classes()
 
 for c in classes:
     assert c in class_members.keys(), "Class %s not defined in class members" % c
-    assert isinstance(c, str), "Class %s should be a string, but found %s" % (c, type(c))
+    assert isinstance(
+        c, str), "Class %s should be a string, but found %s" % (c, type(c))
 
 for c in class_members.keys():
     assert c in classes, "Class %s not defined in classes" % c
 
-class_counts = [len(class_members[c]["eval_instances"]) + len(class_members[c]["train_instances"]) for c in class_members.keys()]
+class_counts = [len(class_members[c]["eval_instances"]) +
+                len(class_members[c]["train_instances"]) for c in class_members.keys()]
 print("Class counts: %s" % dict(zip(classes, class_counts)))
 
 for num_folds in range(2, 21):
@@ -42,7 +44,8 @@ for num_folds in range(2, 21):
         }, outfile, indent=4)
 
 mean, std = dataset.process_images(
-    lambda image, mask, name: np.savez_compressed(os.path.join(outdir, name), image=image, mask=mask)
+    lambda image, mask, name: np.savez_compressed(
+        os.path.join(outdir, name), image=image, mask=mask)
 )
 
 print("Mean = {}".format(mean))

@@ -1,12 +1,10 @@
-import sys
-sys.path.append("..")
-
-from .Specificity import Specificity
-from .FallOut import FallOut
+from segmenter.metrics.Specificity import Specificity
+from segmenter.metrics.FallOut import FallOut
 
 from segmentation_models.metrics import FScore, Precision, Recall, IOUScore
 from segmentation_models.losses import DiceLoss, BinaryFocalLoss, binary_crossentropy, binary_focal_loss, jaccard_loss
-from loss import BinaryCrossentropy
+from segmenter.loss import BinaryCrossentropy
+
 
 def get_metrics(threshold, loss):
 
