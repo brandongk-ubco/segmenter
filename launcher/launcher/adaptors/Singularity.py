@@ -3,12 +3,12 @@ import os
 import subprocess
 
 
-class ComputeCanadaAdaptor(Adaptor):
+class Singularity(Adaptor):
 
     @staticmethod
     def arguments(parser):
         parser.add_argument_group(
-            'computecanada', 'Arguments for the Compute Canada Adaptor')
+            'singularity', 'Arguments for the Singularity Adaptor')
 
     @staticmethod
     def execute(task, args) -> None:

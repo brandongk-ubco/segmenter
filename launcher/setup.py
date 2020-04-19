@@ -18,7 +18,7 @@ setuptools.setup(
         "License :: UNLICENSED",
         "Operating System :: Ubuntu :: 18.04",
     ],
-    python_requires='>=3.8',
+    python_requires='>=3.6',
     entry_points={
         "console_scripts": [
             "launch = launcher.launch:launch"

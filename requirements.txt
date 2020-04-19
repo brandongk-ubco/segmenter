@@ -1,7 +1,6 @@
 tensorflow
 albumentations
 segmentation-models
-tensorflow-addons
 sklearn
 pandas
 pylint

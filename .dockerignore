@@ -1,2 +1,7 @@
 **
 !requirements.txt
+!launcher
+launcher/build
+launcher/dist
+launcher/**/__pycache__
+launcher/**/*.egg-info

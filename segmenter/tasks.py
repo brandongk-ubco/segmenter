@@ -10,9 +10,18 @@ from segmenter.helpers import hash
 from segmenter.train import train_fold
 
 
-class Train(Task):
+class BaseTask(Task):
 
-    name = 'train'
+    @staticmethod
+    def arguments(parser) -> None:
+        command_parser = parser.add_parser(
+            Train.name, help='Train a model.')
+        command_parser.add_argument("dataset", type=str,
+                                    help='the dataset to use when running the command.')
+
+    @staticmethod
+    def arguments_to_cli(args) -> str:
+        return args["dataset"]
 
     def __init__(self, args):
         self.args = args
@@ -33,15 +42,10 @@ class Train(Task):
         self.job_hash = hash(self.job_config)
         pprint.pprint(self.job_config)
 
-    @staticmethod
-    def arguments(parser) -> None:
-        command_parser = parser.add_parser(Train.name, help='Train a model.')
-        command_parser.add_argument("dataset", type=str,
-                                    help='the dataset to use when running the command.')
-        command_parser.add_argument("--data-dir", type=str,
-                                    default="/data", help='the directory which holds the dataset.')
-        command_parser.add_argument("--output-dir", type=str,
-                                    default="/output", help='the directory in which to output results.')
+
+class Train(BaseTask):
+
+    name = 'train'
 
     def execute(self) -> None:
         classes = [os.environ.get("CLASS")] if os.environ.get(

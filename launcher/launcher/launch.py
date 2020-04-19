@@ -24,7 +24,11 @@ def launch():
     parser = argparse.ArgumentParser(
         description='Run a task multiple times, controlled by envrironment variables.')
     parser.add_argument(
-        "--adaptor", type=Adaptors.argparse, default=ShellAdaptor, choices=list(Adaptors), help='the adaptor with which to run the task.')
+        "--adaptor", type=Adaptors.argparse, default="shell", choices=list(Adaptors), help='the adaptor with which to run the task.')
+    parser.add_argument("--data-dir", type=str,
+                        default="/data", help='the directory which holds the dataset.')
+    parser.add_argument("--output-dir", type=str,
+                        default="/output", help='the directory in which to output results.')
     subparsers = parser.add_subparsers(
         title='tasks', description='valid tasks', dest="task")
 
@@ -45,8 +49,9 @@ def launch():
     for adaptor in Adaptors:
         adaptor.value.arguments(parser)
     args = vars(parser.parse_args())
+    assert args["task"] is not None, "No task selected."
 
-    adaptor = args["adaptor"]
+    adaptor = args["adaptor"].value
     task = tasks[args["task"]]
 
     parallel_keys = [o[3:] for o in os.environ if o.upper().startswith("BY_")]

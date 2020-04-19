@@ -1,11 +1,11 @@
 from .Shell import ShellAdaptor
-from .ComputeCanada import ComputeCanadaAdaptor
+from .Docker import DockerAdaptor
 from enum import Enum
 
 
 class Adaptors(Enum):
     shell = ShellAdaptor
-    computecanada = ComputeCanadaAdaptor
+    docker = DockerAdaptor
 
     def __str__(self):
         return self.name
