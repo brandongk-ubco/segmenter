@@ -3,12 +3,13 @@ from segmentation_models import Unet as segmentations_unet
 from segmenter.activations import get_activation
 import tensorflow as tf
 from tensorflow.keras.regularizers import l1_l2
-from tensorflow.keras.layers import Input, Average, Add, Lambda, Activation
-from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, Lambda, Activation, Add
+from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.activations import linear, sigmoid
 from tensorflow.keras import backend as K
 import os
 from segmenter.helpers import logit
+from segmenter.aggregators import Aggregator
 
 
 def find_latest_weight(folder):
@@ -73,16 +74,17 @@ def get_model(image_size, job_config):
     return model
 
 
-def full_model(clazz,
-               modeldir,
-               job_config,
-               job_hash,
-               load_weights=True,
-               fold_activation="linear",
-               final_activation="sigmoid",
-               aggregator=Average):
+def full_model(clazz, modeldir, job_config, job_hash, aggregator):
 
     inputs = Input(shape=(None, None, 1))
+
+    weight_file = os.path.join(modeldir, job_hash, clazz,
+                               "{}.h5".format(aggregator.name()))
+    model_location = os.path.join(modeldir, job_hash, clazz,
+                                  "{}".format(aggregator.name()))
+
+    # if os.path.exists(model_location):
+    #     return load_model(model_location)
 
     models = []
 
@@ -101,12 +103,12 @@ def full_model(clazz,
             boost_fold_name += "" if boost_fold is None else "b{}".format(
                 boost_fold)
 
-            if load_weights:
-                best_weight = find_best_weight(
-                    os.path.join(modeldir, job_hash, clazz, boost_fold_name))
-                assert best_weight is not None, "Could not find weight for fold %s" % fold
-                print("Loading weight %s" % best_weight)
-                boost_fold_model.load_weights(best_weight)
+            best_weight = find_best_weight(
+                os.path.join(modeldir, job_hash, clazz, boost_fold_name))
+            assert best_weight is not None, "Could not find weight for fold %s" % fold
+            print("Loading weight %s" % best_weight)
+            boost_fold_model.load_weights(best_weight)
+
             boost_fold_model.trainable = False
             boost_fold_model._name = boost_fold_name
             boost_fold_model = boost_fold_model(inputs)
@@ -117,9 +119,11 @@ def full_model(clazz,
 
         fold_model = fold_models[0] if len(fold_models) == 1 else Add(
             name="{}_add".format(fold_name))(fold_models)
-        fold_model = Activation(fold_activation,
+
+        fold_model = Activation(aggregator.fold_activation(),
                                 name="{}_{}".format(
-                                    fold_name, fold_activation))(fold_model)
+                                    fold_name,
+                                    aggregator.fold_activation()))(fold_model)
         fold_model._name = fold_name
         models.append(fold_model)
 
@@ -128,8 +132,16 @@ def full_model(clazz,
     if len(models) == 1:
         out = models[0]
     else:
-        out = aggregator(name="aggregator")(models)
-    out = Activation(final_activation, name=final_activation)(out)
+        out = aggregator.layer()(name="aggregator")(models)
+    out = Activation(aggregator.final_activation(),
+                     name=aggregator.final_activation())(out)
     model = Model(inputs, out)
     model.summary()
+
+    print("Saving Weights")
+    model.save_weights(weight_file)
+    # print("Saving Model")
+    # with open(model_location, "w") as model_file:
+    #     model_file.write(model.to_json(indent=4))
+
     return model

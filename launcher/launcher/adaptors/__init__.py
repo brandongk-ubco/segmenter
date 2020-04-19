@@ -1,5 +1,5 @@
-from .Shell import ShellAdaptor
-from .Docker import DockerAdaptor
+from launcher.adaptors.Shell import ShellAdaptor
+from launcher.adaptors.Docker import DockerAdaptor
 from enum import Enum
 
 

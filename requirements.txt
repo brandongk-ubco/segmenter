@@ -4,6 +4,7 @@ segmentation-models
 sklearn
 pandas
 pylint
+pydocstyle
 mypy
 yapf
 matplotlib

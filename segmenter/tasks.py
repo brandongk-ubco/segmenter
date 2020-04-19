@@ -4,12 +4,12 @@ import pprint
 import os
 import sys
 from segmenter.config import get_config, validate_config
-from segmenter.aggregators import get_aggregators
 from launcher import Task
 import os
 from segmenter.helpers import hash
 from segmenter.train import train_fold
-from segmenter.evaluators import metric_evaluation
+from segmenter.models import full_model
+from segmenter.aggregators import get_aggregators
 import itertools
 
 
@@ -80,9 +80,9 @@ class ConfigureTask(BaseTask):
         pass
 
 
-class EvaluateTask(BaseTask):
+class ConstructModelTask(BaseTask):
 
-    name = 'evaluate'
+    name = 'construct'
 
     def __init__(self, args):
         super().__init__(args)
@@ -91,15 +91,18 @@ class EvaluateTask(BaseTask):
 
     @staticmethod
     def arguments(parser) -> None:
-        command_parser = parser.add_parser(EvaluateTask.name,
-                                           help='Evaluate a model.')
+        command_parser = parser.add_parser(ConstructModelTask.name,
+                                           help='Construct the model.')
         BaseTask.arguments(command_parser)
 
     def execute(self) -> None:
-        for aggregator in get_aggregators(self.job_config):
-            for clazz in self.classes:
-                metric_evaluation(clazz, self.job_config, self.job_hash,
-                                  self.data_dir, self.output_dir, aggregator)
+        for clazz in self.classes:
+            for aggregator in get_aggregators(self.job_config):
+                model = full_model(clazz,
+                                   self.output_dir,
+                                   self.job_config,
+                                   self.job_hash,
+                                   aggregator=aggregator)
 
 
 class TrainTask(BaseTask):
@@ -124,4 +127,4 @@ class TrainTask(BaseTask):
                            self.data_dir, self.output_dir)
 
 
-tasks = [ConfigureTask, EvaluateTask, TrainTask]
+tasks = [ConstructModelTask, ConfigureTask, TrainTask]
