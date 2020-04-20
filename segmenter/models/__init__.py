@@ -74,18 +74,8 @@ def get_model(image_size, job_config):
     return model
 
 
-def full_model(clazz, modeldir, job_config, job_hash, aggregator):
-
-    inputs = Input(shape=(None, None, 1))
-
-    weight_file = os.path.join(modeldir, job_hash, clazz,
-                               "{}.h5".format(aggregator.name()))
-    model_location = os.path.join(modeldir, job_hash, clazz,
-                                  "{}".format(aggregator.name()))
-
-    # if os.path.exists(model_location):
-    #     return load_model(model_location)
-
+def model_folds(inputs, clazz, modeldir, job_config, job_hash,
+                fold_activation):
     models = []
 
     folds = range(job_config["FOLDS"]) if job_config["FOLDS"] else [None]
@@ -98,7 +88,6 @@ def full_model(clazz, modeldir, job_config, job_hash, aggregator):
         fold_models = []
         fold_name = "all" if fold is None else "fold{}".format(fold)
         for boost_fold in boost_folds:
-            boost_fold_model = get_model((None, None, 1), job_config)
             boost_fold_name = fold_name
             boost_fold_name += "" if boost_fold is None else "b{}".format(
                 boost_fold)
@@ -106,40 +95,61 @@ def full_model(clazz, modeldir, job_config, job_hash, aggregator):
             best_weight = find_best_weight(
                 os.path.join(modeldir, job_hash, clazz, boost_fold_name))
             assert best_weight is not None, "Could not find weight for fold %s" % fold
+
+            boost_fold_model = get_model((None, None, 1), job_config)
             print("Loading weight %s" % best_weight)
             boost_fold_model.load_weights(best_weight)
-
             boost_fold_model.trainable = False
             boost_fold_model._name = boost_fold_name
             boost_fold_model = boost_fold_model(inputs)
             boost_fold_model = Lambda(
                 lambda x: logit(x),
                 name="{}_logit".format(boost_fold_name))(boost_fold_model)
+
             fold_models.append(boost_fold_model)
 
         fold_model = fold_models[0] if len(fold_models) == 1 else Add(
             name="{}_add".format(fold_name))(fold_models)
 
-        fold_model = Activation(aggregator.fold_activation(),
-                                name="{}_{}".format(
-                                    fold_name,
-                                    aggregator.fold_activation()))(fold_model)
-        fold_model._name = fold_name
-        models.append(fold_model)
+        fold_activation_name = "{}_{}".format(fold_name, fold_activation)
+        fold_model = Activation(fold_activation,
+                                name=fold_activation_name)(fold_model)
+        model = Model(inputs, fold_model)
+        model._name = fold_name
+        models.append(model)
+    return models
+
+
+def full_model(clazz, modeldir, job_config, job_hash, aggregator):
+
+    inputs = Input(shape=(None, None, 1))
+
+    weight_file = os.path.join(modeldir, job_hash, clazz,
+                               "{}.h5".format(aggregator.name()))
+    # model_location = os.path.join(modeldir, job_hash, clazz,
+    #                               "{}".format(aggregator.name()))
+
+    # if os.path.exists(model_location):
+    #     return load_model(model_location)
+    models = model_folds(inputs, clazz, modeldir, job_config, job_hash,
+                         aggregator.fold_activation())
 
     assert len(models) > 0, "No models found for class %s" % clazz
 
     if len(models) == 1:
-        out = models[0]
+        out = models[0](inputs)
     else:
-        out = aggregator.layer()(name="aggregator")(models)
+        out = aggregator.layer()(name="aggregator")(
+            [m(inputs) for m in models])
     out = Activation(aggregator.final_activation(),
                      name=aggregator.final_activation())(out)
     model = Model(inputs, out)
+    model._name = "{}_{}".format(clazz, aggregator.name())
     model.summary()
 
     print("Saving Weights")
     model.save_weights(weight_file)
+    # TODO: Saving and loading models in Keras is really hard, apparently...
     # print("Saving Model")
     # with open(model_location, "w") as model_file:
     #     model_file.write(model.to_json(indent=4))

@@ -43,17 +43,10 @@ class BaseTask(Task):
         self.job_config, self.job_hash = get_config(self.data_dir,
                                                     self.output_dir)
 
-        self.classes = self.job_config["CLASSES"] if os.environ.get(
-            "CLASS") is None else [os.environ.get("CLASS")]
-
-        if self.job_config["FOLDS"] is not None:
-            self.folds = ["fold{}".format(os.environ["FOLD"])
-                          ] if os.environ.get("FOLD") is not None else [
-                              "fold{}".format(o)
-                              for o in range(self.job_config["FOLDS"])
-                          ]
-        else:
-            self.folds = ["all"]
+        self.classes = self.job_config["CLASSES"]
+        self.folds = ["all"] if self.job_config["FOLDS"] is None else [
+            "fold{}".format(o) for o in range(self.job_config["FOLDS"])
+        ]
 
         if self.job_config["BOOST_FOLDS"] is not None:
             boost_folds = [
@@ -113,12 +106,39 @@ class TrainTask(BaseTask):
         super().__init__(args)
         pprint.pprint(self.job_config)
         validate_config(self.job_config)
+        if args["classes"] is not None:
+            self.classes = list(
+                filter(lambda c: c in args["classes"], self.classes))
+        if args["folds"] is not None:
+            self.folds = list(
+                filter(
+                    lambda c: int(c.split("b")[0].replace("fold", "")) in args[
+                        "folds"], self.folds))
+
+    @staticmethod
+    def arguments_to_cli(args) -> str:
+        return " ".join([
+            args["dataset"], "--folds {}".format(" ".join(args["folds"]))
+            if args["folds"] is not None else "",
+            "--classes {}".format(" ".join(args["classes"]))
+            if args["classes"] is not None else ""
+        ])
 
     @staticmethod
     def arguments(parser) -> None:
         command_parser = parser.add_parser(TrainTask.name,
                                            help='Train a model.')
         BaseTask.arguments(command_parser)
+        command_parser.add_argument("--folds",
+                                    type=int,
+                                    help='the folds to train.',
+                                    required=False,
+                                    nargs='+')
+        command_parser.add_argument("--classes",
+                                    type=str,
+                                    help='the clases to train',
+                                    required=False,
+                                    nargs='+')
 
     def execute(self) -> None:
         for clazz in self.classes:

@@ -3,15 +3,15 @@ from segmenter.augmentations import predict_augments
 from segmenter.callbacks import get_evaluation_callbacks
 import json
 import os
-from segmenter.evaluators.BaseEvaluator import BaseEvaluator
+from segmenter.evaluators.ThresholdAwareEvaluator import ThresholdAwareEvaluator
 
 
-class MetricEvaluator(BaseEvaluator):
-    def evaluate_threshold(self, threshold, outdir):
-        results = self.model.evaluate(x=self.dataset,
-                                      callbacks=get_evaluation_callbacks(),
-                                      verbose=1,
-                                      steps=self.num_images)
+class MetricEvaluator(ThresholdAwareEvaluator):
+    def evaluate_threshold(self, model, threshold, outdir):
+        results = model.evaluate(x=self.dataset,
+                                 callbacks=get_evaluation_callbacks(),
+                                 verbose=1,
+                                 steps=self.num_images)
 
         with open(os.path.join(outdir, "results.json"), "w") as results_json:
             results_dict = dict(

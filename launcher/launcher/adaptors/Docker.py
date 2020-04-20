@@ -6,20 +6,26 @@ import argparse
 
 
 class DockerAdaptor(Adaptor):
-
     @staticmethod
     def arguments(parser):
-        group = parser.add_argument_group(
-            'docker', 'Arguments for the Docker Adaptor')
-        group.add_argument("--image", type=str,
-                           default=os.path.basename(os.path.abspath(".")), help='image to run as.  Defaults to the directory name in which the command is run.')
-        group.add_argument("--gpus", type=bool, default=True,
+        group = parser.add_argument_group('docker',
+                                          'Arguments for the Docker Adaptor')
+        group.add_argument(
+            "--image",
+            type=str,
+            default=os.path.basename(os.path.abspath(".")),
+            help=
+            'image to run as.  Defaults to the directory name in which the command is run.'
+        )
+        group.add_argument("--gpus",
+                           type=bool,
+                           default=True,
                            help='Enable gpus in docker container.')
 
     @staticmethod
     def execute(task, args) -> None:
-        subprocess.check_call(
-            "docker build . -t {}".format(args["image"]), shell=True)
+        subprocess.check_call("docker build . -t {}".format(args["image"]),
+                              shell=True)
 
         data = {
             "path": os.path.abspath("."),
@@ -36,5 +42,5 @@ class DockerAdaptor(Adaptor):
         }
         command = "docker run -v {path}/{project}:/src/{project} -v {data_dir}:/data -v {output_dir}:/output -u {uid}:{gid} {gpus} --entrypoint {command} -e JOB_HASH={job_hash} -it {image} {args}".format(
             **data)
-
+        print(command)
         subprocess.check_call(command, shell=True)

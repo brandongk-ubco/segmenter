@@ -4,35 +4,35 @@ import pprint
 import os
 import sys
 from segmenter.config import validate_config
+from segmenter.aggregators import get_aggregators
 from launcher import Task
-from segmenter.evaluators import Evaluators
+from segmenter.visualizers import Visualizers
 from segmenter.tasks import BaseTask
 
 
-class EvaluateTask(BaseTask):
+class VisualizeTask(BaseTask):
 
-    name = 'evaluate'
+    name = 'visualize'
 
     def __init__(self, args):
         super().__init__(args)
         pprint.pprint(self.job_config)
         validate_config(self.job_config)
-        self.evaluator = args["evaluator"].value
+        self.visualizer = args["visualizer"].value
         if args["classes"] is not None:
             self.classes = list(
                 filter(lambda c: c in args["classes"], self.classes))
 
     @staticmethod
     def arguments(parser) -> None:
-        command_parser = parser.add_parser(EvaluateTask.name,
+        command_parser = parser.add_parser(VisualizeTask.name,
                                            help='Evaluate a model.')
         BaseTask.arguments(command_parser)
-
-        command_parser.add_argument("--evaluator",
-                                    type=Evaluators.argparse,
-                                    default="metric",
-                                    choices=list(Evaluators),
-                                    help='the evaluation to perform.')
+        command_parser.add_argument("--visualizer",
+                                    type=Visualizers.argparse,
+                                    default="auc",
+                                    choices=list(Visualizers),
+                                    help='the visualization to perform.')
         command_parser.add_argument("--classes",
                                     type=str,
                                     help='the clases to train',
@@ -42,15 +42,16 @@ class EvaluateTask(BaseTask):
     @staticmethod
     def arguments_to_cli(args) -> str:
         return " ".join([
-            args["dataset"], "--evaluator {}".format(args["evaluator"]),
+            args["dataset"], "--visualizer {}".format(args["visualizer"]),
             "--classes {}".format(" ".join(args["classes"]))
             if args["classes"] is not None else ""
         ])
 
     def execute(self) -> None:
         for clazz in self.classes:
-            self.evaluator(clazz, self.job_config, self.job_hash,
-                           self.data_dir, self.output_dir).execute()
+            indir = os.path.join(self.output_dir, self.job_hash, clazz,
+                                 "results")
+            self.visualizer(indir).execute()
 
 
-tasks = [EvaluateTask]
+tasks = [VisualizeTask]
