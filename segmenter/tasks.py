@@ -3,10 +3,9 @@ from typing import Dict
 import pprint
 import os
 import sys
-from segmenter.config import get_config, validate_config
+from segmenter.config import config_from_dir, config_from_env, validate_config
 from launcher import Task
 import os
-from segmenter.helpers import hash
 from segmenter.train import train_fold
 from segmenter.models import full_model
 from segmenter.aggregators import get_aggregators
@@ -20,6 +19,12 @@ class BaseTask(Task):
             "dataset",
             type=str,
             help='the dataset to use when running the command.')
+        parser.add_argument(
+            "--job-config",
+            type=str,
+            help=
+            'the configuration on which to run the command. Can also be set through the JOB_CONFIG environment variable.',
+            required=False)
 
     @staticmethod
     def arguments_to_cli(args) -> str:
@@ -31,6 +36,10 @@ class BaseTask(Task):
                                      args["dataset"])
         self.output_dir = os.path.join(os.path.abspath(args["output_dir"]),
                                        args["dataset"])
+        if args["job_config"] is not None:
+            os.environ["JOB_CONFIG"] = args["job_config"]
+        self.job_config, self.job_hash = config_from_dir(self.output_dir)
+
         try:
             import tensorflow as tf
             if os.environ.get("DEBUG", "false").lower() == "true":
@@ -39,9 +48,6 @@ class BaseTask(Task):
                 tf.get_logger().setLevel("ERROR")
         except ModuleNotFoundError:
             pass
-
-        self.job_config, self.job_hash = get_config(self.data_dir,
-                                                    self.output_dir)
 
         self.classes = self.job_config["CLASSES"]
         self.folds = ["all"] if self.job_config["FOLDS"] is None else [
@@ -57,20 +63,6 @@ class BaseTask(Task):
                 "".join(o)
                 for o in itertools.product(*[self.folds, boost_folds])
             ]
-
-
-class ConfigureTask(BaseTask):
-
-    name = 'configure'
-
-    @staticmethod
-    def arguments(parser) -> None:
-        command_parser = parser.add_parser(
-            ConfigureTask.name, help='Prepare configuration for job.')
-        BaseTask.arguments(command_parser)
-
-    def execute(self) -> None:
-        pass
 
 
 class ConstructModelTask(BaseTask):
@@ -147,4 +139,4 @@ class TrainTask(BaseTask):
                            self.data_dir, self.output_dir)
 
 
-tasks = [ConstructModelTask, ConfigureTask, TrainTask]
+tasks = [ConstructModelTask, TrainTask]

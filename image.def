@@ -1,22 +1,14 @@
 Bootstrap: docker
 From: tensorflow/tensorflow:latest-gpu-py3
 
+%files
+    ./requirements.txt
+    ./launcher
+
 %post
-  pip install albumentations segmentation-models
-
+  pip install -r requirements.txt
+  ls -al
+  ls -al launcher
+  pip install file:./launcher
+  rm -rf launcher
   mkdir /data
-
-  #Nvidia driver file mount paths
-  mkdir /nvlib /nvbin
-
-  #Add nvidia driver paths to the environment variables
-  echo "\n #Nvidia driver paths \n" >> /environment
-  echo 'export PATH="/nvbin:$PATH"' >> /environment
-  echo 'export LD_LIBRARY_PATH="/nvlib:$LD_LIBRARY_PATH"' >> /environment
-
-  #Add CUDA paths
-  echo "\n #Cuda paths \n" >> /environment
-  echo 'export CPATH="/usr/local/cuda/include:$CPATH"' >> /environment
-  echo 'export PATH="/usr/local/cuda/bin:$PATH"' >> /environment
-  echo 'export LD_LIBRARY_PATH="/usr/local/cuda/lib64:$LD_LIBRARY_PATH"' >> /environment
-  echo 'export CUDA_HOME="/usr/local/cuda"' >> /environment

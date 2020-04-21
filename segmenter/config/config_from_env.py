@@ -1,7 +1,7 @@
 import os
 import json
-from segmenter.helpers import hash, get_available_gpus
 from typing import Dict, Any
+from segmenter.config.hash_config import hash_config
 
 if os.environ.get("COMMAND", "train") == "evaluate":
     os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
@@ -126,8 +126,8 @@ def get_optimizer():
 # WARNING when setting precision!
 #  - larger images need higher precision to evaluate the Loss function.
 #    The sum can overflow and give all 0 for loss.
-def build_config(datadir: str):
-    return {
+def config_from_env(datadir: str):
+    config = {
         "BATCH_SIZE": get_batch_size(),
         "PATIENCE": int(os.environ.get("PATIENCE", 20)),
         "MIN_LR": float(os.environ.get("MIN_LR", 1e-8)),
@@ -149,33 +149,4 @@ def build_config(datadir: str):
         "RUN": int(os.environ.get("RUN", 1)),
     }
 
-
-def get_config(datadir: str, outdir: str):
-    job_config: Dict[str, Any] = {}
-
-    if "JOB_HASH" not in os.environ:
-        job_config = build_config(datadir)
-        job_hash = hash(job_config)
-    else:
-        job_hash = os.environ["JOB_HASH"]
-        config_location = os.path.join(outdir, job_hash, "config.json")
-        if os.path.isfile(config_location):
-            with open(config_location, "r") as config_file:
-                job_config = json.load(config_file)
-        else:
-            job_config = build_config(datadir)
-        assert hash(
-            job_config
-        ) == job_hash, "Expected job hash ({}) doesn't match actual ({})".format(
-            job_hash, hash(job_config))
-
-    os.environ["JOB_HASH"] = job_hash
-    return job_config, job_hash
-
-
-def validate_config(config: Dict[str, Any]):
-    num_gpus = get_available_gpus()
-    assert num_gpus == 0 or config["BATCH_SIZE"] == int(
-        config["BATCH_SIZE"] / num_gpus
-    ) * num_gpus, "Batch size must be an integer multiple of the number of gpus ({}).".format(
-        num_gpus)
+    return config, hash_config(config)

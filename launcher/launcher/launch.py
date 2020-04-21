@@ -72,8 +72,6 @@ def launch():
     for parallel_combination in itertools.product(*parallel_items):
         for i, k in enumerate(parallel_keys):
             os.environ[k] = parallel_combination[i]
-        ShellAdaptor.execute(tasks["configure"],
-                             args)  # FIXME: This is a hack!
         adaptor.execute(task, args)
 
 

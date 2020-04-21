@@ -27,3 +27,6 @@
 !commands.py
 !get_configs
 !is_complete
+!.tool-versions
+!setup
+!setup/singularity.sh

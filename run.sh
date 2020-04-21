@@ -9,12 +9,10 @@ module load singularity
 
 singularity exec \
   -B ./src:/src \
-  -B ~/nvidiadriver:/nvlib \
-  -B ~/nvidiadriver:/nvbin \
-  -B "$INDIR":/data \
+  --nv \
   -B "${OUTDIR}${OUTFOLDER}":/output \
-  --pwd /src image.sif \
-  python "${COMMAND}.py"
+  --pwd /src \
+  image.sif python "${COMMAND}.py"
 
 if [ $? -eq 123 ]; then
   echo "Restarting job."

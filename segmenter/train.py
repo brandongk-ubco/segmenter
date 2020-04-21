@@ -36,7 +36,7 @@ def train_fold(clazz,
     fold = int(fold.replace("fold", "")) if fold != "all" else None
     boost_fold = int(fold_name.split("b")[1]) if "b" in fold_name else None
 
-    print("Training {}".format(fold_name))
+    print("Training Class {} fold {}".format(clazz, fold_name))
 
     output_folder = os.path.join(outdir, job_hash, clazz, fold_name)
     print("Using directory %s" % output_folder)

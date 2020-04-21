@@ -38,9 +38,15 @@ class DockerAdaptor(Adaptor):
             "command": "launch",
             "args": "{} {}".format(task.name, task.arguments_to_cli(args)),
             "gpus": "--gpus all" if args["gpus"] else "",
-            "job_hash": os.environ["JOB_HASH"]
         }
-        command = "docker run -v {path}/{project}:/src/{project} -v {data_dir}:/data -v {output_dir}:/output -u {uid}:{gid} {gpus} --entrypoint {command} -e JOB_HASH={job_hash} -it {image} {args}".format(
+
+        if "JOB_CONFIG" in os.environ:
+            data["job_config"] = os.environ["JOB_CONFIG"]
+
+        if "job_config" in args:
+            data["job_config"] = args["job_config"]
+
+        command = "docker run -v {path}/{project}:/src/{project} -v {data_dir}:/data -v {output_dir}:/output -u {uid}:{gid} {gpus} --entrypoint {command} -e JOB_CONFIG={job_config} -it {image} {args}".format(
             **data)
         print(command)
         subprocess.check_call(command, shell=True)

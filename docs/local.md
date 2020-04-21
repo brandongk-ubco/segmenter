@@ -1,10 +1,28 @@
 This setup assumes you are running Ubuntu 18.04.  Note that Docker works on Windows, and using WSL you can run Ubuntu commands pretty easily.  However, it's currently not possible to setup Docker to pass through Nvidia drivers, so it's not possible to use GPUs.
 
+# Setting up NVidia
+
+## Install the NVidia Drivers and CUDA Toolkit
+
+By default, Ubuntu uses nouveau drivers, which won't use your NVidia GPU.  To install the NVidia drivers:
+
+```
+sudo add-apt-repository -y ppa:graphics-drivers/ppa
+sudo apt-get -y update
+sudo ubuntu-drivers autoinstall
+sudo apt-get -y install nvidia-cuda-toolkit gcc-6
+sudo apt-get -y dist-upgrade
+```
+
 # Setting up Docker and NVidia Docker
+
+This is the recommended way to run locally.  You can also setup and run through Singularity as described below.
 
 ## Install Docker
 
-Docker can be installed in many ways.  On Ubuntu, the easiest is through `sudo snap install docker`.  However, if you plan on using GPUs, it's better to install the apt-get package `docker-ce`:
+Docker can be installed in many ways.  On Ubuntu, the easiest is through `sudo snap install docker`.  However, if you plan on using GPUs, it's better to install the apt-get package `docker-ce`.
+
+### Install docker-ce using apt-get
 
 ```
 # From https://docs.docker.com/install/linux/docker-ce/ubuntu/
@@ -22,12 +40,18 @@ sudo add-apt-repository \
    $(lsb_release -cs) \
    stable"
 
-sudo apt-get update
+sudo apt-get updatesingularity-3.5.2.tar.gz
 
 sudo apt-get install docker-ce docker-ce-cli containerd.io
 ```
 
-Either way, you then need to add yourself to the Docker group and logout/login:
+### Install Docker using snap
+
+sudo snap install docker
+
+### Add user to the docker group.
+
+Whichever docker installation method you used, you then need to add yourself to the Docker group and logout/login:
 
 ```
 # From https://docs.docker.com/install/linux/linux-postinstall/
@@ -35,19 +59,7 @@ sudo groupadd docker
 sudo usermod -aG docker $USER
 ```
 
-## Install the NVidia Drivers
-
-By default, Ubuntu uses nouveau drivers, which won't use your NVidia GPU.  To install the NVidia drivers:
-
-```
-sudo add-apt-repository -y ppa:graphics-drivers/ppa
-sudo apt-get update
-sudo ubuntu-drivers autoinstall
-sudo apt-get -y install nvidia-cuda-toolkit gcc-6
-sudo apt-get -y dist-upgrade
-```
-
-## Install the NVidia Container Toolkit
+### Install the NVidia Container Toolkit
 
 The [NVIDIA Container Toolkit](https://github.com/NVIDIA/nvidia-docker) allows users to build and run GPU accelerated Docker containers.
 
@@ -61,52 +73,35 @@ sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
 sudo systemctl restart docker
 ```
 
-## Install Docker
-
-sudo snap install docker
-
-## See if it all works
+### See if it all works
 
 1. Restart the computer.
 2. `docker run --gpus all nvidia/cuda nvidia-smi`
 
 You should see all your NVidia GPUs listed.
 
-# Install VSCode
+# Setting up using Singularity
 
-`sudo snap install --classic code`
+## Install Singularity
 
-# Set up Miniconda (or Anaconda if you need a GUI)
+There is a [setup script](../setup/singularity.sh) for singularity for Ubuntu 18.04.  Running this script will install:
 
-```
-wget -O miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-chmod +x miniconda.sh
-./miniconda.sh -b
-rm miniconda.sh
-```
+- [Linux Brew](https://docs.brew.sh/Homebrew-on-Linux)
+- [asdf Version Manager](https://asdf-vm.com/)
+- [Golang](https://golang.org/)
+- [Singularity](https://sylabs.io/docs/)
 
-# Create the conda environment
+Hopefully it all works... it was tested on an Ubuntu 18.04 machine, but as there are lots of dependencies your installation may differ.
 
-`conda create -n segmenter python=3.8`
+## Login to Singularity remote
 
-# Install the requirements
+Create an account at [Singularity Cloud](https://cloud.sylabs.io/home) and generate a [token](https://cloud.sylabs.io/auth/tokens).
 
-`conda activate segmenter && pip install -r requirements.txt`
+`singularity remote login` and paste the token you created.
 
-# View the pydocs
+`singularity build --remote image.sif image.def`
 
-`pydoc -b`
+## Build the singularity container
 
-# Install Docker Dependencies
 
-`docker build . -t segmenter`
-
-# Load the Docker Container
-
-```docker run \
-    -v $(pwd)/src:/src \
-    -v $(pwd)/datasets/severstal/out:/data \
-    -v $(pwd)/output:/output \
-    --gpus all \
-    -u $(id -u):$(id -g) \
-    -it --entrypoint bash segmenter```
+## See if it all works
