@@ -5,16 +5,13 @@
 #SBATCH --mem=16G
 #SBATCH --cpus-per-task=2
 
-module load singularity
+if command -v module; then
+  module load singularity
+fi
 
-singularity exec \
-  -B ./src:/src \
-  --nv \
-  -B "${OUTDIR}${OUTFOLDER}":/output \
-  --pwd /src \
-  image.sif python "${COMMAND}.py"
+launch --adaptor singularity "$@"
 
 if [ $? -eq 123 ]; then
   echo "Restarting job."
-  sbatch ${BASH_SOURCE[0]}
+  sbatch ${BASH_SOURCE[0]} "$@"
 fi

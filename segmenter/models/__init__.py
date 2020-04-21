@@ -87,7 +87,6 @@ def model_folds(inputs, clazz, modeldir, job_config, job_hash,
     for fold in folds:
         fold_models = []
         fold_name = "all" if fold is None else "fold{}".format(fold)
-        fold_name = "class{}_{}".format(clazz, fold_name)
         for boost_fold in boost_folds:
             boost_fold_name = fold_name
             boost_fold_name += "" if boost_fold is None else "b{}".format(

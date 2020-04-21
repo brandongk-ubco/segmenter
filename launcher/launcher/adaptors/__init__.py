@@ -1,6 +1,6 @@
-from launcher.adaptors.Shell import ShellAdaptor
-from launcher.adaptors.Docker import DockerAdaptor
-from launcher.adaptors.Singularity import SingularityAdaptor
+from launcher.adaptors.ShellAdaptor import ShellAdaptor
+from launcher.adaptors.DockerAdaptor import DockerAdaptor
+from launcher.adaptors.SingularityAdaptor import SingularityAdaptor
 from enum import Enum
 
 

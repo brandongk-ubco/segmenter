@@ -46,7 +46,7 @@ class DockerAdaptor(Adaptor):
         if "job_config" in args:
             data["job_config"] = args["job_config"]
 
-        command = "docker run -v {path}/{project}:/src/{project} -v {data_dir}:/data -v {output_dir}:/output -u {uid}:{gid} {gpus} --entrypoint {command} -e JOB_CONFIG={job_config} -it {image} {args}".format(
+        command = "docker run -v {path}/{project}:/src/{project} -v {data_dir}:/data -v {output_dir}:/output -u {uid}:{gid} {gpus} --entrypoint {command} -e JOB_CONFIG={job_config} -it {image} --data-dir=/data --output-dir=/output {args}".format(
             **data)
         print(command)
         subprocess.check_call(command, shell=True)

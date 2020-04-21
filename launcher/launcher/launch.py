@@ -27,14 +27,18 @@ def launch():
                         default="shell",
                         choices=list(Adaptors),
                         help='the adaptor with which to run the task.')
-    parser.add_argument("--data-dir",
-                        type=str,
-                        default="/data",
-                        help='the directory which holds the dataset.')
-    parser.add_argument("--output-dir",
-                        type=str,
-                        default="/output",
-                        help='the directory in which to output results.')
+    parser.add_argument(
+        "--data-dir",
+        type=str,
+        help=
+        'the directory which holds the dataset.  Can also be set through the DATA_DIR environment variable.',
+        required=False)
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        help=
+        'the directory in which to output results. Can also be set through the OUTPUT_DIR environment variable.',
+        required=False)
     subparsers = parser.add_subparsers(title='tasks',
                                        description='valid tasks',
                                        dest="task")
@@ -56,8 +60,13 @@ def launch():
     for adaptor in Adaptors:
         adaptor.value.arguments(parser)
     args = vars(parser.parse_args())
+    if args["data_dir"] is None and "DATA_DIR" in os.environ:
+        args["data_dir"] = os.environ["DATA_DIR"]
+    if args["output_dir"] is None and "OUTPUT_DIR" in os.environ:
+        args["output_dir"] = os.environ["OUTPUT_DIR"]
+    assert args["data_dir"] is not None, "No data directory selected."
+    assert args["output_dir"] is not None, "No output directory selected."
     assert args["task"] is not None, "No task selected."
-
     adaptor = args["adaptor"].value
     task = tasks[args["task"]]
 

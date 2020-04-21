@@ -11,6 +11,9 @@ from segmenter.models import full_model
 from segmenter.aggregators import get_aggregators
 import itertools
 
+if os.environ.get("DEBUG", "false").lower() != "true":
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 
 class BaseTask(Task):
     @staticmethod

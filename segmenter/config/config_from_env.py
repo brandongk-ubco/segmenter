@@ -3,11 +3,6 @@ import json
 from typing import Dict, Any
 from segmenter.config.hash_config import hash_config
 
-if os.environ.get("COMMAND", "train") == "evaluate":
-    os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
-if os.environ.get("DEBUG", "false").lower() != "true":
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-
 
 def get_batch_size():
     BATCH_SIZE = int(os.environ.get("BATCH_SIZE", 2))

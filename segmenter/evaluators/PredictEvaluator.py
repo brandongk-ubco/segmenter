@@ -23,14 +23,7 @@ class PredictEvaluator(ThresholdAwareEvaluator):
                 if image.shape[2] == 1:
                     image = image[:, :, 0]
 
-                boolean_mask = mask.astype(bool)
-                boolean_prediction = thresholded_prediction.astype(bool)
-
-                intr = np.sum(np.logical_and(boolean_prediction, boolean_mask))
-                union = np.sum(np.logical_or(boolean_prediction, boolean_mask))
-                iou = intr / union
-
-                name = "prediction-{}-{:.4f}".format(name, iou)
+                name = "prediction-{}".format(name)
 
                 np.savez_compressed(os.path.join(outdir, name),
                                     image=image,
