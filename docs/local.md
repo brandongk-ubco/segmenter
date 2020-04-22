@@ -151,7 +151,9 @@ There is a [setup script](../setup/singularity.sh) for singularity for Ubuntu 18
 
 Hopefully it all works... it was tested on an Ubuntu 18.04 machine, but as there are lots of dependencies your installation may differ.
 
-## Login to Singularity remote
+## Login to Singularity remote (optional)
+
+This section is only needed if you want to build remotely.  You can build locally with either `sudo` or `fakeroot` and not login remotely.
 
 Create an account at [Singularity Cloud](https://cloud.sylabs.io/home) and generate a [token](https://cloud.sylabs.io/auth/tokens).
 
@@ -160,7 +162,7 @@ Create an account at [Singularity Cloud](https://cloud.sylabs.io/home) and gener
 
 ## Build the singularity container
 
-`singularity build --remote image.sif image.def`
+`singularity build --fakeroot image.sif image.def`
 
 ## See if it all works
 

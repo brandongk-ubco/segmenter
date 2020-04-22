@@ -3,6 +3,8 @@
     // for the documentation about the extensions.json format
     "recommendations": [
         "ms-python.python",
-        "eamodio.gitlens"
+        "eamodio.gitlens",
+        "onnovalkering.vscode-singularity",
+        "ms-azuretools.vscode-docker"
     ]
 }

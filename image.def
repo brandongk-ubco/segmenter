@@ -7,8 +7,6 @@ From: tensorflow/tensorflow:latest-gpu-py3
 
 %post
   pip install -r requirements.txt
-  ls -al
-  ls -al launcher
   pip install file:./launcher
   rm -rf launcher
   mkdir /data
