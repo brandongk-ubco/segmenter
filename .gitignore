@@ -24,9 +24,11 @@
 **/__pycache__
 !.vscode
 !.vscode/settings.json
+!.vscode/extensions.json
 !commands.py
 !get_configs
 !is_complete
 !.tool-versions
 !setup
 !setup/singularity.sh
+!setup/*.deb

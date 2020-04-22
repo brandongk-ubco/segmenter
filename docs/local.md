@@ -1,5 +1,31 @@
 This setup assumes you are running Ubuntu 18.04.  Note that Docker works on Windows, and using WSL you can run Ubuntu commands pretty easily.  However, it's currently not possible to setup Docker to pass through Nvidia drivers, so it's not possible to use GPUs.
 
+# Install basics
+
+```
+sudo apt-get -y update
+sudo apt-get -y install build-essential git
+```
+
+# Set up Miniconda (or Anaconda if you need a GUI)
+
+```
+wget -O miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+chmod +x miniconda.sh
+./miniconda.sh -b
+rm miniconda.sh
+~/miniconda3/bin/conda init
+```
+
+# Create the conda environment
+
+`conda create -n segmenter python=3.6`
+
+# Install the requirements
+
+`conda activate segmenter && pip install -r requirements.txt`
+
+
 # Setting up NVidia
 
 ## Install the NVidia Drivers and CUDA Toolkit
@@ -7,11 +33,27 @@ This setup assumes you are running Ubuntu 18.04.  Note that Docker works on Wind
 By default, Ubuntu uses nouveau drivers, which won't use your NVidia GPU.  To install the NVidia drivers:
 
 ```
+# Install NVidia Drivers
 sudo add-apt-repository -y ppa:graphics-drivers/ppa
 sudo apt-get -y update
 sudo ubuntu-drivers autoinstall
-sudo apt-get -y install nvidia-cuda-toolkit gcc-6
-sudo apt-get -y dist-upgrade
+
+# Install The CUDA Toolkit (File in setup directory)
+sudo dpkg -i cuda-repo-ubuntu1804-10-2-local-10.2.89-440.33.01_1.0-1_amd64.deb
+sudo apt-key add /var/cuda-repo-10-2-local-10.2.89-440.33.01/7fa2af80.pub
+sudo apt-get update
+sudo apt-get -y install cuda
+
+# Install tensorrt (File in setup directory)
+sudo dpkg -i nv-tensorrt-repo-ubuntu1804-cuda10.2-trt7.0.0.11-ga-20191216_1-1_amd64.deb
+sudo apt-key add /var/nv-tensorrt-repo-cuda10.2-trt7.0.0.11-ga-20191216/7fa2af80.pub
+sudo apt-get update
+sudo apt-get install -y tensorrt
+sudo apt-get install -y python3-libnvinfer-dev
+sudo apt-get install -y uff-converter-tf
+
+# Install cudnn (File in setup directory)
+sudo dpkg -i libcudnn7_7.6.5.32-1+cuda10.2_amd64.deb
 ```
 
 # Setting up Docker and NVidia Docker
@@ -26,8 +68,8 @@ Docker can be installed in many ways.  On Ubuntu, the easiest is through `sudo s
 
 ```
 # From https://docs.docker.com/install/linux/docker-ce/ubuntu/
-sudo apt-get update
-sudo apt-get install \
+sudo apt-get -y update
+sudo apt-get -y install \
     apt-transport-https \
     ca-certificates \
     curl \
@@ -40,9 +82,9 @@ sudo add-apt-repository \
    $(lsb_release -cs) \
    stable"
 
-sudo apt-get updatesingularity-3.5.2.tar.gz
+sudo apt-get update
 
-sudo apt-get install docker-ce docker-ce-cli containerd.io
+sudo apt-get -y install docker-ce docker-ce-cli containerd.io
 ```
 
 ### Install Docker using snap
@@ -59,13 +101,15 @@ sudo groupadd docker
 sudo usermod -aG docker $USER
 ```
 
+Note that you will need to login/logout or restart for the group addition to take effect.
+
 ### Install the NVidia Container Toolkit
 
 The [NVIDIA Container Toolkit](https://github.com/NVIDIA/nvidia-docker) allows users to build and run GPU accelerated Docker containers.
 
 ```
 # From https://github.com/NVIDIA/nvidia-docker
-distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+export distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
 curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
 curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
 
@@ -99,9 +143,11 @@ Create an account at [Singularity Cloud](https://cloud.sylabs.io/home) and gener
 
 `singularity remote login` and paste the token you created.
 
-`singularity build --remote image.sif image.def`
 
 ## Build the singularity container
 
+`singularity build --remote image.sif image.def`
 
 ## See if it all works
+
+`singularity exec --nv image.sif nvidia-smi`

@@ -1,24 +1,28 @@
+# Install Git lfs
+
+`curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash`
+`sudo apt-get install git-lfs`
+`git lfs install`
+
 # Install VSCode
 
 `sudo snap install --classic code`
 
-# Set up Miniconda (or Anaconda if you need a GUI)
+# Install NVidia Dependencies
 
-```
-wget -O miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-chmod +x miniconda.sh
-./miniconda.sh -b
-rm miniconda.sh
-```
+Do we need these?
+- TensorRT
+- cuDNN
+- PyCUDA
 
-# Create the conda environment
-
-`conda create -n segmenter python=3.6`
-
-# Install the requirements
-
-`conda activate segmenter && pip install -r requirements.txt`
+`https://docs.nvidia.com/deeplearning/sdk/tensorrt-install-guide/index.html`
+`pip install 'pycuda>=2019.1.1'`
 
 # View the pydocs
 
 `pydoc -b`
+
+# Optional Installs
+
+ZSH - ` sudo apt-get install -y zsh && sudo usermod -s /usr/bin/zsh $(whoami)`
+Oh My ZSH - `sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"`

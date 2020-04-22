@@ -5,6 +5,7 @@ sklearn
 pandas
 pylint
 pydocstyle
+pycodestyle
 mypy
 yapf
 matplotlib

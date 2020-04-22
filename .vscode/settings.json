@@ -10,7 +10,7 @@
     "python.testing.unittestArgs": [
         "-v",
         "-s",
-        "./src",
+        "./segmenter",
         "-p",
         "*_test.py"
     ],

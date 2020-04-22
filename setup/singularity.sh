@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -euo pipefail
+
 # FROM: https://sylabs.io/guides/3.5/user-guide/quick_start.html#quick-installation-steps
 
 # Install GO through asdf
@@ -8,17 +10,11 @@
 sudo apt-get -y update
 sudo apt-get -y install build-essential curl file git
 
-test -d ~/.linuxbrew && eval $(~/.linuxbrew/bin/brew shellenv)
-test -d /home/linuxbrew/.linuxbrew && eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)
-test -r ~/.bash_profile && echo "eval \$($(brew --prefix)/bin/brew shellenv)" >>~/.bash_profile
-echo "eval \$($(brew --prefix)/bin/brew shellenv)" >>~/.profile
-
 # Install asdf version manager
-if ! brew list asdf; then
-    brew install asdf
-else
-    brew upgrade asdf
-fi
+git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.7.8
+
+# NOTE: You may need to add this to your path as well.
+export ASDF_DIR=$(brew --prefix asdf)
 
 # Add asdf go plugin
 asdf plugin-add golang https://github.com/kennyp/asdf-golang.git
@@ -51,4 +47,4 @@ sudo make -C builddir
 sudo make -C builddir install
 cd -
 sudo rm -rf singularity
-rm ingularity-${SINGULARITY_VERSION}.tar.gz
+rm singularity-*.tar.gz
