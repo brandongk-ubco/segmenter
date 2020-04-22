@@ -33,27 +33,42 @@ rm miniconda.sh
 By default, Ubuntu uses nouveau drivers, which won't use your NVidia GPU.  To install the NVidia drivers:
 
 ```
+
+#Make sure no NVidia or CUDA Drivers are installed
+dpkg -l | grep nvidia | awk '{print $2}' | xargs -n1 sudo apt-get purge -y
+dpkg -l | grep cuda | awk '{print $2}' | xargs -n1 sudo apt-get purge -y
+
 # Install NVidia Drivers
 sudo add-apt-repository -y ppa:graphics-drivers/ppa
 sudo apt-get -y update
 sudo ubuntu-drivers autoinstall
 
-# Install The CUDA Toolkit (File in setup directory)
-sudo dpkg -i cuda-repo-ubuntu1804-10-2-local-10.2.89-440.33.01_1.0-1_amd64.deb
-sudo apt-key add /var/cuda-repo-10-2-local-10.2.89-440.33.01/7fa2af80.pub
-sudo apt-get update
-sudo apt-get -y install cuda
+#NOTE: It is possible to install nvidia-cuda-toolkit here, but I experienced issues with Tensorflow.
+#      I found it better to download the files from Nvidia Developer directly and install here.
+# NOTE: CUDA 10.2 is available, but Tensorflow 2.1 does not play nice with it.  For now, use CUDA 10.1.
 
-# Install tensorrt (File in setup directory)
-sudo dpkg -i nv-tensorrt-repo-ubuntu1804-cuda10.2-trt7.0.0.11-ga-20191216_1-1_amd64.deb
-sudo apt-key add /var/nv-tensorrt-repo-cuda10.2-trt7.0.0.11-ga-20191216/7fa2af80.pub
+# Install The CUDA Toolkit
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-ubuntu1804.pin
+sudo mv cuda-ubuntu1804.pin /etc/apt/preferences.d/cuda-repository-pin-600
+sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
+sudo add-apt-repository "deb http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/ /"
 sudo apt-get update
-sudo apt-get install -y tensorrt
-sudo apt-get install -y python3-libnvinfer-dev
-sudo apt-get install -y uff-converter-tf
+sudo apt-get -y install cuda-10-1
 
-# Install cudnn (File in setup directory)
-sudo dpkg -i libcudnn7_7.6.5.32-1+cuda10.2_amd64.deb
+# Install cuDNN
+# NOTE: This needs to be downloaded - https://developer.nvidia.com/rdp/cudnn-download
+sudo dpkg -i libcudnn7_7.6.5.32-1+cuda10.1_amd64.deb
+sudo dpkg -i libcudnn7-dev_7.6.5.32-1+cuda10.1_amd64.deb
+
+# Install tensorrt
+# NOTE - This needs to be downloaded - https://developer.nvidia.com/nvidia-tensorrt-6x-download
+sudo dpkg -i nv-tensorrt-repo-ubuntu1804-cuda10.1-trt6.0.1.5-ga-20190913_1-1_amd64.deb
+sudo apt-key add /var/nv-tensorrt-repo-cuda10.1-trt6.0.1.5-ga-20190913/7fa2af80.pub
+sudo apt-get update
+sudo apt-get install -y --no-install-recommends libnvinfer6=6.0.1-1+cuda10.1 libnvinfer-dev=6.0.1-1+cuda10.1 libnvinfer-plugin6=6.0.1-1+cuda10.1
+sudo apt-get install -y tensorrt python3-libnvinfer-dev uff-converter-tf
+
+# NOTE: You can delete the .deb files after you are done with them.
 ```
 
 # Setting up Docker and NVidia Docker
