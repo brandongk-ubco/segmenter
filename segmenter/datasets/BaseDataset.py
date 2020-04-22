@@ -1,8 +1,11 @@
 from math import sqrt
 import numpy as np
-from DatasetValidator import DatasetValidator
+from segmenter.datasets.DatasetValidator import DatasetValidator
+from typing import Dict, List
+from abc import abstractmethod, ABCMeta
 
-class BaseDataset:
+
+class BaseDataset(metaclass=ABCMeta):
     """
     A base class for creating datasets.  Your class should subclass this class.
     You may need to append this module into the system path before importing
@@ -15,8 +18,27 @@ class BaseDataset:
     """
 
     validator = DatasetValidator()
+    name = ""
 
-    # These need to be overriden by your base class.
+    @classmethod
+    def __subclasshook__(cls, subclass):
+        return (
+            hasattr(subclass, 'get_classes') and callable(subclass.get_classes)
+            and hasattr(subclass, 'get_class_members')
+            and callable(subclass.get_class_members)
+            and hasattr(subclass, 'iter_instances')
+            and callable(subclass.iter_instances)
+            and hasattr(subclass, 'get_name') and callable(subclass.get_name)
+            and hasattr(subclass, 'get_image') and callable(subclass.get_image)
+            and hasattr(subclass, 'get_masks') and callable(subclass.get_masks)
+            and hasattr(subclass, 'enhance_image')
+            and callable(subclass.enhance_image)
+            and hasattr(subclass, 'get_class_members')
+            and callable(subclass.get_class_members)
+            and hasattr(subclass, 'get_class_members')
+            and callable(subclass.get_class_members))
+
+    @abstractmethod
     def get_classes(self):
         """
         Defines the classes this dataset uses.
@@ -28,9 +50,10 @@ class BaseDataset:
 
         :return: returns an ordered array of the classes in this dataset.
         """
-        pass
+        raise NotImplementedError
 
-    def get_class_members(self):
+    @abstractmethod
+    def get_class_members(self) -> Dict:
         """
         Defines which members exist in which class.
 
@@ -61,8 +84,9 @@ class BaseDataset:
         ```
         :return: an dictionary containing which members are in which class, and which should be used for training or evaluation..
         """
-        pass
+        raise NotImplementedError
 
+    @abstractmethod
     def iter_instances(self):
         """
         Creates a python generator that can be used to iterate over all instances in the dataset.
@@ -71,9 +95,10 @@ class BaseDataset:
 
         :return: a python generator that iterates over each instance.
         """
-        pass
+        raise NotImplementedError
 
-    def get_name(self, instance):
+    @abstractmethod
+    def get_name(self, instance) -> str:
         """
         Converts a representation produced by iter_instances into the representative name.
 
@@ -83,18 +108,20 @@ class BaseDataset:
         :instance: The instance representation as produced by iter_instances
         :return: a String of instance name.
         """
-        pass
+        raise NotImplementedError
 
-    def get_image(self, instance):
+    @abstractmethod
+    def get_image(self, instance) -> np.ndarray:
         """
         Given an instance produced by iter_instances, loads the image into a numpy array.
 
         :instance: The instance representation as produced by iter_instances
         :return: a numpy array of the image.
         """
-        pass
+        raise NotImplementedError
 
-    def get_masks(self, instance):
+    @abstractmethod
+    def get_masks(self, instance) -> np.ndarray:
         """
         Given an instance produced by iter_instances, load the mask into a numpy array.
 
@@ -104,9 +131,11 @@ class BaseDataset:
         :instance: The instance representation as produced by iter_instances
         :return: a numpy array of the masks.
         """
-        pass
+        raise NotImplementedError
 
-    def enhance_image(self, image):
+    #Done overriding.
+
+    def enhance_image(self, image) -> np.ndarray:
         """
         Given an image, performs and enhancement or processing required and returns the result.
 
@@ -120,9 +149,7 @@ class BaseDataset:
         """
         return image
 
-    #Done overriding.
-
-    def chunkify(self, lst,n):
+    def chunkify(self, lst, n) -> List:
         """
         Given a list and a number of chunks, returns a list of lists of chunks.
         Chunks will be split as evenly as possible.
@@ -145,14 +172,20 @@ class BaseDataset:
         """
         chunked = {}
         for clazz, members in class_members.items():
-            chunked[str(clazz)] = self.chunkify(members["train_instances"], num_folds)
+            chunked[str(clazz)] = self.chunkify(members["train_instances"],
+                                                num_folds)
         folds = []
         for fold_number in range(num_folds):
             fold = {}
             for clazz, members in chunked.items():
                 fold[clazz] = {
-                    "val": members[fold_number],
-                    "train": sum([members[i] for i in range(len(members)) if i != fold_number], [])
+                    "val":
+                    members[fold_number],
+                    "train":
+                    sum([
+                        members[i]
+                        for i in range(len(members)) if i != fold_number
+                    ], [])
                 }
             folds.append(fold)
 
@@ -175,7 +208,7 @@ class BaseDataset:
             name = self.get_name(instance)
             image = self.get_image(instance)
 
-            #Validate both before and after enhancing the image
+            # Validate both before and after enhancing the image
             self.validator.validate(image, masks, name)
             image = self.enhance_image(image)
             self.validator.validate(image, masks, name, print_output=False)

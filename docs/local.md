@@ -33,7 +33,6 @@ rm miniconda.sh
 By default, Ubuntu uses nouveau drivers, which won't use your NVidia GPU.  To install the NVidia drivers:
 
 ```
-
 #Make sure no NVidia or CUDA Drivers are installed
 dpkg -l | grep nvidia | awk '{print $2}' | xargs -n1 sudo apt-get purge -y
 dpkg -l | grep cuda | awk '{print $2}' | xargs -n1 sudo apt-get purge -y

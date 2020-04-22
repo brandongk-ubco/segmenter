@@ -9,3 +9,7 @@ pycodestyle
 mypy
 yapf
 matplotlib
+scikit-image
+deepdiff
+deepdiff[murmur]
+nibabel
