@@ -38,6 +38,16 @@ Then either logout/login or `source ~/.bashrc` to load conda.  You should see `(
 
 `export SLURM_ACCOUNT=def-<SUPERVISOR>`
 
+You can also add envvars for data directories:
+
+```
+export DATA_DIR=/scratch/<USER>/datasets/
+export OUTPUT_DIR=/scratch/<USER>/results/
+export PROJECT_DIR=/project/def-<SUPERVISOR>/<USER>/segmenter/
+```
+
+Finally, it's also good to add `module load singularity` so that it's not forgotten.
+
 Then either logout/login or `source ~/.bashrc`.
 
 # Checkout the Git Project on Compute Canada
@@ -59,37 +69,6 @@ You can't install xclip on compute canada servers, so just open the file and cop
 1. `cd /project/def-<SUPERVISOR>/<USER>`
 2. `git clone git@github.com:brandongk60/segmenter.git`
 
-# Setup the NVIDIA Drivers on the cluster
-
-## Discover the NVIDIA Driver version of the cluster
-
-In the cloned repo, there is a file `nvidia.sh`.  We need to schedule that file as a job to view the current nvidia driver version of the cluster.
-
-1. `cd /project/def-<SUPERVISOR>/<USER>/segmenter`
-2. `sbatch nvidia.sh`  This should schedule a job; you should see output like `Submitted batch job 29940889`
-3. Wait for the job to complete.  You can see the currently scheduled jobs by `squeue -u $USER`.  If the job list is empty, the job has already completed.
-4. `cat ~/nvidia-smi.log`.  You should see output like (where the driver version in this example is `418.87.00`):
-
-```
-Sat Apr  4 13:14:20 2020       
-+-----------------------------------------------------------------------------+
-| NVIDIA-SMI 418.87.00    Driver Version: 418.87.00    CUDA Version: 10.1     |
-|-------------------------------+----------------------+----------------------+
-| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
-| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
-|===============================+======================+======================|
-|   0  Tesla P100-PCIE...  On   | 00000000:04:00.0 Off |                    0 |
-| N/A   34C    P0    25W / 250W |      0MiB / 12198MiB |      0%      Default |
-+-------------------------------+----------------------+----------------------+
-                                                                               
-+-----------------------------------------------------------------------------+
-| Processes:                                                       GPU Memory |
-|  GPU       PID   Type   Process name                             Usage      |
-|=============================================================================|
-|  No running processes found                                                 |
-+-----------------------------------------------------------------------------+
-```
-
 ## Extract the nvidia driver version
 
 Hopefully the .run file for NVidia Driver version exists in this repo already.  If it does not, you will need to find it and download it.  Once it's in the repo:
@@ -97,6 +76,15 @@ Hopefully the .run file for NVidia Driver version exists in this repo already.  
 1. `cd /project/def-<SUPERVISOR>/<USER>/segmenter/nvidia-drivers`
 2. `git lfs pull`
 3. `./extract_nvdriver.sh <VERSION> ~/nvidiadriver`
+
+## Login to Singularity remote
+
+This section is only needed if you want to build remotely.  You can build locally with either `sudo` or `fakeroot` and not login remotely.
+
+Create an account at [Singularity Cloud](https://cloud.sylabs.io/home) and generate a [token](https://cloud.sylabs.io/auth/tokens).
+
+`singularity remote login` and paste the token you created.
+
 
 # Build the Singularity image
 
@@ -110,5 +98,5 @@ You should have created a [dataset](dataset.md) and processed it.
 
 The dataset should go on the `/scratch` drive.  The scratch drive has faster i/o, but is not persisted.  If the files are stale there for a certain number of weeks, they get deleted.  On your local machine:
 
-1. `cd segmenter/datasets/<DATASET_NAME>/out`
-2. `rsync --progress --delete . <USER>@<CLUSTER>.computecanada.ca:/scratch/<USER>/datasets/<DATASET_NAME>`
+1. `cd segmenter/datasets/`
+2. `rsync --progress --delete . <USER>@<CLUSTER>.computecanada.ca:/scratch/<USER>/datasets/`

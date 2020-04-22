@@ -12,14 +12,4 @@ The dataset module should export the dataset processor as `Dataset`.  This shoul
 
 The dataset processor should subclass the [BaseDataset.py](../datasets/BaseDataset.py) file.
 
-```
-import sys
-sys.path.append("..")
-
-from BaseDataset import BaseDataset
-
-class MyDataset(BaseDataset):
-    ...
-```
-
 There are functions which need to be overridden in your dataset.  They are described using inline documentation in [BaseDataset.py](../datasets/BaseDataset.py)
