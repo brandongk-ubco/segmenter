@@ -12,7 +12,7 @@ from segmenter.optimizers import get_optimizer
 from segmenter.augmentations import train_augments, val_augments
 from segmenter.layers import AddSingleGradient
 from segmenter.data import augmented_generator
-from segmenter.helpers import logit
+from segmenter.helpers.logit import logit
 import sys
 import json
 import os

@@ -9,3 +9,4 @@ pydocstyle
 pycodestyle
 mypy
 yapf
+git+git://github.com/brandongk60/launcher.git#egg=launcher

@@ -8,7 +8,7 @@ from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.activations import linear, sigmoid
 from tensorflow.keras import backend as K
 import os
-from segmenter.helpers import logit
+from segmenter.helpers.logit import logit
 from segmenter.aggregators import Aggregator
 
 

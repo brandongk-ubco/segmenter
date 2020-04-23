@@ -1,9 +1,11 @@
 Bootstrap: docker
 From: tensorflow/tensorflow:latest-gpu-py3
 
+# NOTE: This doesn't work with remote builds.
+# https://github.com/sylabs/singularity/issues/4455
 %files
-    ./requirements.txt
-    ./launcher
+    requirements.txt
+    launcher
 
 %post
   pip install -r requirements.txt
