@@ -1,7 +1,6 @@
 from launcher import Task
 import json
 import os
-from segmenter.config import config_from_env
 import argparse
 import pprint
 
@@ -31,6 +30,7 @@ class ConfigureTask(Task):
         return args["dataset"]
 
     def execute(self) -> None:
+        from segmenter.config import config_from_env
         self.job_config, self.job_hash = config_from_env(self.data_dir)
         pprint.pprint(self.job_config)
         print(self.job_hash)
