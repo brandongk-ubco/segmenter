@@ -113,7 +113,7 @@ class TrainTask(BaseTask):
                                            help='Train a model.')
         BaseTask.arguments(command_parser)
         command_parser.add_argument("--folds",
-                                    type=int,
+                                    type=str,
                                     help='the folds to train.',
                                     required=False,
                                     nargs='+')
@@ -132,8 +132,8 @@ class TrainTask(BaseTask):
         if self.args["folds"] is not None:
             self.folds = list(
                 filter(
-                    lambda c: int(c.split("b")[0].replace("fold", "")) in self.
-                    args["folds"], self.folds))
+                    lambda c: c.split("b")[0].replace("fold", "") in self.args[
+                        "folds"], self.folds))
         for clazz in self.classes:
             for fold in self.folds:
                 train_fold(clazz, fold, self.job_config, self.job_hash,
