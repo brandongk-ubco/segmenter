@@ -3,7 +3,6 @@ from typing import Dict
 import pprint
 import os
 import sys
-from segmenter.config import validate_config
 from launcher import Task
 from segmenter.evaluators import Evaluators
 from segmenter.tasks import BaseTask
@@ -15,12 +14,7 @@ class EvaluateTask(BaseTask):
 
     def __init__(self, args):
         super().__init__(args)
-        pprint.pprint(self.job_config)
-        validate_config(self.job_config)
-        self.evaluator = args["evaluator"].value
-        if args["classes"] is not None:
-            self.classes = list(
-                filter(lambda c: c in args["classes"], self.classes))
+        self.evaluator = Evaluators.get(args["evaluator"])
 
     @staticmethod
     def arguments(parser) -> None:
@@ -29,9 +23,9 @@ class EvaluateTask(BaseTask):
         BaseTask.arguments(command_parser)
 
         command_parser.add_argument("--evaluator",
-                                    type=Evaluators.argparse,
+                                    type=str,
                                     default="metric",
-                                    choices=list(Evaluators),
+                                    choices=Evaluators.choices(),
                                     help='the evaluation to perform.')
         command_parser.add_argument("--classes",
                                     type=str,
@@ -48,6 +42,10 @@ class EvaluateTask(BaseTask):
         ])
 
     def execute(self) -> None:
+        super(EvaluateTask, self).execute()
+        if self.args["classes"] is not None:
+            self.classes = list(
+                filter(lambda c: c in self.args["classes"], self.classes))
         for clazz in self.classes:
             self.evaluator(clazz, self.job_config, self.job_hash,
                            self.data_dir, self.output_dir).execute()

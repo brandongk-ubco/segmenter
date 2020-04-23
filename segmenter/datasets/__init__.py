@@ -1,11 +1,9 @@
-from segmenter.datasets.severstal.SeverstalDataset import SeverstalDataset
-from segmenter.datasets.kits.KitsDataset import KitsDataset
 from enum import Enum
 
 
 class Datasets(Enum):
-    severstal = SeverstalDataset
-    kits = KitsDataset
+    severstal = "severstal"
+    kits = "kits"
 
     def __str__(self):
         return self.name
@@ -13,9 +11,17 @@ class Datasets(Enum):
     def __repr__(self):
         return str(self)
 
+    @classmethod
+    def choices(cls):
+        return [e.value for e in cls]
+
     @staticmethod
-    def argparse(s):
-        try:
-            return Datasets[s]
-        except KeyError:
-            return s
+    def get(dataset):
+        if dataset == "severstal":
+            from segmenter.datasets.severstal.SeverstalDataset import SeverstalDataset
+            return SeverstalDataset
+        if dataset == "kits":
+            from segmenter.datasets.kits.KitsDataset import KitsDataset
+            return KitsDataset
+
+        raise ValueError("Unknown evaluator {}".format(dataset))

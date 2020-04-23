@@ -27,8 +27,8 @@ class ProcessDataset(Task):
         command_parser = parser.add_parser(ProcessDataset.name,
                                            help='Process a dataset.')
         command_parser.add_argument("dataset",
-                                    type=Datasets.argparse,
-                                    choices=list(Datasets),
+                                    type=str,
+                                    choices=Datasets.choices(),
                                     help='the dataset to process.')
 
     @staticmethod

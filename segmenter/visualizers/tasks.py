@@ -3,8 +3,6 @@ from typing import Dict
 import pprint
 import os
 import sys
-from segmenter.config import validate_config
-from segmenter.aggregators import get_aggregators
 from launcher import Task
 from segmenter.visualizers import Visualizers
 from segmenter.tasks import BaseTask
@@ -16,12 +14,7 @@ class VisualizeTask(BaseTask):
 
     def __init__(self, args):
         super().__init__(args)
-        pprint.pprint(self.job_config)
-        validate_config(self.job_config)
-        self.visualizer = args["visualizer"].value
-        if args["classes"] is not None:
-            self.classes = list(
-                filter(lambda c: c in args["classes"], self.classes))
+        self.visualizer = Visualizers.get(args["visualizer"])
 
     @staticmethod
     def arguments(parser) -> None:
@@ -29,9 +22,9 @@ class VisualizeTask(BaseTask):
                                            help='Evaluate a model.')
         BaseTask.arguments(command_parser)
         command_parser.add_argument("--visualizer",
-                                    type=Visualizers.argparse,
+                                    type=str,
                                     default="auc",
-                                    choices=list(Visualizers),
+                                    choices=Visualizers.choices(),
                                     help='the visualization to perform.')
         command_parser.add_argument("--classes",
                                     type=str,
@@ -48,6 +41,10 @@ class VisualizeTask(BaseTask):
         ])
 
     def execute(self) -> None:
+        super().execute()
+        if self.args["classes"] is not None:
+            self.classes = list(
+                filter(lambda c: c in self.args["classes"], self.classes))
         for clazz in self.classes:
             indir = os.path.join(self.output_dir, self.job_hash, clazz,
                                  "results")

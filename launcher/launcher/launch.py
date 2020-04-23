@@ -23,9 +23,9 @@ def launch():
         description=
         'Run a task multiple times, controlled by envrironment variables.')
     parser.add_argument("--adaptor",
-                        type=Adaptors.argparse,
+                        type=str,
                         default="shell",
-                        choices=list(Adaptors),
+                        choices=Adaptors.choices(),
                         help='the adaptor with which to run the task.')
     parser.add_argument(
         "--data-dir",
@@ -57,8 +57,9 @@ def launch():
 
     assert len(tasks) > 0, "No tasks found in {}".format(discover_paths)
 
-    for adaptor in Adaptors:
-        adaptor.value.arguments(parser)
+    for adaptor_name in Adaptors.choices():
+        adaptor = Adaptors.get(adaptor_name)
+        adaptor.arguments(parser)
     args = vars(parser.parse_args())
     if args["data_dir"] is None and "DATA_DIR" in os.environ:
         args["data_dir"] = os.environ["DATA_DIR"]
@@ -67,7 +68,7 @@ def launch():
     assert args["data_dir"] is not None, "No data directory selected."
     assert args["output_dir"] is not None, "No output directory selected."
     assert args["task"] is not None, "No task selected."
-    adaptor = args["adaptor"].value
+    adaptor = Adaptors.get(args["adaptor"])
     task = tasks[args["task"]]
 
     parallel_keys = [o[3:] for o in os.environ if o.upper().startswith("BY_")]

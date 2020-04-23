@@ -2,13 +2,7 @@ import argparse
 from typing import Dict
 import pprint
 import os
-import sys
-from segmenter.config import config_from_dir, config_from_env, validate_config
 from launcher import Task
-import os
-from segmenter.train import train_fold
-from segmenter.models import full_model
-from segmenter.aggregators import get_aggregators
 import itertools
 
 if os.environ.get("DEBUG", "false").lower() != "true":
@@ -41,7 +35,12 @@ class BaseTask(Task):
                                        args["dataset"])
         if args["job_config"] is not None:
             os.environ["JOB_CONFIG"] = args["job_config"]
+
+    def execute(self):
+        from segmenter.config import config_from_dir, validate_config
         self.job_config, self.job_hash = config_from_dir(self.output_dir)
+        validate_config(self.job_config)
+        pprint.pprint(self.job_config)
 
         try:
             import tensorflow as tf
@@ -75,7 +74,6 @@ class ConstructModelTask(BaseTask):
     def __init__(self, args):
         super().__init__(args)
         pprint.pprint(self.job_config)
-        validate_config(self.job_config)
 
     @staticmethod
     def arguments(parser) -> None:
@@ -84,31 +82,21 @@ class ConstructModelTask(BaseTask):
         BaseTask.arguments(command_parser)
 
     def execute(self) -> None:
+        from segmenter.models import full_model
+        from segmenter.aggregators import get_aggregators
+        super(ConstructModelTask, self).execute()
         for clazz in self.classes:
             for aggregator in get_aggregators(self.job_config):
-                model = full_model(clazz,
-                                   self.output_dir,
-                                   self.job_config,
-                                   self.job_hash,
-                                   aggregator=aggregator)
+                full_model(clazz,
+                           self.output_dir,
+                           self.job_config,
+                           self.job_hash,
+                           aggregator=aggregator)
 
 
 class TrainTask(BaseTask):
 
     name = 'train'
-
-    def __init__(self, args):
-        super().__init__(args)
-        pprint.pprint(self.job_config)
-        validate_config(self.job_config)
-        if args["classes"] is not None:
-            self.classes = list(
-                filter(lambda c: c in args["classes"], self.classes))
-        if args["folds"] is not None:
-            self.folds = list(
-                filter(
-                    lambda c: int(c.split("b")[0].replace("fold", "")) in args[
-                        "folds"], self.folds))
 
     @staticmethod
     def arguments_to_cli(args) -> str:
@@ -136,6 +124,16 @@ class TrainTask(BaseTask):
                                     nargs='+')
 
     def execute(self) -> None:
+        from segmenter.train import train_fold
+        super().execute()
+        if self.args["classes"] is not None:
+            self.classes = list(
+                filter(lambda c: c in self.args["classes"], self.classes))
+        if self.args["folds"] is not None:
+            self.folds = list(
+                filter(
+                    lambda c: int(c.split("b")[0].replace("fold", "")) in self.
+                    args["folds"], self.folds))
         for clazz in self.classes:
             for fold in self.folds:
                 train_fold(clazz, fold, self.job_config, self.job_hash,
