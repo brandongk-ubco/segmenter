@@ -1,3 +1,0 @@
-nvidia-drivers/NVIDIA-Linux-x86_64-418.87.00.run filter=lfs diff=lfs merge=lfs -text
-nvidia-drivers/NVIDIA-Linux-x86_64-418.67.run filter=lfs diff=lfs merge=lfs -text
-setup/*.deb filter=lfs diff=lfs merge=lfs -text
