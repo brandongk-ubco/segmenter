@@ -1,4 +1,4 @@
-from segmenter.helpers import get_available_gpus
+from segmenter.helpers.get_available_gpus import get_available_gpus
 from typing import Dict, Any
 
 

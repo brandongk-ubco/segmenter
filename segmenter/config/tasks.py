@@ -34,7 +34,8 @@ class ConfigureTask(Task):
         self.job_config, self.job_hash = config_from_env(self.data_dir)
         pprint.pprint(self.job_config)
         print(self.job_hash)
-        os.makedirs(self.output_dir, exist_ok=True)
+        os.makedirs(os.path.join(self.output_dir, self.job_hash),
+                    exist_ok=True)
         config_location = os.path.join(self.output_dir, self.job_hash,
                                        "config.json")
         with open(config_location, "w") as config_file:
