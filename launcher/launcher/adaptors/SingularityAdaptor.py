@@ -1,6 +1,7 @@
 from launcher.adaptors.Adaptor import Adaptor
 import os
-import subprocess
+from subprocess import check_call, CalledProcessError
+import sys
 
 
 class SingularityAdaptor(Adaptor):
@@ -32,4 +33,8 @@ class SingularityAdaptor(Adaptor):
         command = "singularity exec -c -B {path}/{project}:/src/{project} -B {data_dir}:/data -B {output_dir}:/output {gpus} --pwd /src image.sif {command} --data-dir=/data --output-dir=/output {args}".format(
             **data)
         print(command)
-        subprocess.check_call(command, shell=True)
+        try:
+            check_call(command, shell=True)
+        except CalledProcessError as e:
+            print(e)
+            sys.exit(e.returncode)
