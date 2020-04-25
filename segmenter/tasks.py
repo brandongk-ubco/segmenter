@@ -52,11 +52,11 @@ class BaseTask(Task):
             pass
 
         self.classes = self.job_config["CLASSES"]
-        self.folds = ["all"] if self.job_config["FOLDS"] is None else [
+        self.folds = ["all"] if self.job_config["FOLDS"] == 0 else [
             "fold{}".format(o) for o in range(self.job_config["FOLDS"])
         ]
 
-        if self.job_config["BOOST_FOLDS"] is not None:
+        if self.job_config["BOOST_FOLDS"] > 0:
             boost_folds = [
                 "b{}".format(o)
                 for o in list(range(0, self.job_config["BOOST_FOLDS"] + 1))

@@ -1,4 +1,3 @@
-import numpy as np
 import os
 import json
 import sys
@@ -36,6 +35,8 @@ class ProcessDataset(Task):
         return " ".join([args["dataset"].name])
 
     def execute(self) -> None:
+        import numpy as np
+
         os.makedirs(self.output_dir, exist_ok=True)
 
         class_members = self.dataset.get_class_members()

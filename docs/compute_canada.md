@@ -34,6 +34,10 @@ unset __conda_setup
 ```
 Then either logout/login or `source ~/.bashrc` to load conda.  You should see `(base)` in your prompt which specifies the Conda environment you are currently using.
 
+Finally, downgrade python to 3.6 for now as it is compatible:
+
+`conda install python=3.6`
+
 # Add your SLURM_ACCOUNT info to your ~./bashrc
 
 `export SLURM_ACCOUNT=def-<SUPERVISOR>`
@@ -69,14 +73,6 @@ You can't install xclip on compute canada servers, so just open the file and cop
 1. `cd /project/def-<SUPERVISOR>/<USER>`
 2. `git clone git@github.com:brandongk60/segmenter.git`
 
-## Extract the nvidia driver version
-
-Hopefully the .run file for NVidia Driver version exists in this repo already.  If it does not, you will need to find it and download it.  Once it's in the repo:
-
-1. `cd /project/def-<SUPERVISOR>/<USER>/segmenter/nvidia-drivers`
-2. `git lfs pull`
-3. `./extract_nvdriver.sh <VERSION> ~/nvidiadriver`
-
 ## Login to Singularity remote
 
 This section is only needed if you want to build remotely.  You can build locally with either `sudo` or `fakeroot` and not login remotely.
@@ -84,7 +80,6 @@ This section is only needed if you want to build remotely.  You can build locall
 Create an account at [Singularity Cloud](https://cloud.sylabs.io/home) and generate a [token](https://cloud.sylabs.io/auth/tokens).
 
 `singularity remote login` and paste the token you created.
-
 
 # Build the Singularity image
 
