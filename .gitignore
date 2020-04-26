@@ -13,14 +13,8 @@
 !args.py
 !launcher
 !launcher/**/*
-!dataloaders
-!dataloaders/**/*
 !docs
 !docs/*.md
-!nvidia-drivers
-!nvidia-drivers/nvidia-job.sh
-!nvidia-drivers/extract_nvdriver.sh
-!nvidia-drivers/*.run
 !.gitattributes
 !.vscode
 !.vscode/settings.json
@@ -31,6 +25,7 @@
 !.tool-versions
 !setup
 !setup/singularity.sh
-!setup/*.deb
+!segmenter/datasets/kits/kits19/
+!segmenter/datasets/kits/kits19/*
 
 **/__pycache__
