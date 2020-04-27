@@ -1,8 +1,7 @@
 from abc import abstractmethod, ABCMeta
-import argparse
 
 
-class BaseVisualizer(metaclass=ABCMeta):
+class BaseCollector(metaclass=ABCMeta):
     @classmethod
     def __subclasshook__(cls, subclass):
         return (hasattr(subclass, 'execute') and callable(subclass.execute))

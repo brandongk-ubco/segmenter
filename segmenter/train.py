@@ -13,6 +13,7 @@ from segmenter.augmentations import train_augments, val_augments
 from segmenter.layers import AddSingleGradient
 from segmenter.data import augmented_generator
 from segmenter.helpers.logit import logit
+from segmenter.helpers.parse_fold import parse_fold
 import sys
 import json
 import os
@@ -32,9 +33,7 @@ def train_fold(clazz,
     K.clear_session()
     K.set_floatx(job_config["PRECISION"])
 
-    fold = fold_name.split("b")[0]
-    fold = int(fold.replace("fold", "")) if fold != "all" else None
-    boost_fold = int(fold_name.split("b")[1]) if "b" in fold_name else None
+    fold, boost_fold = parse_fold(fold_name)
 
     print("Training Class {} fold {}".format(clazz, fold_name))
 

@@ -7,6 +7,33 @@ import pathlib
 from segmenter.datasets import Datasets
 
 
+class InitializeDataset(Task):
+    name = 'initialize-dataset'
+
+    def __init__(self, args):
+        self.args = args
+        self.dataset_name = args["dataset"]
+        self.dataset_dir = os.path.join(
+            pathlib.Path(__file__).parent.absolute(), self.dataset_name)
+        self.dataset = Datasets.get(self.dataset_name)(self.dataset_dir)
+
+    @staticmethod
+    def arguments(parser) -> None:
+        command_parser = parser.add_parser(InitializeDataset.name,
+                                           help='Initialize a dataset.')
+        command_parser.add_argument("dataset",
+                                    type=str,
+                                    choices=Datasets.choices(),
+                                    help='the dataset to initialize.')
+
+    @staticmethod
+    def arguments_to_cli(args) -> str:
+        return " ".join([args["dataset"].name])
+
+    def execute(self) -> None:
+        self.dataset.initialize()
+
+
 class ProcessDataset(Task):
 
     name = 'process-dataset'
@@ -89,4 +116,4 @@ class ProcessDataset(Task):
                 indent=4)
 
 
-tasks = [ProcessDataset]
+tasks = [InitializeDataset, ProcessDataset]

@@ -4,6 +4,8 @@ import pprint
 import os
 from launcher import Task
 import itertools
+import sys
+import json
 
 if os.environ.get("DEBUG", "false").lower() != "true":
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -94,6 +96,53 @@ class ConstructModelTask(BaseTask):
                            aggregator=aggregator)
 
 
+class IsCompleteTask(BaseTask):
+
+    name = 'is-complete'
+
+    @staticmethod
+    def arguments_to_cli(args) -> str:
+        return " ".join([
+            args["dataset"], "--folds {}".format(" ".join(args["folds"]))
+            if args["folds"] is not None else ""
+        ])
+
+    @staticmethod
+    def arguments(parser) -> None:
+        command_parser = parser.add_parser(
+            IsCompleteTask.name, help='Check if training is complete.')
+        BaseTask.arguments(command_parser)
+
+    @staticmethod
+    def check_is_complete(directory):
+        with open(os.path.join(directory, "early_stopping.json"),
+                  "r") as json_file:
+            early_stopping = json.load(json_file)
+        return early_stopping["wait"] >= early_stopping["patience"]
+
+    @staticmethod
+    def is_complete(directory):
+        incomplete = []
+        complete = []
+        for root, dirs, files in os.walk(directory):
+            if "logs" not in dirs or "early_stopping.json" not in files:
+                continue
+
+            if not IsCompleteTask.check_is_complete(root):
+                print("WARNING: %s is not complete!" % os.path.abspath(root))
+                incomplete.append(os.path.abspath(root))
+                continue
+            complete.append(os.path.abspath(root))
+        return complete, incomplete
+
+    def execute(self):
+        complete, incomplete = IsCompleteTask.is_complete(
+            os.path.join(self.output_dir))
+        pprint.pprint({"Complete": complete, "Incomplete": incomplete})
+        if len(incomplete) > 0:
+            sys.exit(1)
+
+
 class TrainTask(BaseTask):
 
     name = 'train'
@@ -140,4 +189,4 @@ class TrainTask(BaseTask):
                            self.data_dir, self.output_dir)
 
 
-tasks = [ConstructModelTask, TrainTask]
+tasks = [ConstructModelTask, TrainTask, IsCompleteTask]

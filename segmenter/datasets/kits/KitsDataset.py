@@ -6,11 +6,19 @@ import random
 import pandas as pd
 from skimage.io import imread
 import os
+from subprocess import check_call
 
 
 class KitsDataset(BaseDataset):
-    def __init__(self):
-        raise NotImplementedError
+    def initialize(self):
+        current_dir = os.path.dirname(os.path.realpath(__file__))
+        check_call("git submodule update --init", shell=True, cwd=current_dir)
+        check_call("pip install -r requirements.txt",
+                   shell=True,
+                   cwd=os.path.join(current_dir, "kits19"))
+        check_call("python -m starter_code.get_imaging",
+                   shell=True,
+                   cwd=os.path.join(current_dir, "kits19"))
 
     def get_classes(self):
         return ["kidney", "tumor"]
@@ -18,7 +26,7 @@ class KitsDataset(BaseDataset):
     def get_class_members(self):
         raise NotImplementedError
 
-    def get_instances(self):
+    def iter_instances(self):
         raise NotImplementedError
 
     def get_name(self, instance):
@@ -27,7 +35,7 @@ class KitsDataset(BaseDataset):
     def get_image(self, instance):
         raise NotImplementedError
 
-    def get_mask(self, instance):
+    def get_masks(self, instance):
         raise NotImplementedError
 
     def enhance_image(self, image):

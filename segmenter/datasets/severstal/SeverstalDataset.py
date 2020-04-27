@@ -6,14 +6,14 @@ import os
 
 from segmenter.datasets.BaseDataset import BaseDataset
 from segmenter.datasets.severstal.helpers import build_mask
-from segmenter.helpers import contrast_stretch
+from segmenter.helpers.contrast_stretch import contrast_stretch
 
 
 class SeverstalDataset(BaseDataset):
     def __init__(self, src_dir):
-        self.path = os.path.abspath(src_dir)
+        super(SeverstalDataset, self).__init__(src_dir)
         # reading in the training set
-        data = pd.read_csv(os.path.join(self.path, 'train.csv'))
+        data = pd.read_csv(os.path.join(self.src_dir, 'train.csv'))
 
         # isolating the file name and class
         data['ImageId'], data['ClassId'] = data.ImageId_ClassId.str.split(
@@ -65,7 +65,7 @@ class SeverstalDataset(BaseDataset):
         return instance['ImageId'][:-4]
 
     def get_image(self, instance):
-        return imread(os.path.join(self.path, "train", instance['ImageId']),
+        return imread(os.path.join(self.src_dir, "train", instance['ImageId']),
                       as_gray=True).astype(np.float32)
 
     def get_masks(self, instance):

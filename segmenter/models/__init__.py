@@ -9,6 +9,7 @@ from tensorflow.keras.activations import linear, sigmoid
 from tensorflow.keras import backend as K
 import os
 from segmenter.helpers.logit import logit
+from segmenter.helpers.parse_fold import parse_fold
 from segmenter.aggregators import Aggregator
 
 
