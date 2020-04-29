@@ -115,8 +115,10 @@ class IsCompleteTask(BaseTask):
 
     @staticmethod
     def check_is_complete(directory):
-        with open(os.path.join(directory, "early_stopping.json"),
-                  "r") as json_file:
+        file_path = os.path.join(directory, "early_stopping.json")
+        if not os.path.exists(file_path):
+            return False
+        with open(file_path, "r") as json_file:
             early_stopping = json.load(json_file)
         return early_stopping["wait"] >= early_stopping["patience"]
 
@@ -141,7 +143,11 @@ class IsCompleteTask(BaseTask):
         for clazz in self.classes:
             for fold in self.folds:
                 if not os.path.exists(
-                        os.path.join(directory, self.job_hash, clazz, fold)):
+                        os.path.join(directory, self.job_hash, clazz,
+                                     fold)) or not os.path.exists(
+                                         os.path.join(directory, self.job_hash,
+                                                      clazz, fold,
+                                                      "early_stopping.json")):
                     print("WARNING: class {} fold {} is not started!".format(
                         clazz, fold))
                     incomplete.append((self.job_hash, clazz, fold))
