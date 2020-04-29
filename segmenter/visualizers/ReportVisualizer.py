@@ -75,6 +75,4 @@ class ReportVisualizer(BaseVisualizer):
         ax2.set(ylabel=display_name)
         ax2.set_xticks([])
 
-        # plt.subplots_adjust(wspace=0, hspace=0)
-
         return fig

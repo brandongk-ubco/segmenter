@@ -14,6 +14,7 @@ class BoostVisualizer(BaseVisualizer):
             print("CSV file does not exist {}".format(csv_file))
             return
         results = pd.read_csv(csv_file)
+        results = results[results["boost_fold"] > 0]
         plot = results.boxplot(column=['improvement'],
                                by='boost_fold',
                                grid=False)
