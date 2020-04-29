@@ -120,24 +120,59 @@ class IsCompleteTask(BaseTask):
             early_stopping = json.load(json_file)
         return early_stopping["wait"] >= early_stopping["patience"]
 
-    @staticmethod
-    def is_complete(directory):
+    def is_complete(self, directory):
         incomplete = []
         complete = []
-        for root, dirs, files in os.walk(directory):
-            if "logs" not in dirs or "early_stopping.json" not in files:
-                continue
 
+        # Check for existing directories which are not complete.
+        for root, _dirs, _files in os.walk(directory):
+            if root.split("/")[-3] != self.job_hash or root.split(
+                    "/")[-1] not in self.folds or root.split(
+                        "/")[-2] not in self.classes:
+                continue
+            clazz = root.split("/")[-2]
+            fold = root.split("/")[-1]
             if not IsCompleteTask.check_is_complete(root):
                 print("WARNING: %s is not complete!" % os.path.abspath(root))
-                incomplete.append(os.path.abspath(root))
+                incomplete.append((self.job_hash, clazz, fold))
                 continue
-            complete.append(os.path.abspath(root))
+            complete.append((self.job_hash, clazz, fold))
+
+        for clazz in self.classes:
+            for fold in self.folds:
+                if not os.path.exists(
+                        os.path.join(directory, self.job_hash, clazz, fold)):
+                    print("WARNING: class {} fold {} is not started!".format(
+                        clazz, fold))
+                    incomplete.append((self.job_hash, clazz, fold))
+
+        complete = sorted(complete, key=lambda x: x[1] + x[2])
+        incomplete = sorted(incomplete, key=lambda x: x[1] + x[2])
         return complete, incomplete
 
     def execute(self):
-        complete, incomplete = IsCompleteTask.is_complete(
-            os.path.join(self.output_dir))
+        from segmenter.config import config_from_dir, validate_config
+
+        self.job_config, self.job_hash = config_from_dir(self.output_dir)
+        validate_config(self.job_config)
+        pprint.pprint(self.job_config)
+
+        self.classes = self.job_config["CLASSES"]
+        self.folds = ["all"] if self.job_config["FOLDS"] == 0 else [
+            "fold{}".format(o) for o in range(self.job_config["FOLDS"])
+        ]
+
+        if self.job_config["BOOST_FOLDS"] > 0:
+            boost_folds = [
+                "b{}".format(o)
+                for o in list(range(0, self.job_config["BOOST_FOLDS"] + 1))
+            ]
+            self.folds = [
+                "".join(o)
+                for o in itertools.product(*[self.folds, boost_folds])
+            ]
+
+        complete, incomplete = self.is_complete(os.path.join(self.output_dir))
         pprint.pprint({"Complete": complete, "Incomplete": incomplete})
         if len(incomplete) > 0:
             sys.exit(1)
