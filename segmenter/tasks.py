@@ -142,12 +142,12 @@ class IsCompleteTask(BaseTask):
 
         for clazz in self.classes:
             for fold in self.folds:
-                if not os.path.exists(
-                        os.path.join(directory, self.job_hash, clazz,
-                                     fold)) or not os.path.exists(
-                                         os.path.join(directory, self.job_hash,
-                                                      clazz, fold,
-                                                      "early_stopping.json")):
+                directory_exists = os.path.exists(
+                    os.path.join(directory, self.job_hash, clazz, fold))
+                early_stopping_exists = os.path.exists(
+                    os.path.join(directory, self.job_hash, clazz, fold,
+                                 "early_stopping.json"))
+                if not directory_exists or not early_stopping_exists:
                     print("WARNING: class {} fold {} is not started!".format(
                         clazz, fold))
                     incomplete.append((self.job_hash, clazz, fold))
