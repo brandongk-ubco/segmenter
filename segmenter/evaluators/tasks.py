@@ -1,11 +1,8 @@
 import argparse
-from typing import Dict
-import pprint
-import os
-import sys
 from launcher import Task
 from segmenter.evaluators import Evaluators
 from segmenter.tasks import BaseTask
+from segmenter.models import FoldWeightFinders
 
 
 class EvaluateTask(BaseTask):
@@ -15,6 +12,7 @@ class EvaluateTask(BaseTask):
     def __init__(self, args):
         super().__init__(args)
         self.evaluator = Evaluators.get(args["evaluator"])
+        self.weight_finder = FoldWeightFinders.get(args["weight_finder"])
 
     @staticmethod
     def arguments(parser) -> None:
@@ -32,11 +30,18 @@ class EvaluateTask(BaseTask):
                                     help='the clases to train',
                                     required=False,
                                     nargs='+')
+        command_parser.add_argument(
+            "--weight-finder",
+            type=str,
+            default="organized",
+            choices=FoldWeightFinders.choices(),
+            help='the strategy for finding fold weights')
 
     @staticmethod
     def arguments_to_cli(args) -> str:
         return " ".join([
             args["dataset"], "--evaluator {}".format(args["evaluator"]),
+            "--weight-finder {}".format(args["weight_finder"]),
             "--classes {}".format(" ".join(args["classes"]))
             if args["classes"] is not None else ""
         ])
@@ -48,7 +53,8 @@ class EvaluateTask(BaseTask):
                 filter(lambda c: c in self.args["classes"], self.classes))
         for clazz in self.classes:
             self.evaluator(clazz, self.job_config, self.job_hash,
-                           self.data_dir, self.output_dir).execute()
+                           self.data_dir, self.output_dir,
+                           self.weight_finder).execute()
 
 
 tasks = [EvaluateTask]

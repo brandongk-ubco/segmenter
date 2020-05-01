@@ -7,7 +7,7 @@ from segmenter.data import augmented_generator
 from segmenter.augmentations import predict_augments
 from segmenter.optimizers import get_optimizer
 from segmenter.loss import get_loss
-from segmenter.models import model_folds
+from segmenter.models.full_model import model_folds
 from tensorflow.keras.layers import Input
 from tensorflow.keras.models import Model
 
@@ -29,12 +29,11 @@ class FoldAwareEvaluator(BaseEvaluator, metaclass=ABCMeta):
             self.clazz, None, predict_augments, self.job_config, "evaluate",
             self.datadir)
         self.dataset = self.dataset.batch(1)
-
         self.loss = get_loss(self.job_config["LOSS"])
         self.inputs = Input(shape=(None, None, 1))
         self.optimizer = get_optimizer(self.job_config["OPTIMIZER"])
-        self.models = model_folds(self.inputs, self.clazz, self.outdir,
-                                  self.job_config, self.job_hash, "linear")
+        self.models = model_folds(self.inputs, self.clazz, self.job_config,
+                                  self.weight_finder, "linear")
 
     def execute(self) -> None:
         for model in self.models:

@@ -69,33 +69,6 @@ class BaseTask(Task):
             ]
 
 
-class ConstructModelTask(BaseTask):
-
-    name = 'construct'
-
-    def __init__(self, args):
-        super().__init__(args)
-        pprint.pprint(self.job_config)
-
-    @staticmethod
-    def arguments(parser) -> None:
-        command_parser = parser.add_parser(ConstructModelTask.name,
-                                           help='Construct the model.')
-        BaseTask.arguments(command_parser)
-
-    def execute(self) -> None:
-        from segmenter.models import full_model
-        from segmenter.aggregators import get_aggregators
-        super(ConstructModelTask, self).execute()
-        for clazz in self.classes:
-            for aggregator in get_aggregators(self.job_config):
-                full_model(clazz,
-                           self.output_dir,
-                           self.job_config,
-                           self.job_hash,
-                           aggregator=aggregator)
-
-
 class IsCompleteTask(BaseTask):
 
     name = 'is-complete'
@@ -230,4 +203,4 @@ class TrainTask(BaseTask):
                            self.data_dir, self.output_dir)
 
 
-tasks = [ConstructModelTask, TrainTask, IsCompleteTask]
+tasks = [TrainTask, IsCompleteTask]

@@ -19,7 +19,7 @@ class VisualizeTask(BaseTask):
     @staticmethod
     def arguments(parser) -> None:
         command_parser = parser.add_parser(VisualizeTask.name,
-                                           help='Evaluate a model.')
+                                           help='Visualize results.')
         BaseTask.arguments(command_parser)
         command_parser.add_argument("--visualizer",
                                     type=str,

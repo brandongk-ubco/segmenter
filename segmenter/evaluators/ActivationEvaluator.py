@@ -1,13 +1,11 @@
 from tensorflow.keras import backend as K
 from segmenter.evaluators.FoldAwareEvaluator import FoldAwareEvaluator
 from tensorflow.keras.models import Model
-from segmenter.models import full_model
 from segmenter.loss import get_loss
 from segmenter.data import augmented_generator
 from segmenter.augmentations import predict_augments
 from segmenter.aggregators import Aggregator
 from segmenter.optimizers import get_optimizer
-from segmenter.models import full_model
 import numpy as np
 import os
 

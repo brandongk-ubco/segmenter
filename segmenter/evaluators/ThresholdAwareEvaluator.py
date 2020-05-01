@@ -6,7 +6,7 @@ from segmenter.aggregators import Aggregator
 from segmenter.data import augmented_generator
 from segmenter.augmentations import predict_augments
 from segmenter.loss import get_loss
-from segmenter.models import full_model
+from segmenter.models.full_model import full_model
 from segmenter.optimizers import get_optimizer
 from segmenter.metrics import get_metrics
 from segmenter.aggregators import get_aggregators
@@ -35,9 +35,8 @@ class ThresholdAwareEvaluator(BaseEvaluator, metaclass=ABCMeta):
     def execute(self) -> None:
         for aggregator in get_aggregators(self.job_config):
             model = full_model(self.clazz,
-                               self.outdir,
                                self.job_config,
-                               self.job_hash,
+                               self.weight_finder,
                                aggregator=aggregator)
             for threshold in aggregator.thresholds():
                 threshold_str = "{:1.2f}".format(threshold)

@@ -5,7 +5,7 @@ from tensorflow.keras.layers import Input, Average, Lambda, Activation
 from tensorflow.keras.models import Model
 from tensorflow.keras.activations import sigmoid
 from segmenter.metrics import get_metrics
-from segmenter.models import get_model, find_latest_weight, find_best_weight
+from segmenter.models.full_model import get_model
 from segmenter.loss import get_loss
 from segmenter.callbacks import get_callbacks
 from segmenter.optimizers import get_optimizer
@@ -14,6 +14,8 @@ from segmenter.layers import AddSingleGradient
 from segmenter.data import augmented_generator
 from segmenter.helpers.logit import logit
 from segmenter.helpers.parse_fold import parse_fold
+from segmenter.models.LatestFoldWeightFinder import LatestFoldWeightFinder
+from segmenter.models.BestFoldWeightFinder import BestFoldWeightFinder
 import sys
 import json
 import os
@@ -75,7 +77,10 @@ def train_fold(clazz,
               "w") as outfile:
         json.dump(job_config, outfile, indent=4)
 
-    latest_weight = find_latest_weight(output_folder)
+    latest_weight_finder = LatestFoldWeightFinder(
+        os.path.join(outdir, job_hash, clazz))
+    best_weight_finder = BestFoldWeightFinder(
+        os.path.join(outdir, job_hash, clazz))
 
     boost_folds = range(0, boost_fold) if boost_fold is not None else []
 
@@ -100,7 +105,7 @@ def train_fold(clazz,
 
             boost_fold_dir = os.path.abspath(
                 os.path.join(output_folder, "..", boost_fold_name))
-            best_weight = find_best_weight(boost_fold_dir)
+            best_weight = best_weight_finder.get(boost_fold_dir)
 
             print("Loading weight %s" % best_weight)
             boost_fold_model.load_weights(best_weight)
@@ -115,7 +120,8 @@ def train_fold(clazz,
         fold_model = get_model(image_size, job_config)
         fold_model._name = fold_name
 
-        if latest_weight is not None:
+        if fold_name in latest_weight_finder.keys():
+            latest_weight = latest_weight_finder.get(fold_name)
             print("Loading weight %s" % latest_weight)
             fold_model.load_weights(latest_weight)
 
@@ -136,7 +142,8 @@ def train_fold(clazz,
 
     initial_epoch = 0
     val_loss = np.Inf
-    if latest_weight is not None:
+    if fold_name in latest_weight_finder.keys():
+        latest_weight = latest_weight_finder.get(fold_name)
         initial_epoch = int(latest_weight.split("/")[-1].split("-")[0])
         val_loss = float(latest_weight.split("/")[-1].split("-")[1][:-3])
 

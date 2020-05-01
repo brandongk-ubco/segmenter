@@ -12,13 +12,15 @@ class BaseEvaluator(metaclass=ABCMeta):
                 and callable(subclass.evaluate_threshold))
 
     def __init__(self, clazz: str, job_config, job_hash: str, datadir: str,
-                 outdir: str, **kwargs):
+                 outdir: str, weight_finder, **kwargs):
         K.clear_session()
         self.job_config = job_config
         self.clazz = clazz
         self.job_hash = job_hash
         self.datadir = datadir
         self.outdir = outdir
+        self.weight_finder = weight_finder(
+            os.path.join(self.outdir, self.job_hash, self.clazz))
         self.resultdir = os.path.join(outdir, job_hash, clazz, "results")
 
     @abstractmethod

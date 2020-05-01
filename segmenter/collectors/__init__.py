@@ -5,6 +5,7 @@ class Collectors(Enum):
     predict = "predict"
     metric = "metric"
     boost = "boost"
+    wight = "weight"
 
     def __str__(self):
         return self.name
@@ -17,16 +18,19 @@ class Collectors(Enum):
         return [e.value for e in cls]
 
     @staticmethod
-    def get(visualizer):
+    def get(collector):
 
-        if visualizer == "predict":
+        if collector == "predict":
             from segmenter.collectors.PredictionCollector import PredictionCollector
             return PredictionCollector
-        if visualizer == "metric":
+        if collector == "metric":
             from segmenter.collectors.MetricCollector import MetricCollector
             return MetricCollector
-        if visualizer == "boost":
+        if collector == "boost":
             from segmenter.collectors.BoostCollector import BoostCollector
             return BoostCollector
+        if collector == "weight":
+            from segmenter.collectors.WeightCollector import WeightCollector
+            return WeightCollector
 
-        raise ValueError("Unknown collector {}".format(visualizer))
+        raise ValueError("Unknown collector {}".format(collector))
