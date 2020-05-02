@@ -79,6 +79,9 @@ def train_fold(clazz,
 
     latest_weight_finder = LatestFoldWeightFinder(
         os.path.join(outdir, job_hash, clazz))
+    if fold_name in latest_weight_finder.keys():
+        latest_weight = latest_weight_finder.get(fold_name)
+
     best_weight_finder = BestFoldWeightFinder(
         os.path.join(outdir, job_hash, clazz))
 
@@ -107,7 +110,6 @@ def train_fold(clazz,
                 os.path.join(output_folder, "..", boost_fold_name))
             best_weight = best_weight_finder.get(boost_fold_dir)
 
-            print("Loading weight %s" % best_weight)
             boost_fold_model.load_weights(best_weight)
             boost_fold_model.trainable = False
             boost_fold_model._name = boost_fold_name
@@ -120,8 +122,7 @@ def train_fold(clazz,
         fold_model = get_model(image_size, job_config)
         fold_model._name = fold_name
 
-        if fold_name in latest_weight_finder.keys():
-            latest_weight = latest_weight_finder.get(fold_name)
+        if latest_weight is not None:
             print("Loading weight %s" % latest_weight)
             fold_model.load_weights(latest_weight)
 
@@ -142,8 +143,7 @@ def train_fold(clazz,
 
     initial_epoch = 0
     val_loss = np.Inf
-    if fold_name in latest_weight_finder.keys():
-        latest_weight = latest_weight_finder.get(fold_name)
+    if latest_weight is not None:
         initial_epoch = int(latest_weight.split("/")[-1].split("-")[0])
         val_loss = float(latest_weight.split("/")[-1].split("-")[1][:-3])
 

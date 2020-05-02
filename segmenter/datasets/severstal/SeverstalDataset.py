@@ -34,6 +34,9 @@ class SeverstalDataset(BaseDataset):
             self.squashed.ImageId.tolist()).index.tolist()
         print("No defect instances: %s" % len(self.no_defects))
 
+    def initialize(self):
+        raise NotImplementedError
+
     def get_classes(self):
         return sorted([str(c) for c in self._get_classes()])
 

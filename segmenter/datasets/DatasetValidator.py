@@ -1,4 +1,3 @@
-import pprint
 from deepdiff import DeepDiff
 import numpy as np
 
@@ -8,7 +7,7 @@ class DatasetValidator():
     image_size = None
     masks_size = None
 
-    def validate(self, image, masks, name, print_output=True):
+    def validate(self, image, masks, name):
         assert image is not None, "Got a None image for %s" % name
         assert masks is not None, "Got a None mask for %s" % name
         assert isinstance(
@@ -43,12 +42,3 @@ class DatasetValidator():
         assert not DeepDiff(
             masks.shape,
             self.masks_size), "Mask size is not consistent in %s" % name
-
-        if print_output:
-            pprint.pprint({
-                "name": name,
-                "image_size": image.shape,
-                "masks_size": masks.shape,
-                "min": np.min(image),
-                "max": np.max(image)
-            })

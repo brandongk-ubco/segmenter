@@ -4,6 +4,7 @@ from segmenter.datasets.DatasetValidator import DatasetValidator
 from typing import Dict, List
 from abc import abstractmethod, ABCMeta
 import os
+import pprint
 
 
 class BaseDataset(metaclass=ABCMeta):
@@ -221,8 +222,14 @@ class BaseDataset(metaclass=ABCMeta):
             # Validate both before and after enhancing the image
             self.validator.validate(image, masks, name)
             image = self.enhance_image(image)
-            self.validator.validate(image, masks, name, print_output=False)
-
+            self.validator.validate(image, masks, name)
+            pprint.pprint({
+                "name": name,
+                "image_size": image.shape,
+                "masks_size": masks.shape,
+                "min": np.min(image),
+                "max": np.max(image)
+            })
             if np.max(masks) == 0:
                 print("Mask has no values for %s" % name)
                 continue
