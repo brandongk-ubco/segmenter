@@ -35,6 +35,66 @@ class InitializeDataset(Task):
         self.dataset.initialize()
 
 
+class DatasetCoverage(Task):
+    name = 'dataset-coverage'
+
+    def __init__(self, args):
+        self.args = args
+        self.dataset_name = args["dataset"]
+        self.dataset_dir = os.path.join(
+            pathlib.Path(__file__).parent.absolute(), self.dataset_name)
+        self.dataset = Datasets.get(self.dataset_name)(self.dataset_dir)
+
+    @staticmethod
+    def arguments(parser) -> None:
+        command_parser = parser.add_parser(
+            DatasetCoverage.name, help='Calculate the coverage on a dataset.')
+        command_parser.add_argument("dataset",
+                                    type=str,
+                                    choices=Datasets.choices(),
+                                    help='the dataset.')
+
+    @staticmethod
+    def arguments_to_cli(args) -> str:
+        return " ".join([args["dataset"].name])
+
+    def execute(self) -> None:
+        from matplotlib import pyplot as plt
+        import numpy as np
+
+        coverages = self.dataset.coverage()
+        classes = self.dataset.get_classes()
+
+        num_instances = len(coverages)
+        fig, axs = plt.subplots(1, num_instances)
+        axs[0].set_ylabel('Frequency (%)')
+        for i in range(num_instances):
+            coverage = coverages[i]
+
+            ticks = np.round(np.linspace(0, max(coverage), num=11), 2)
+            axs[i].hist(coverage,
+                        bins=ticks,
+                        weights=100 * np.ones(len(coverage)) / len(coverage))
+            axs[i].set_title(classes[i])
+            axs[i].set_xlabel('Coverage (%)')
+            axs[i].set_xticks(ticks)
+            axs[i].tick_params(axis='x', rotation=90)
+
+        fig.suptitle("Instance Coverage Frequency for {} Dataset".format(
+            self.dataset.get_dataset_name()),
+                     y=1.05,
+                     fontsize=14)
+        plt.figtext(.5,
+                    .96,
+                    "excludes instances with no coverage",
+                    fontsize=12,
+                    ha='center')
+
+        out_file = os.path.join(self.dataset_dir, "coverage.png")
+        plt.savefig(out_file, dpi=100, bbox_inches='tight', pad_inches=0.5)
+        plt.close()
+
+
 class VisualizeDataset(Task):
 
     name = "visualize-dataset"
@@ -178,4 +238,4 @@ class ProcessDataset(Task):
                 indent=4)
 
 
-tasks = [InitializeDataset, ProcessDataset, VisualizeDataset]
+tasks = [InitializeDataset, ProcessDataset, VisualizeDataset, DatasetCoverage]

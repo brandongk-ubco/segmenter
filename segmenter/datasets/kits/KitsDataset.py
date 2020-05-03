@@ -10,6 +10,7 @@ from typing import Dict, Set, List, Any
 from segmenter.helpers.contrast_stretch import contrast_stretch
 import json
 from skimage.transform import resize
+from matplotlib import pyplot as plt
 
 
 class KitsDataset(BaseDataset):
@@ -34,7 +35,7 @@ class KitsDataset(BaseDataset):
         "tumor_mask": None
     }
 
-    coverage_required = .02
+    coverage_required = 1e-3
 
     def _initialize_members(self, members, membership_type):
         for instance in members:
@@ -80,6 +81,50 @@ class KitsDataset(BaseDataset):
                     "class_members": self.class_members,
                     "instances": list(self.instances)
                 }, outfile)
+
+    def get_dataset_name(self):
+        return "KiTS19"
+
+    def coverage(self):
+
+        kidney_coverages = []
+        tumor_coverages = []
+        instances = []
+
+        coverage_cache_file = os.path.join(self.src_dir, "coverage.json")
+        if os.path.exists(coverage_cache_file):
+            with open(coverage_cache_file, "r") as infile:
+                cache = json.load(infile)
+            instances = cache["instances"]
+            kidney_coverages = cache["kidney_coverages"]
+            tumor_coverages = cache["tumor_coverages"]
+        else:
+            for instance in self.train_cases[:10]:
+                imaging, kidney_mask, tumor_mask = self.load_case(instance)
+                for slice_idx in range(imaging.shape[0]):
+                    name = "{}_{}".format(instance, slice_idx)
+                    instances.append(name)
+                    print(name)
+                    kidney_mask_slice = kidney_mask[slice_idx, :, :]
+                    tumor_mask_slice = tumor_mask[slice_idx, :, :]
+                    kidney_coverages.append(
+                        np.sum(kidney_mask_slice) / kidney_mask_slice.size)
+                    tumor_coverages.append(
+                        np.sum(tumor_mask_slice) / tumor_mask_slice.size)
+
+            with open(coverage_cache_file, "w") as outfile:
+                json.dump(
+                    {
+                        "instances": instances,
+                        "kidney_coverages": kidney_coverages,
+                        "tumor_coverages": tumor_coverages
+                    }, outfile)
+
+        kidney_coverages = np.array(
+            [k * 100 for k in kidney_coverages if k > 0])
+        tumor_coverages = np.array([k * 100 for k in tumor_coverages if k > 0])
+
+        return [kidney_coverages, tumor_coverages]
 
     def initialize(self):
         current_dir = os.path.dirname(os.path.realpath(__file__))

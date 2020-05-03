@@ -40,13 +40,24 @@ class BaseDataset(metaclass=ABCMeta):
             and hasattr(subclass, 'get_class_members')
             and callable(subclass.get_class_members)
             and hasattr(subclass, 'initialize')
-            and callable(subclass.initialize))
+            and callable(subclass.initialize)
+            and hasattr(subclass, 'coverage') and callable(subclass.coverage)
+            and hasattr(subclass, 'get_dataset_name')
+            and callable(subclass.get_dataset_name))
 
     def __init__(self, src_dir):
         self.src_dir = os.path.abspath(src_dir)
 
     @abstractmethod
     def initialize(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def coverage(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_dataset_name(self):
         raise NotImplementedError
 
     @abstractmethod

@@ -66,8 +66,10 @@ class ReportVisualizer(BaseVisualizer):
 
         fig.set_size_inches(10, 5)
 
-        ax1.hist(ratings, bins=bins)
-        ax1.set(xlabel=display_name, ylabel="Count")
+        ax1.hist(ratings,
+                 bins=bins,
+                 weights=100 * np.ones(len(ratings)) / len(ratings))
+        ax1.set(xlabel=display_name, ylabel="Frequency (%)")
 
         plt.subplots_adjust(hspace=.2)
 
