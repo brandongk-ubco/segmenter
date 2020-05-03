@@ -35,8 +35,6 @@ class KitsDataset(BaseDataset):
         "tumor_mask": None
     }
 
-    coverage_required = 1e-3
-
     def _initialize_members(self, members, membership_type):
         for instance in members:
             imaging, kidney_mask, tumor_mask = self.load_case(instance)
@@ -139,7 +137,7 @@ class KitsDataset(BaseDataset):
                    cwd=os.path.join(current_dir, "kits19"))
 
     def class_represented(self, segmentation):
-        return np.sum(segmentation) > 512 * 512 * self.coverage_required
+        return np.sum(segmentation) > 0
 
     def load_case(self, case):
         if case != self.case["name"]:
