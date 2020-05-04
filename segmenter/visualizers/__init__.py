@@ -5,7 +5,7 @@ class Visualizers(Enum):
     auc = "auc"
     predict = "predict"
     activation = "activation"
-    report = "report"
+    instance_metrics = "instance-metrics"
     metric = "metric"
     boost = "boost"
 
@@ -22,7 +22,7 @@ class Visualizers(Enum):
     @staticmethod
     def get(visualizer):
 
-        if visualizer == "arc":
+        if visualizer == "auc":
             from segmenter.visualizers.AUCVisualizer import AUCVisualizer
             return AUCVisualizer
         if visualizer == "predict":
@@ -31,9 +31,9 @@ class Visualizers(Enum):
         if visualizer == "activation":
             from segmenter.visualizers.ActivationVisualizer import ActivationVisualizer
             return ActivationVisualizer
-        if visualizer == "report":
-            from segmenter.visualizers.ReportVisualizer import ReportVisualizer
-            return ReportVisualizer
+        if visualizer == "instance-metrics":
+            from segmenter.visualizers.InstanceMetricsVisualizer import InstanceMetricsVisualizer
+            return InstanceMetricsVisualizer
         if visualizer == "metric":
             from segmenter.visualizers.MetricVisualizer import MetricVisualizer
             return MetricVisualizer

@@ -9,16 +9,21 @@ from segmenter.visualizers.BaseVisualizer import BaseVisualizer
 class AUCVisualizer(BaseVisualizer):
     def execute(self):
         results = self.collect_results(self.data_dir)
+        clazz = self.data_dir.split("/")[-2]
         for method, result in results.items():
             tpr, fpr, auc = self.compile_results(result)
-            plot = self.visualize(method, tpr, fpr, auc)
-            plot.savefig(os.path.join(self.data_dir, "{}.png".format(method)))
+            plot = self.visualize(method, tpr, fpr, auc, clazz)
+            plot.savefig(os.path.join(self.data_dir,
+                                      "{}-auc.png".format(method)),
+                         dpi=100,
+                         bbox_inches='tight',
+                         pad_inches=0.5)
             plot.close()
 
     def collect_results(self, directory):
         methods = sorted([
-            m for m in os.listdir(directory)
-            if os.path.isdir(os.path.join(directory, m))
+            m for m in os.listdir(directory) if
+            os.path.isdir(os.path.join(directory, m)) and m not in ["weights"]
         ])
         results = {}
         for method in methods:
@@ -52,11 +57,14 @@ class AUCVisualizer(BaseVisualizer):
         auc = max(tpr) * (1 - max(fpr)) + np.trapz(tpr, fpr)
         return tpr, fpr, auc
 
-    def visualize(self, method, tpr, fpr, auc):
+    def visualize(self, method, tpr, fpr, auc, clazz):
         plt.plot(fpr, tpr, marker='o')
-        plt.title(
-            'Receiver Operating Characteristic Curve for {} (AUC = {})'.format(
-                method, round(auc, 3)))
+        subtitle = "Class {}, {} aggregation".format(clazz, method)
+        plt.figtext(.5, .95, subtitle, fontsize=14, ha='center')
+        plt.title('Receiver Operating Characteristic Curve (AUC = {})'.format(
+            round(auc, 3)),
+                  y=1.15,
+                  fontsize=16)
         plt.ylim([0, 1])
         plt.xlim([0, max(fpr)])
         plt.xlabel('False Positive Rate (1 - Specificity)')

@@ -18,9 +18,6 @@ class MetricVisualizer(BaseVisualizer):
     }
 
     def execute(self):
-        self.collect_results()
-
-    def collect_results(self):
         csv_file = os.path.join(self.data_dir, "results.csv")
         clazz = self.data_dir.split("/")[-2]
         if not os.path.exists(csv_file):
@@ -34,7 +31,8 @@ class MetricVisualizer(BaseVisualizer):
             subtitle = "Class {}, {} Aggregator".format(
                 clazz, self.aggregator_pretty.get(aggregator, aggregator))
 
-            outfile = os.path.join(self.data_dir, "{}.png".format(aggregator))
+            outfile = os.path.join(self.data_dir,
+                                   "{}-metrics.png".format(aggregator))
             print(outfile)
             plot = self.visualize(aggregator_results)
             plot.suptitle(title, y=1.05, fontsize=16)
@@ -52,4 +50,6 @@ class MetricVisualizer(BaseVisualizer):
                    loc="lower left",
                    ncol=len(self.series),
                    frameon=False)
+        plt.xlabel("Threshold")
+        plt.ylabel("Metrics")
         return plt

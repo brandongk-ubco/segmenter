@@ -6,6 +6,7 @@ class Collectors(Enum):
     metric = "metric"
     boost = "boost"
     wight = "weight"
+    instance_metrics = "instance-metrics"
 
     def __str__(self):
         return self.name
@@ -32,5 +33,8 @@ class Collectors(Enum):
         if collector == "weight":
             from segmenter.collectors.WeightCollector import WeightCollector
             return WeightCollector
+        if collector == "instance-metrics":
+            from segmenter.collectors.InstanceMetricsCollector import InstanceMetricsCollector
+            return InstanceMetricsCollector
 
         raise ValueError("Unknown collector {}".format(collector))

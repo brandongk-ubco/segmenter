@@ -60,9 +60,29 @@ class AverageAggregator(Aggregator):
         return "sigmoid"
 
 
+class DummyAggregator(Aggregator):
+    def name(self):
+        return "dummy"
+
+    def thresholds(self):
+        return np.linspace(0., 0.95, num=20)
+
+    def layer(self):
+        return Activation("linear")
+
+    def fold_activation(self):
+        return "linear"
+
+    def final_activation(self):
+        return "sigmoid"
+
+
 def get_aggregators(job_config, aggregators=None):
-    return [
-        VoteAggregator(job_config["FOLDS"]),
-        NoisyOrAggregator(),
-        AverageAggregator()
-    ]
+    if job_config["FOLDS"] > 0:
+        return [
+            VoteAggregator(job_config["FOLDS"]),
+            NoisyOrAggregator(),
+            AverageAggregator()
+        ]
+    else:
+        return [DummyAggregator()]

@@ -13,9 +13,10 @@ class WeightCollector(BaseCollector):
         fold_directory = os.path.join(os.path.abspath(self.data_dir), "..")
         weight_finder = BestFoldWeightFinder(fold_directory)
 
-        for fold_name in weight_finder.keys():
+        for fold_name in sorted(weight_finder.keys()):
             weight_file = weight_finder.get(fold_name)
             extension = weight_file.split(".")[-1]
             dest_file = os.path.join(self.data_dir, "weights",
                                      "{}.{}".format(fold_name, extension))
+            print("{} -> {}".format(weight_file, dest_file))
             copyfile(weight_file, dest_file)

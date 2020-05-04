@@ -50,56 +50,61 @@ def get_model(image_size, job_config):
     return model
 
 
-def model_folds(inputs, clazz, job_config, weight_finder, fold_activation):
+def model_for_fold(fold_name, job_config, weight_finder, fold_activation,
+                   inputs):
+
+    boost_folds = range(job_config["BOOST_FOLDS"] +
+                        1) if job_config["BOOST_FOLDS"] else [None]
+
+    fold_models = []
+    for boost_fold in boost_folds:
+        boost_fold_name = fold_name
+        boost_fold_name += "" if boost_fold is None else "b{}".format(
+            boost_fold)
+
+        best_weight = weight_finder.get(boost_fold_name)
+        boost_fold_model = get_model((None, None, 1), job_config)
+        print("Loading weight %s" % best_weight)
+        boost_fold_model.load_weights(best_weight)
+        boost_fold_model.trainable = False
+        boost_fold_model._name = boost_fold_name
+        boost_fold_model = boost_fold_model(inputs)
+        boost_fold_model = Lambda(
+            lambda x: logit(x),
+            name="{}_logit".format(boost_fold_name))(boost_fold_model)
+
+        fold_models.append(boost_fold_model)
+
+    fold_model = fold_models[0] if len(fold_models) == 1 else Add(
+        name="{}_add".format(fold_name))(fold_models)
+    fold_activation_name = "{}_{}".format(fold_name, fold_activation)
+    fold_model = Activation(fold_activation,
+                            name=fold_activation_name)(fold_model)
+    model = Model(inputs, fold_model)
+    model._name = fold_name
+    return model
+
+
+def model_folds(inputs, job_config, weight_finder, aggregator):
     models = []
 
     folds = range(job_config["FOLDS"]) if job_config["FOLDS"] else [None]
-    boost_folds = range(job_config["BOOST_FOLDS"] +
-                        1) if job_config["BOOST_FOLDS"] is not None else [
-                            None
-                        ]
 
     for fold in folds:
-        fold_models = []
         fold_name = "all" if fold is None else "fold{}".format(fold)
-        for boost_fold in boost_folds:
-            boost_fold_name = fold_name
-            boost_fold_name += "" if boost_fold is None else "b{}".format(
-                boost_fold)
-
-            best_weight = weight_finder.get(boost_fold_name)
-            boost_fold_model = get_model((None, None, 1), job_config)
-            print("Loading weight %s" % best_weight)
-            boost_fold_model.load_weights(best_weight)
-            boost_fold_model.trainable = False
-            boost_fold_model._name = boost_fold_name
-            boost_fold_model = boost_fold_model(inputs)
-            boost_fold_model = Lambda(
-                lambda x: logit(x),
-                name="{}_logit".format(boost_fold_name))(boost_fold_model)
-
-            fold_models.append(boost_fold_model)
-
-        fold_model = fold_models[0] if len(fold_models) == 1 else Add(
-            name="{}_add".format(fold_name))(fold_models)
-
-        fold_activation_name = "{}_{}".format(fold_name, fold_activation)
-        fold_model = Activation(fold_activation,
-                                name=fold_activation_name)(fold_model)
-        model = Model(inputs, fold_model)
-        model._name = fold_name
-        models.append(model)
+        models.append(
+            model_for_fold(fold_name, job_config, weight_finder,
+                           aggregator.fold_activation(), inputs))
     return models
 
 
-def full_model(clazz, job_config, weight_finder, aggregator):
+def full_model(job_config, weight_finder, aggregator):
 
     inputs = Input(shape=(None, None, 1))
 
-    models = model_folds(inputs, clazz, job_config, weight_finder,
-                         aggregator.fold_activation())
+    models = model_folds(inputs, job_config, weight_finder, aggregator)
 
-    assert len(models) > 0, "No models found for class %s" % clazz
+    assert len(models) > 0, "No models found."
 
     if len(models) == 1:
         out = models[0](inputs)
@@ -109,7 +114,6 @@ def full_model(clazz, job_config, weight_finder, aggregator):
     out = Activation(aggregator.final_activation(),
                      name=aggregator.final_activation())(out)
     model = Model(inputs, out)
-    model._name = "{}_{}".format(clazz, aggregator.name())
     model.summary()
 
     return model

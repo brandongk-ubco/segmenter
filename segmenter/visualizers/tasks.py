@@ -23,7 +23,7 @@ class VisualizeTask(BaseTask):
         BaseTask.arguments(command_parser)
         command_parser.add_argument("--visualizer",
                                     type=str,
-                                    default="auc",
+                                    default="metric",
                                     choices=Visualizers.choices(),
                                     help='the visualization to perform.')
         command_parser.add_argument("--classes",
