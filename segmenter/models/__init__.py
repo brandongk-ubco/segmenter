@@ -14,7 +14,7 @@ class FoldWeightFinders(Enum):
 
     @classmethod
     def choices(cls):
-        return [e.value for e in cls]
+        return sorted([e.value for e in cls])
 
     @staticmethod
     def get(finder):

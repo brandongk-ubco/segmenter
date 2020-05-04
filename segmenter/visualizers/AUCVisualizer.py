@@ -13,8 +13,21 @@ class AUCVisualizer(BaseVisualizer):
         for method, result in results.items():
             tpr, fpr, auc = self.compile_results(result)
             plot = self.visualize(method, tpr, fpr, auc, clazz)
-            plot.savefig(os.path.join(self.data_dir,
-                                      "{}-auc.png".format(method)),
+            plot.xlabel('False Positive Rate (1 - Specificity)')
+            plot.ylabel('True Positive Rate (Sensitivity)')
+            plot.savefig(os.path.join(
+                self.data_dir, "{}-auc-false-positive.png".format(method)),
+                         dpi=100,
+                         bbox_inches='tight',
+                         pad_inches=0.5)
+            plot.close()
+
+            tpr, fpr, auc = self.compile_results(result, x='precision')
+            plot = self.visualize(method, tpr, fpr, auc, clazz)
+            plot.xlabel('False Discovery Rate (1 - Precision)')
+            plot.ylabel('True Positive Rate (Sensitivity)')
+            plot.savefig(os.path.join(
+                self.data_dir, "{}-auc-false-discovery.png".format(method)),
                          dpi=100,
                          bbox_inches='tight',
                          pad_inches=0.5)
@@ -41,12 +54,12 @@ class AUCVisualizer(BaseVisualizer):
             results[method] = method_results
         return results
 
-    def compile_results(self, results):
+    def compile_results(self, results, y='recall', x='specificity'):
         tpr = [0.0, 1.0]
         fpr = [0.0, 1.0]
         for result in results:
-            tpr.append(round(result['recall'], 2))
-            fpr.append(round((1 - result['specificity']), 3))
+            tpr.append(round(result[y], 2))
+            fpr.append(round((1 - result[x]), 3))
         df = pd.DataFrame({"tpr": tpr, "fpr": fpr})
         df = df.sort_values(['tpr', 'fpr'],
                             ascending=[True,
@@ -67,6 +80,4 @@ class AUCVisualizer(BaseVisualizer):
                   fontsize=16)
         plt.ylim([0, 1])
         plt.xlim([0, max(fpr)])
-        plt.xlabel('False Positive Rate (1 - Specificity)')
-        plt.ylabel('True Positive Rate (Sensitivity)')
         return plt

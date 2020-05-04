@@ -13,7 +13,12 @@ class Aggregator:
                 and hasattr(subclass, 'fold_activation')
                 and callable(subclass.fold_activation)
                 and hasattr(subclass, 'final_activation')
-                and callable(subclass.final_activation))
+                and callable(subclass.final_activation)
+                and hasattr(subclass, 'display_name')
+                and callable(subclass.display_name))
+
+    def __init__(self, job_config):
+        self.job_config = job_config
 
     @abstractmethod
     def name(self) -> str:
@@ -21,6 +26,10 @@ class Aggregator:
 
     @abstractmethod
     def thresholds(self) -> np.ndarray:
+        raise NotImplementedError
+
+    @abstractmethod
+    def display_name(self) -> str:
         raise NotImplementedError
 
     @abstractmethod

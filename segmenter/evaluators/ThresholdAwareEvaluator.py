@@ -9,7 +9,7 @@ from segmenter.loss import get_loss
 from segmenter.models.full_model import full_model, model_for_fold
 from segmenter.optimizers import get_optimizer
 from segmenter.metrics import get_metrics
-from segmenter.aggregators import get_aggregators
+from segmenter.aggregators import Aggregators
 import numpy as np
 
 
@@ -34,14 +34,15 @@ class ThresholdAwareEvaluator(BaseEvaluator, metaclass=ABCMeta):
         self.optimizer = get_optimizer(self.job_config["OPTIMIZER"])
 
     def execute(self) -> None:
-        for aggregator in get_aggregators(self.job_config):
+        for aggregator_name in Aggregators.choices():
+            aggregator = Aggregators.get(aggregator_name)(self.job_config)
             model = full_model(self.job_config,
                                self.weight_finder,
                                aggregator=aggregator)
             for threshold in aggregator.thresholds():
                 threshold_str = "{:1.2f}".format(threshold)
                 print("Aggregator {} and Threshold: {}".format(
-                    aggregator.name(), threshold_str))
+                    aggregator.display_name(), threshold_str))
                 threshold_dir = os.path.join(self.resultdir, aggregator.name(),
                                              threshold_str)
                 os.makedirs(threshold_dir, exist_ok=True)

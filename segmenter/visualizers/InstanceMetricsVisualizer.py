@@ -7,17 +7,12 @@ from segmenter.visualizers.BaseVisualizer import BaseVisualizer
 import glob
 import numpy as np
 from typing import Dict
+from segmenter.aggregators import Aggregators
 
 
 class InstanceMetricsVisualizer(BaseVisualizer):
 
     metrics = [("dice", "F1-Score"), ("iou", "IOU")]
-
-    aggregator_pretty = {
-        "average": "Average",
-        "noisy_or": "Noisy Or",
-        "vote": "Vote"
-    }
 
     def execute(self):
         csv_file = os.path.join(self.data_dir, "instance-metrics.csv")
@@ -26,18 +21,19 @@ class InstanceMetricsVisualizer(BaseVisualizer):
             print("CSV file does not exist {}".format(csv_file))
             return
         self.results = pd.read_csv(csv_file)
-        for aggregator in self.results["aggregator"].unique():
+        for aggregator_name in self.results["aggregator"].unique():
             aggregator_results = self.results[self.results.aggregator ==
-                                              aggregator]
+                                              aggregator_name]
+            aggregator = Aggregators.get(aggregator_name)
             for threshold in aggregator_results["threshold"].unique():
                 threshold_results = aggregator_results[
                     aggregator_results.threshold == threshold]
                 subtitle = "Class {}, {} aggregation with threshold {}".format(
-                    clazz, aggregator, threshold)
+                    clazz, aggregator.display_name(), threshold)
                 for metric, display in self.metrics:
                     outfile = os.path.join(
-                        os.path.dirname(self.data_dir), "results", aggregator,
-                        "{:.2f}".format(threshold),
+                        os.path.dirname(self.data_dir), "results",
+                        aggregator.name(), "{:.2f}".format(threshold),
                         "instance-metrics-{}.png".format(metric))
                     print(outfile)
                     metric_results = threshold_results[metric]
@@ -57,7 +53,8 @@ class InstanceMetricsVisualizer(BaseVisualizer):
                                             by='threshold',
                                             grid=False)
                 title = "{} by Threshold".format(display)
-                subtitle = "Class {}, {} aggregation".format(clazz, aggregator)
+                subtitle = "Class {}, {} aggregation".format(
+                    clazz, aggregator.display_name())
 
                 fig = plot.get_figure()
                 plt.title('')
@@ -69,7 +66,8 @@ class InstanceMetricsVisualizer(BaseVisualizer):
 
                 outfile = os.path.join(
                     os.path.dirname(self.data_dir), "results",
-                    "{}-instance-metrics-{}.png".format(aggregator, metric))
+                    "{}-instance-metrics-{}.png".format(
+                        aggregator.name(), metric))
                 fig.savefig(outfile,
                             dpi=100,
                             bbox_inches='tight',
