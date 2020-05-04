@@ -23,8 +23,8 @@ class MetricCollector(BaseCollector):
             self.results = self.results.append(df, ignore_index=True)
         if not self.results.empty:
             print("Writing {}".format(
-                os.path.join(self.data_dir, "results.csv")))
-            self.results.to_csv(os.path.join(self.data_dir, "results.csv"),
+                os.path.join(self.data_dir, "metrics.csv")))
+            self.results.to_csv(os.path.join(self.data_dir, "metrics.csv"),
                                 index=False)
 
     def collect_results(self, directory):

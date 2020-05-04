@@ -48,7 +48,7 @@ class VisualizeTask(BaseTask):
         for clazz in self.classes:
             indir = os.path.join(self.output_dir, self.job_hash, clazz,
                                  "results")
-            self.visualizer(indir).execute()
+            self.visualizer(indir, self.job_config).execute()
 
 
 tasks = [VisualizeTask]

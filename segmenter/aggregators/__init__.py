@@ -4,9 +4,9 @@ from enum import Enum
 
 
 class Aggregators(Enum):
-    average_after = "average-after"
-    average_before = "average-before"
-    noisy_or = "noisy-or"
+    average_after = "average_after"
+    average_before = "average_before"
+    noisy_or = "noisy_or"
     vote = "vote"
 
     def __str__(self):
@@ -22,13 +22,13 @@ class Aggregators(Enum):
     @staticmethod
     def get(aggregator):
 
-        if aggregator == "noisy-or":
+        if aggregator == "noisy_or":
             from segmenter.aggregators.NoisyOrAggregator import NoisyOrAggregator
             return NoisyOrAggregator
-        if aggregator == "average-before":
+        if aggregator == "average_before":
             from segmenter.aggregators.AverageBeforeAggregator import AverageBeforeAggregator
             return AverageBeforeAggregator
-        if aggregator == "average-after":
+        if aggregator == "average_after":
             from segmenter.aggregators.AverageAfterAggregator import AverageAfterAggregator
             return AverageAfterAggregator
         if aggregator == "vote":

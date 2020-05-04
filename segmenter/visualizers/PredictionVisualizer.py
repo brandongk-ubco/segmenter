@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 from segmenter.visualizers.BaseVisualizer import BaseVisualizer
+from segmenter.aggregators import Aggregators
 import glob
 import numpy as np
 
@@ -14,10 +15,20 @@ class PredictionVisualizer(BaseVisualizer):
         for result in results:
             print(result)
             r = np.load(result)
+
+            clazz = result.split("/")[-5]
+            aggregator_name = result.split("/")[-3]
+            threshold = result.split("/")[-2]
+            aggregator = Aggregators.get(aggregator_name)
+            name = os.path.basename(result)[11:-4]
+            title = "Predictions for {}".format(name)
+            subtitle = "Class {}, {} Aggregator with Threshold {}".format(
+                clazz, aggregator.display_name(), threshold)
             plot = self.visualize(r["image"], r["mask"], r["prediction"])
-            plt.savefig(os.path.join(
-                os.path.dirname(result),
-                "{}.png".format(os.path.basename(result)[:-4])),
+            plot.suptitle(title, y=1.05, fontsize=16)
+            plt.figtext(.5, .96, subtitle, fontsize=14, ha='center')
+            plt.savefig(os.path.join(os.path.dirname(result),
+                                     "{}.png".format(name)),
                         dpi=100,
                         bbox_inches='tight',
                         pad_inches=0.5)
@@ -56,25 +67,21 @@ class PredictionVisualizer(BaseVisualizer):
         union = np.sum(np.logical_or(boolean_prediction, boolean_mask))
         iou = intr / union
 
-        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
+        fig, (ax1, ax2, ax3) = plt.subplots(3, 1)
 
         fig.set_size_inches(10, 5)
 
         ax1.imshow(image, cmap='gray')
         ax1.axis('off')
-        ax1.set_title('Original Image')
+        ax1.set_title('Image')
 
         ax2.imshow(mask, cmap='gray')
         ax2.axis('off')
-        ax2.set_title('Original Mask')
+        ax2.set_title('Mask')
 
-        ax3.imshow(highlighted_image)
+        ax3.imshow(highlighted_mask, cmap='gray')
+        ax3.set_title("Predicted Mask (IOU {:.2f})".format(iou))
         ax3.axis('off')
-        ax3.set_title('Predictions')
-
-        ax4.imshow(highlighted_mask, cmap='gray')
-        ax4.set_title("Predicted Mask (IOU {:.2f})".format(iou))
-        ax4.axis('off')
 
         plt.subplots_adjust(wspace=0, hspace=0)
 

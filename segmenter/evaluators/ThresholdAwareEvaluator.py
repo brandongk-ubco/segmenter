@@ -35,6 +35,7 @@ class ThresholdAwareEvaluator(BaseEvaluator, metaclass=ABCMeta):
 
     def execute(self) -> None:
         for aggregator_name in Aggregators.choices():
+            K.clear_session()
             aggregator = Aggregators.get(aggregator_name)(self.job_config)
             model = full_model(self.job_config,
                                self.weight_finder,
