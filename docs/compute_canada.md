@@ -94,4 +94,4 @@ You should have created a [dataset](dataset.md) and processed it.
 The dataset should go on the `/scratch` drive.  The scratch drive has faster i/o, but is not persisted.  If the files are stale there for a certain number of weeks, they get deleted.  On your local machine:
 
 1. `cd segmenter/datasets/`
-2. `rsync -r --progress --delete --exclude '*.png' . <USER>@<CLUSTER>.computecanada.ca:/scratch/<USER>/datasets/`
+2. `rsync -r --progress --update --delete --exclude '*.png' . <USER>@<CLUSTER>.computecanada.ca:/scratch/<USER>/datasets/`

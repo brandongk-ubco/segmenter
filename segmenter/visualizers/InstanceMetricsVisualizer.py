@@ -30,8 +30,8 @@ class InstanceMetricsVisualizer(BaseVisualizer):
             aggregator_results = self.results[self.results.aggregator ==
                                               aggregator]
             for threshold in aggregator_results["threshold"].unique():
-                threshold_results = aggregator_results[aggregator_results ==
-                                                       threshold]
+                threshold_results = aggregator_results[
+                    aggregator_results.threshold == threshold]
                 subtitle = "Class {}, {} aggregation with threshold {}".format(
                     clazz, aggregator, threshold)
                 for metric, display in self.metrics:
@@ -40,7 +40,7 @@ class InstanceMetricsVisualizer(BaseVisualizer):
                         "{:.2f}".format(threshold),
                         "instance-metrics-{}.png".format(metric))
                     print(outfile)
-                    metric_results = aggregator_results[metric]
+                    metric_results = threshold_results[metric]
                     metric_plot = self.visualize(metric_results, display)
                     title = r'{} ($\mu$ = {:.2f}, $\sigma$ = {:.2f})'.format(
                         display, np.mean(metric_results),
