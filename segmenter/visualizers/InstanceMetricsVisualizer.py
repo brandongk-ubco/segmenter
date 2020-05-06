@@ -24,7 +24,7 @@ class InstanceMetricsVisualizer(BaseVisualizer):
         for aggregator_name in self.results["aggregator"].unique():
             aggregator_results = self.results[self.results.aggregator ==
                                               aggregator_name]
-            aggregator = Aggregators.get(aggregator_name)
+            aggregator = Aggregators.get(aggregator_name)(self.job_config)
             for threshold in aggregator_results["threshold"].unique():
                 threshold_results = aggregator_results[
                     aggregator_results.threshold == threshold]
@@ -35,6 +35,8 @@ class InstanceMetricsVisualizer(BaseVisualizer):
                         os.path.dirname(self.data_dir), "results",
                         aggregator.name(), "{:.2f}".format(threshold),
                         "instance-metrics-{}.png".format(metric))
+                    if os.path.exists(outfile):
+                        continue
                     print(outfile)
                     metric_results = threshold_results[metric]
                     metric_plot = self.visualize(metric_results, display)

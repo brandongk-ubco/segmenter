@@ -4,80 +4,95 @@ import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 from segmenter.visualizers.BaseVisualizer import BaseVisualizer
+from segmenter.aggregators import Aggregators
 
 
 class AUCVisualizer(BaseVisualizer):
     def execute(self):
-        results = self.collect_results(self.data_dir)
+        csv_file = os.path.join(self.data_dir, "metrics.csv")
         clazz = self.data_dir.split("/")[-2]
-        for method, result in results.items():
-            tpr, fpr, auc = self.compile_results(result)
-            plot = self.visualize(method, tpr, fpr, auc, clazz)
-            plot.xlabel('False Positive Rate (1 - Specificity)')
-            plot.ylabel('True Positive Rate (Sensitivity)')
-            plot.savefig(os.path.join(
-                self.data_dir, "{}-auc-false-positive.png".format(method)),
-                         dpi=100,
-                         bbox_inches='tight',
-                         pad_inches=0.5)
-            plot.close()
+        if not os.path.exists(csv_file):
+            print("CSV file does not exist {}".format(csv_file))
+            return
+        self.results = pd.read_csv(csv_file)
+        self.results["false_positive_rate"] = 1 - self.results["specificity"]
+        self.results["false_discovery_rate"] = 1 - self.results["precision"]
+        self.results = self.results.round(2)
+        self.results = self.results[[
+            "recall", "false_positive_rate", "false_discovery_rate",
+            "aggregator"
+        ]]
+        for aggregator_name in self.results["aggregator"].unique():
+            aggregator = Aggregators.get(aggregator_name)(self.job_config)
+            aggregator_results = self.results[
+                self.results.aggregator == aggregator_name][[
+                    "recall", "false_positive_rate", "false_discovery_rate"
+                ]]
+            aggregator_results = aggregator_results.groupby("recall").agg(
+                'min').reset_index()
+            aggregator_results = aggregator_results.append(
+                {
+                    "recall": 0.,
+                    "false_positive_rate": 0.,
+                    "false_discovery_rate": 0.
+                },
+                ignore_index=True)
+            aggregator_results = aggregator_results.append(
+                {
+                    "recall": 1.,
+                    "false_positive_rate": 1.,
+                    "false_discovery_rate": 1.
+                },
+                ignore_index=True)
+            aggregator_results = aggregator_results.sort_values("recall")
+            recall = aggregator_results["recall"]
+            fpr = aggregator_results["false_positive_rate"]
+            fdr = aggregator_results["false_discovery_rate"]
 
-            tpr, fpr, auc = self.compile_results(result, x='precision')
-            plot = self.visualize(method, tpr, fpr, auc, clazz)
-            plot.xlabel('False Discovery Rate (1 - Precision)')
-            plot.ylabel('True Positive Rate (Sensitivity)')
-            plot.savefig(os.path.join(
-                self.data_dir, "{}-auc-false-discovery.png".format(method)),
-                         dpi=100,
-                         bbox_inches='tight',
-                         pad_inches=0.5)
-            plot.close()
+            auc_fpr = np.trapz(recall, fpr)
+            auc_fdr = np.trapz(recall, fdr)
 
-    def collect_results(self, directory):
-        methods = sorted([
-            m for m in os.listdir(directory) if
-            os.path.isdir(os.path.join(directory, m)) and m not in ["weights"]
-        ])
-        results = {}
-        for method in methods:
-            method_dir = os.path.join(directory, method)
-            samples = sorted([
-                os.path.join(method_dir, o) for o in os.listdir(method_dir)
-                if os.path.isdir(os.path.join(method_dir, o))
-            ])
-            method_results = []
-            for sample in samples:
-                with open(os.path.join(sample, "results.json"),
-                          "r") as sample_file:
-                    sample_json = json.load(sample_file)
-                    method_results.append(sample_json)
-            results[method] = method_results
-        return results
+            #Plot False-Positive Rate
+            fig, ax = self.visualize(recall, fpr)
+            ax.set_xlabel('False Positive Rate (1 - Specificity)')
+            ax.set_ylabel('True Positive Rate (Sensitivity)')
+            subtitle = "Class {}, {} aggregation".format(
+                clazz, aggregator.display_name())
+            plt.figtext(.5, .95, subtitle, fontsize=14, ha='center')
+            plt.title(
+                'True Positive Rate vs. False Positive Rate (AUC = {:1.2f})'.
+                format(round(auc_fpr, 3)),
+                y=1.15,
+                fontsize=16)
+            outfile = os.path.join(
+                self.data_dir,
+                "{}-auc-false-positive.png".format(aggregator.name()))
+            print(outfile)
+            plt.savefig(outfile, dpi=100, bbox_inches='tight', pad_inches=0.5)
+            plt.close()
 
-    def compile_results(self, results, y='recall', x='specificity'):
-        tpr = [0.0, 1.0]
-        fpr = [0.0, 1.0]
-        for result in results:
-            tpr.append(round(result[y], 2))
-            fpr.append(round((1 - result[x]), 3))
-        df = pd.DataFrame({"tpr": tpr, "fpr": fpr})
-        df = df.sort_values(['tpr', 'fpr'],
-                            ascending=[True,
-                                       True]).drop_duplicates(['fpr'],
-                                                              keep="last")
-        tpr = np.array(df["tpr"])
-        fpr = np.array(df["fpr"])
-        auc = max(tpr) * (1 - max(fpr)) + np.trapz(tpr, fpr)
-        return tpr, fpr, auc
+            #Plot False-Discovery Rate
+            fig, ax = self.visualize(recall, fdr)
+            ax.set_xlabel('False Discovery Rate (1 - Precision)')
+            ax.set_ylabel('True Positive Rate (Sensitivity)')
+            subtitle = "Class {}, {} aggregation".format(
+                clazz, aggregator.display_name())
+            plt.figtext(.5, .95, subtitle, fontsize=14, ha='center')
+            plt.title(
+                'True Positive Rate vs. False Discovery Rate (AUC = {:1.2f})'.
+                format(round(auc_fdr, 3)),
+                y=1.15,
+                fontsize=16)
+            outfile = os.path.join(
+                self.data_dir,
+                "{}-auc-false-discovery.png".format(aggregator.name()))
+            print(outfile)
+            plt.savefig(outfile, dpi=100, bbox_inches='tight', pad_inches=0.5)
+            plt.close()
 
-    def visualize(self, method, tpr, fpr, auc, clazz):
-        plt.plot(fpr, tpr, marker='o')
-        subtitle = "Class {}, {} aggregation".format(clazz, method)
-        plt.figtext(.5, .95, subtitle, fontsize=14, ha='center')
-        plt.title('Receiver Operating Characteristic Curve (AUC = {})'.format(
-            round(auc, 3)),
-                  y=1.15,
-                  fontsize=16)
-        plt.ylim([0, 1])
-        plt.xlim([0, max(fpr)])
-        return plt
+    def visualize(self, tpr, fpr):
+        f, ax = plt.subplots()
+        ax.plot(fpr, tpr, marker='o')
+        ax.set_ylim([0, 1])
+        ax.set_xlim([0, max(fpr)])
+        return f, ax
