@@ -51,9 +51,9 @@ class InstanceMetricsVisualizer(BaseVisualizer):
                                 pad_inches=0.5)
                     plt.close()
             for metric, display in self.metrics:
-                plot = self.results.boxplot(column=[metric],
-                                            by='threshold',
-                                            grid=False)
+                plot = aggregator_results.boxplot(column=[metric],
+                                                  by='threshold',
+                                                  grid=False)
                 title = "{} by Threshold".format(display)
                 subtitle = "Class {}, {} aggregation".format(
                     clazz, aggregator.display_name())
