@@ -4,7 +4,7 @@ from enum import Enum
 class Evaluators(Enum):
     metric = "metric"
     predict = "predict"
-    activations = "activation"
+    layer_output = "layer-output"
 
     def __str__(self):
         return self.name
@@ -25,8 +25,8 @@ class Evaluators(Enum):
         if evaluator == "predict":
             from segmenter.evaluators.PredictEvaluator import PredictEvaluator
             return PredictEvaluator
-        if evaluator == "activation":
-            from segmenter.evaluators.ActivationEvaluator import ActivationEvaluator
-            return ActivationEvaluator
+        if evaluator == "layer-output":
+            from segmenter.evaluators.LayerOutputEvaluator import LayerOutputEvaluator
+            return LayerOutputEvaluator
 
         raise ValueError("Unknown evaluator {}".format(evaluator))
