@@ -7,6 +7,7 @@ class Collectors(Enum):
     boost = "boost"
     wight = "weight"
     instance_metrics = "instance-metrics"
+    layer_output = "layer-output"
 
     def __str__(self):
         return self.name
@@ -36,5 +37,8 @@ class Collectors(Enum):
         if collector == "instance-metrics":
             from segmenter.collectors.InstanceMetricsCollector import InstanceMetricsCollector
             return InstanceMetricsCollector
+        if collector == "layer-output":
+            from segmenter.collectors.LayerOutputCollector import LayerOutputCollector
+            return LayerOutputCollector
 
         raise ValueError("Unknown collector {}".format(collector))
