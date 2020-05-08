@@ -50,6 +50,16 @@ def get_model(image_size, job_config):
     return model
 
 
+def model_for_boost_fold(boost_fold_name, job_config, weight_finder):
+    best_weight = weight_finder.get(boost_fold_name)
+    boost_fold_model = get_model((None, None, 1), job_config)
+    print("Loading weight %s" % best_weight)
+    boost_fold_model.load_weights(best_weight)
+    boost_fold_model.trainable = False
+    boost_fold_model._name = boost_fold_name
+    return boost_fold_model
+
+
 def model_for_fold(fold_name, job_config, weight_finder, fold_activation,
                    inputs):
 
@@ -62,12 +72,8 @@ def model_for_fold(fold_name, job_config, weight_finder, fold_activation,
         boost_fold_name += "" if boost_fold is None else "b{}".format(
             boost_fold)
 
-        best_weight = weight_finder.get(boost_fold_name)
-        boost_fold_model = get_model((None, None, 1), job_config)
-        print("Loading weight %s" % best_weight)
-        boost_fold_model.load_weights(best_weight)
-        boost_fold_model.trainable = False
-        boost_fold_model._name = boost_fold_name
+        boost_fold_model = model_for_boost_fold(boost_fold_name, job_config,
+                                                weight_finder)
         boost_fold_model = boost_fold_model(inputs)
         boost_fold_model = Lambda(
             lambda x: logit(x),

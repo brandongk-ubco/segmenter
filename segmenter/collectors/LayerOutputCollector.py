@@ -20,10 +20,16 @@ class LayerOutputCollector(BaseCollector):
             print(result)
             fold_results = np.load(result)
             fold = result.split("/")[-2]
+            boost_fold = None
+            if "b" in fold:
+                boost_fold = fold.split("b")[-1]
+                fold = fold.split("b")[1]
+
             for layer_type in self.layer_types:
                 layer_results = pd.DataFrame([fold_results[layer_type]])
                 layer_results["layer_type"] = layer_type
                 layer_results["fold"] = fold
+                layer_results["boost_fold"] = boost_fold
                 self.results = self.results.append(layer_results)
 
         self.results.to_csv(os.path.join(self.data_dir, "layer-outputs.csv"),

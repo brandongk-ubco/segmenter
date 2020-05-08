@@ -20,7 +20,7 @@ class BoostVisualizer(BaseVisualizer):
                                grid=False)
 
         title = "Loss Improvement by Number of Boost Folds"
-        subtitle = "Class {}".format(clazz)
+        subtitle = "{} - Class {}".format(self.label, clazz)
 
         fig = plot.get_figure()
         plt.title('')
@@ -30,5 +30,5 @@ class BoostVisualizer(BaseVisualizer):
         plot.set_xlabel('Number of Boost Folds')
 
         outfile = os.path.join(self.data_dir, "boost.png")
-        fig.savefig(outfile, dpi=100, bbox_inches='tight', pad_inches=0.5)
+        fig.savefig(outfile, dpi=70, bbox_inches='tight', pad_inches=0.5)
         plt.close()

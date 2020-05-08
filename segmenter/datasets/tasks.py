@@ -91,7 +91,7 @@ class DatasetCoverage(Task):
                     ha='center')
 
         out_file = os.path.join(self.dataset_dir, "coverage.png")
-        plt.savefig(out_file, dpi=100, bbox_inches='tight', pad_inches=0.5)
+        plt.savefig(out_file, dpi=70, bbox_inches='tight', pad_inches=0.5)
         plt.close()
 
 
@@ -151,7 +151,7 @@ class VisualizeDataset(Task):
 
             out_file = os.path.join(os.path.dirname(instance),
                                     "{}.png".format(name))
-            plt.savefig(out_file, dpi=100, bbox_inches='tight', pad_inches=0.5)
+            plt.savefig(out_file, dpi=70, bbox_inches='tight', pad_inches=0.5)
 
             plt.close()
 

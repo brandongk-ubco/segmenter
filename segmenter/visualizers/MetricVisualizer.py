@@ -25,17 +25,19 @@ class MetricVisualizer(BaseVisualizer):
                                               aggregator_name].sort_values(
                                                   "threshold")
             f1_max = max(aggregator_results["f1-score"])
-            title = "Metrics vs. Threshold"
-            subtitle = "Class {}, {} Aggregator (Max F1-Score {:1.2f})".format(
-                clazz, aggregator.display_name(), f1_max)
+            title = "Metrics vs. Threshold (Max F1-Score {:1.2f})".format(
+                f1_max)
+            subtitle_2 = "{} Aggregator ".format(aggregator.display_name())
+            subtitle_1 = "{} - Class {}".format(self.label, clazz)
 
             outfile = os.path.join(self.data_dir,
                                    "{}-metrics.png".format(aggregator_name))
             print(outfile)
             plot = self.visualize(aggregator_results)
-            plot.suptitle(title, y=1.05, fontsize=16)
-            plt.figtext(.5, .96, subtitle, fontsize=14, ha='center')
-            plot.savefig(outfile, dpi=100, bbox_inches='tight', pad_inches=0.5)
+            plot.suptitle(title, y=1.1, fontsize=16)
+            plt.figtext(.5, 1.01, subtitle_1, fontsize=14, ha='center')
+            plt.figtext(.5, 0.96, subtitle_2, fontsize=14, ha='center')
+            plot.savefig(outfile, dpi=70, bbox_inches='tight', pad_inches=0.5)
             plot.close()
 
     def visualize(self, results):

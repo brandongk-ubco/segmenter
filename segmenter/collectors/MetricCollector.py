@@ -11,7 +11,11 @@ class MetricCollector(BaseCollector):
     results = pd.DataFrame()
 
     def execute(self):
-        for result in self.collect_results(self.data_dir):
+        outfile = os.path.join(self.data_dir, "metrics.csv")
+        if os.path.exists(outfile):
+            print("Metrics already collected in {}".format(self.data_dir))
+            return
+        for result in sorted(self.collect_results(self.data_dir)):
             print(result)
             aggregator = result.split("/")[-3]
             threshold = float(result.split("/")[-2])
@@ -24,8 +28,7 @@ class MetricCollector(BaseCollector):
         if not self.results.empty:
             print("Writing {}".format(
                 os.path.join(self.data_dir, "metrics.csv")))
-            self.results.to_csv(os.path.join(self.data_dir, "metrics.csv"),
-                                index=False)
+            self.results.to_csv(outfile, index=False)
 
     def collect_results(self, directory):
         return glob.glob("{}/**/results.json".format(directory),

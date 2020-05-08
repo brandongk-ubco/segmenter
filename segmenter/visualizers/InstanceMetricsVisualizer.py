@@ -28,8 +28,8 @@ class InstanceMetricsVisualizer(BaseVisualizer):
             for threshold in aggregator_results["threshold"].unique():
                 threshold_results = aggregator_results[
                     aggregator_results.threshold == threshold]
-                subtitle = "Class {}, {} aggregation with threshold {}".format(
-                    clazz, aggregator.display_name(), threshold)
+                subtitle = "{} - Class {}, {} Aggregator with threshold {}".format(
+                    self.label, clazz, aggregator.display_name(), threshold)
                 for metric, display in self.metrics:
                     outfile = os.path.join(
                         os.path.dirname(self.data_dir), "results",
@@ -46,7 +46,7 @@ class InstanceMetricsVisualizer(BaseVisualizer):
                     metric_plot.suptitle(title, y=1.07, fontsize=16)
                     plt.figtext(.5, .98, subtitle, fontsize=14, ha='center')
                     plt.savefig(outfile,
-                                dpi=100,
+                                dpi=70,
                                 bbox_inches='tight',
                                 pad_inches=0.5)
                     plt.close()
@@ -55,8 +55,8 @@ class InstanceMetricsVisualizer(BaseVisualizer):
                                                   by='threshold',
                                                   grid=False)
                 title = "{} by Threshold".format(display)
-                subtitle = "Class {}, {} aggregation".format(
-                    clazz, aggregator.display_name())
+                subtitle = "{} - Class {}, {} Aggregator".format(
+                    self.label, clazz, aggregator.display_name())
 
                 fig = plot.get_figure()
                 plt.title('')
@@ -71,7 +71,7 @@ class InstanceMetricsVisualizer(BaseVisualizer):
                     "{}-instance-metrics-{}.png".format(
                         aggregator.name(), metric))
                 fig.savefig(outfile,
-                            dpi=100,
+                            dpi=70,
                             bbox_inches='tight',
                             pad_inches=0.5)
                 plt.close()

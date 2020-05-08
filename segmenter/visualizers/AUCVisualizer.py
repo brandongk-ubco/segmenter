@@ -56,11 +56,11 @@ class AUCVisualizer(BaseVisualizer):
             fig, ax = self.visualize(recall, fpr)
             ax.set_xlabel('False Positive Rate (1 - Specificity)')
             ax.set_ylabel('True Positive Rate (Sensitivity)')
-            subtitle = "Class {}, {} aggregation".format(
-                clazz, aggregator.display_name())
+            subtitle = "{} - Class {}, {} Aggregator".format(
+                self.label, clazz, aggregator.display_name())
             plt.figtext(.5, .95, subtitle, fontsize=14, ha='center')
             plt.title(
-                'True Positive Rate vs. False Positive Rate (AUC = {:1.2f})'.
+                'True Positive Rate vs. False Positive Rate (AUC {:1.2f})'.
                 format(round(auc_fpr, 3)),
                 y=1.15,
                 fontsize=16)
@@ -68,18 +68,18 @@ class AUCVisualizer(BaseVisualizer):
                 self.data_dir,
                 "{}-auc-false-positive.png".format(aggregator.name()))
             print(outfile)
-            plt.savefig(outfile, dpi=100, bbox_inches='tight', pad_inches=0.5)
+            plt.savefig(outfile, dpi=70, bbox_inches='tight', pad_inches=0.5)
             plt.close()
 
             #Plot False-Discovery Rate
             fig, ax = self.visualize(recall, fdr)
             ax.set_xlabel('False Discovery Rate (1 - Precision)')
             ax.set_ylabel('True Positive Rate (Sensitivity)')
-            subtitle = "Class {}, {} aggregation".format(
-                clazz, aggregator.display_name())
+            subtitle = "{} - Class {}, {} Aggregator".format(
+                self.label, clazz, aggregator.display_name())
             plt.figtext(.5, .95, subtitle, fontsize=14, ha='center')
             plt.title(
-                'True Positive Rate vs. False Discovery Rate (AUC = {:1.2f})'.
+                'True Positive Rate vs. False Discovery Rate (AUC {:1.2f})'.
                 format(round(auc_fdr, 3)),
                 y=1.15,
                 fontsize=16)
@@ -87,7 +87,7 @@ class AUCVisualizer(BaseVisualizer):
                 self.data_dir,
                 "{}-auc-false-discovery.png".format(aggregator.name()))
             print(outfile)
-            plt.savefig(outfile, dpi=100, bbox_inches='tight', pad_inches=0.5)
+            plt.savefig(outfile, dpi=70, bbox_inches='tight', pad_inches=0.5)
             plt.close()
 
     def visualize(self, tpr, fpr):

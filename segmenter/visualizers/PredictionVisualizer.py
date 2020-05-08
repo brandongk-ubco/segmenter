@@ -17,11 +17,11 @@ class PredictionVisualizer(BaseVisualizer):
             name = os.path.basename(result)[11:-4]
 
             outfile = os.path.join(os.path.dirname(result),
-                                   "{}.png".format(name))
+                                   "{}.jpg".format(name))
             if os.path.exists(outfile):
                 continue
 
-            print(result)
+            print(outfile)
             r = np.load(result)
 
             clazz = result.split("/")[-5]
@@ -31,12 +31,17 @@ class PredictionVisualizer(BaseVisualizer):
 
             plot, iou = self.visualize(r["image"], r["mask"], r["prediction"])
             title = "Predictions for {} (IOU {:.2f})".format(name, iou)
-            subtitle = "Class {}, {} Aggregator with Threshold {}".format(
-                clazz, aggregator.display_name(), threshold)
+            subtitle = "{} - Class {}, {} Aggregator with Threshold {}".format(
+                self.label, clazz, aggregator.display_name(), threshold)
 
             plot.suptitle(title, y=1.35, fontsize=16)
             plt.figtext(.5, 1.12, subtitle, fontsize=14, ha='center')
-            plt.savefig(outfile, dpi=100, bbox_inches='tight', pad_inches=0.5)
+            plt.savefig(outfile,
+                        dpi=70,
+                        bbox_inches='tight',
+                        pad_inches=0.5,
+                        quality=90,
+                        optimize=True)
             plt.close()
 
     def collect_results(self, directory):

@@ -14,6 +14,7 @@ class LayerOutputEvaluator(FoldAwareEvaluator):
 
     layer_types = ["activation", "convolutional", "normalization"]
     bins = np.linspace(-10, 10, num=2001)
+    by_boost_fold = True
 
     @staticmethod
     def get_outputs(model, matcher):

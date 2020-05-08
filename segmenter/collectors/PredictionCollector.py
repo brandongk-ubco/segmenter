@@ -17,7 +17,7 @@ class PredictionCollector(BaseCollector):
         results = self.collect_results(self.data_dir)
 
         # Find and calculate metrics
-        for result in results:
+        for result in sorted(results):
             name = os.path.basename(result)[11:-4]
             directory = os.path.dirname(result)
             print(result)

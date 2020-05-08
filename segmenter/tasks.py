@@ -41,7 +41,7 @@ class BaseTask(Task):
     def execute(self):
         from segmenter.config import config_from_dir, validate_config
         self.job_config, self.job_hash = config_from_dir(self.output_dir)
-        validate_config(self.job_config)
+        # validate_config(self.job_config)
         pprint.pprint(self.job_config)
 
         try:

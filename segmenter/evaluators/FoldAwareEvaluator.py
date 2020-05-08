@@ -6,13 +6,16 @@ from segmenter.data import augmented_generator
 from segmenter.augmentations import predict_augments
 from segmenter.optimizers import get_optimizer
 from segmenter.loss import get_loss
-from segmenter.models.full_model import model_for_fold
+from segmenter.models.full_model import model_for_fold, model_for_boost_fold
 from tensorflow.keras.layers import Input
 from tensorflow.keras.models import Model
 import itertools
 
 
 class FoldAwareEvaluator(BaseEvaluator, metaclass=ABCMeta):
+
+    by_boost_fold = False
+
     @classmethod
     def __subclasshook__(cls, subclass):
         return BaseEvaluator.__subclasshook__(subclass) and hasattr(
@@ -34,23 +37,30 @@ class FoldAwareEvaluator(BaseEvaluator, metaclass=ABCMeta):
             "fold{}".format(o) for o in range(self.job_config["FOLDS"])
         ]
 
-        if self.job_config["BOOST_FOLDS"] > 0:
-            boost_folds = [
-                "b{}".format(o)
-                for o in list(range(0, self.job_config["BOOST_FOLDS"] + 1))
-            ]
-            self.folds = [
-                "".join(o)
-                for o in itertools.product(*[self.folds, boost_folds])
-            ]
+        if self.by_boost_fold:
+            if self.job_config["BOOST_FOLDS"] > 0:
+                boost_folds = [
+                    "b{}".format(o)
+                    for o in list(range(0, self.job_config["BOOST_FOLDS"] + 1))
+                ]
+                self.folds = [
+                    "".join(o)
+                    for o in itertools.product(*[self.folds, boost_folds])
+                ]
 
     def execute(self) -> None:
         for fold_name in self.folds:
             result_dir = os.path.join(self.resultdir, fold_name)
             os.makedirs(result_dir, exist_ok=True)
             inputs = Input(shape=(None, None, 1))
-            model = model_for_fold(fold_name, self.job_config,
-                                   self.weight_finder, "sigmoid", inputs)
+            if "b" in fold_name:
+                model = model_for_boost_fold(fold_name, self.job_config,
+                                             self.weight_finder)
+                model = model(inputs)
+                model = Model(inputs, model)
+            else:
+                model = model_for_fold(fold_name, self.job_config,
+                                       self.weight_finder, "sigmoid", inputs)
             model.summary()
             self.evaluate_fold(fold_name, model, result_dir)
 
