@@ -18,9 +18,12 @@ class PredictionCollector(BaseCollector):
 
         # Find and calculate metrics
         for result in sorted(results):
-            name = os.path.basename(result)[11:-4]
-            directory = os.path.dirname(result)
+            name = os.path.basename(result)[:-4]
+            if name == "layer_outputs":
+                continue
+
             print(result)
+            directory = os.path.dirname(result)
             r = np.load(result)
             iou, dice = self.metrics(r["mask"], r["prediction"])
             if directory not in self.ratings:
@@ -34,8 +37,7 @@ class PredictionCollector(BaseCollector):
                 json.dump(ratings, results_json)
 
     def collect_results(self, directory):
-        return glob.glob("{}/**/prediction-*.npz".format(directory),
-                         recursive=True)
+        return glob.glob("{}/**/*.npz".format(directory), recursive=True)
 
     def metrics(self, mask, prediction):
         boolean_mask = mask.astype(bool)

@@ -20,6 +20,7 @@ class InstanceMetricsVisualizer(BaseVisualizer):
         if not os.path.exists(csv_file):
             print("CSV file does not exist {}".format(csv_file))
             return
+        print(csv_file)
         self.results = pd.read_csv(csv_file)
         for aggregator_name in self.results["aggregator"].unique():
             aggregator_results = self.results[self.results.aggregator ==

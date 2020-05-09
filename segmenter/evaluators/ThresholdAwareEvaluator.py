@@ -9,7 +9,7 @@ from segmenter.aggregators import Aggregator
 from segmenter.data import augmented_generator
 from segmenter.augmentations import predict_augments
 from segmenter.loss import get_loss
-from segmenter.models.full_model import full_model, model_for_fold
+from segmenter.models.full_model import full_model
 from segmenter.optimizers import get_optimizer
 from segmenter.metrics import get_metrics
 from segmenter.aggregators import Aggregators
@@ -61,7 +61,11 @@ class ThresholdAwareEvaluator(BaseEvaluator, metaclass=ABCMeta):
         t_map(execute_function, aggregator.thresholds())
 
     def execute(self) -> None:
-        deque(map(self.execute_aggregator, Aggregators.choices()))
+        if self.job_config["FOLDS"] == 0:
+            aggregators = ["dummy"]
+        else:
+            aggregators = Aggregators.choices()
+        deque(map(self.execute_aggregator, aggregators))
 
     @abstractmethod
     def evaluate_threshold(self, model, threshold, threshold_dir) -> None:

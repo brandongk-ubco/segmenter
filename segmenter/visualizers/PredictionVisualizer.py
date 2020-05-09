@@ -13,7 +13,9 @@ from segmenter.helpers.p_tqdm import p_map
 
 class PredictionVisualizer(BaseVisualizer):
     def execute_result(self, result):
-        name = os.path.basename(result)[11:-4]
+        name = os.path.basename(result)[:-4]
+        if name == "layer_outputs":
+            return
 
         outfile = os.path.join(os.path.dirname(result), "{}.jpg".format(name))
         if os.path.exists(outfile):
@@ -47,8 +49,7 @@ class PredictionVisualizer(BaseVisualizer):
         p_map(self.execute_result, results)
 
     def collect_results(self, directory):
-        return glob.glob("{}/**/prediction-*.npz".format(directory),
-                         recursive=True)
+        return glob.glob("{}/**/*.npz".format(directory), recursive=True)
 
     def visualize(self, image, mask, prediction):
         boolean_mask = mask.astype(bool)

@@ -34,14 +34,17 @@ class LayerOutputVisualizer(BaseVisualizer):
 
             plt.xlabel("Output Value")
             plt.ylabel("Frequency (%)")
-            plt.ylim([0, max(weights)])
+            plt.ylim([0, np.percentile(weights, 99.9)])
 
             title = "Output Histogram for {} layers".format(layer_type)
-            subtitle = "{} - Class {}".format(self.label, clazz)
+            subtitle1 = "{} - Class {}".format(self.label, clazz)
+            subtitle2 = "Peak of {:1.2f}% at {:1.2f}".format(
+                np.max(weights), self.bins[np.argmax(weights)])
 
             plt.title('')
             fig.suptitle(title, y=1.05, fontsize=14)
-            plt.figtext(.5, .96, subtitle, fontsize=12, ha='center')
+            plt.figtext(.5, 0.97, subtitle1, fontsize=12, ha='center')
+            plt.figtext(.5, .93, subtitle2, fontsize=12, ha='center')
             outfile = os.path.join(self.data_dir,
                                    "layer-output-{}.png".format(layer_type))
             print(outfile)

@@ -16,7 +16,7 @@ class DummyAggregator(Aggregator):
         raise NotImplementedError
 
     def fold_activation(self):
-        raise NotImplementedError
+        return "linear"
 
     def final_activation(self):
         return "sigmoid"

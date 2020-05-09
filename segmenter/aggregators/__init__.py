@@ -34,5 +34,8 @@ class Aggregators(Enum):
         if aggregator == "vote":
             from segmenter.aggregators.VoteAggregator import VoteAggregator
             return VoteAggregator
+        if aggregator == "dummy":
+            from segmenter.aggregators.DummyAggregator import DummyAggregator
+            return DummyAggregator
 
         raise ValueError("Unknown aggregator {}".format(aggregator))
