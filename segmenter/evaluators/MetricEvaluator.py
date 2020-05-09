@@ -10,7 +10,6 @@ class MetricEvaluator(ThresholdAwareEvaluator):
     def evaluate_threshold(self, model, threshold, outdir):
         outfile = os.path.join(outdir, "results.json")
         if os.path.exists(outfile):
-            print("Threshold {:1.2f} already complete.".format(threshold))
             return
         results = model.evaluate(x=self.dataset,
                                  callbacks=get_evaluation_callbacks(),

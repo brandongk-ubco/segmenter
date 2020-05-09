@@ -9,7 +9,7 @@ class PredictEvaluator(ThresholdAwareEvaluator):
         for batch, (images, masks) in enumerate(self.dataset):
             name = os.path.basename(self.generator.image_files[batch])
             outfile = os.path.join(outdir, name)
-            if os.path.exists(outfile):
+            if os.path.exists("{}.npz".format(outfile)):
                 continue
             print("{} ({}/{})".format(name, batch, self.num_images))
             predictions = model.predict_on_batch(images).numpy()
@@ -19,7 +19,7 @@ class PredictEvaluator(ThresholdAwareEvaluator):
                 image = images[i].numpy()
                 prediction = prediction[:, :, 0]
                 mask = mask[:, :, 0]
-                # TODO: Should this be > or >=?  Needs to match what the metric evaluation does.
+
                 thresholded_prediction = np.where(prediction > threshold, 1,
                                                   0).astype(prediction.dtype)
 

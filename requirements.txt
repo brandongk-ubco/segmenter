@@ -9,4 +9,6 @@ pydocstyle
 pycodestyle
 mypy
 yapf
+pathos
+tqdm
 https://github.com/brandongk60/launcher/archive/master.zip
