@@ -7,28 +7,28 @@ from segmenter.collectors.BaseCollector import BaseCollector
 import glob
 import numpy as np
 from typing import Dict
+from segmenter.helpers.p_tqdm import p_map
 
 
 class PredictionCollector(BaseCollector):
 
     ratings: Dict[str, Dict[str, Dict[str, float]]] = {}
 
+    def execute_result(self, result):
+        name = os.path.basename(result)[:-4]
+        if name == "layer_outputs":
+            return
+
+        directory = os.path.dirname(result)
+        r = np.load(result)
+        iou, dice = self.metrics(r["mask"], r["prediction"])
+        if directory not in self.ratings:
+            self.ratings[directory] = {}
+        self.ratings[directory][name] = {"iou": iou, "dice": dice}
+
     def execute(self):
-        results = self.collect_results(self.data_dir)
-
-        # Find and calculate metrics
-        for result in sorted(results):
-            name = os.path.basename(result)[:-4]
-            if name == "layer_outputs":
-                continue
-
-            print(result)
-            directory = os.path.dirname(result)
-            r = np.load(result)
-            iou, dice = self.metrics(r["mask"], r["prediction"])
-            if directory not in self.ratings:
-                self.ratings[directory] = {}
-            self.ratings[directory][name] = {"iou": iou, "dice": dice}
+        results = sorted(self.collect_results(self.data_dir))
+        p_map(self.execute_result, results)
 
         # Persist the report to disk
         for directory, ratings in self.ratings.items():

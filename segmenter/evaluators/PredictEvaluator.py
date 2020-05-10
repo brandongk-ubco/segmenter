@@ -26,8 +26,6 @@ class PredictEvaluator(ThresholdAwareEvaluator):
                 if image.shape[2] == 1:
                     image = image[:, :, 0]
 
-                name = "prediction-{}".format(name)
-
                 np.savez_compressed(outfile,
                                     image=image,
                                     prediction=thresholded_prediction,

@@ -8,13 +8,25 @@ from segmenter.visualizers.BaseVisualizer import BaseVisualizer
 
 class BoostVisualizer(BaseVisualizer):
     def execute(self):
-        csv_file = os.path.join(self.data_dir, "boost.csv")
+        csv_file = os.path.join(self.data_dir, "train_results.csv")
         clazz = self.data_dir.split("/")[-2]
         if not os.path.exists(csv_file):
             print("CSV file does not exist {}".format(csv_file))
             return
         results = pd.read_csv(csv_file)
+        results = results[["loss", "fold", "boost_fold"]]
+        results = results.groupby(['fold', 'boost_fold']).min().reset_index()
+        results = results.sort_values(["fold", "boost_fold"])
+
+        results["baseline"] = results.apply(lambda x: results[
+            (results["fold"] == x["fold"]) &
+            (results["boost_fold"] == 0)].iloc[0].loss,
+                                            axis=1)
+        results["improvement"] = results.apply(
+            lambda x: 100 * (x["baseline"] - x["loss"]) / x["baseline"],
+            axis=1)
         results = results[results["boost_fold"] > 0]
+
         plot = results.boxplot(column=['improvement'],
                                by='boost_fold',
                                grid=False)
