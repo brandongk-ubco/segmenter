@@ -25,6 +25,7 @@ class LayerOutputVisualizer(BaseVisualizer):
                                                      == layer_type]
             layer_type_results.drop("layer_type", axis=1, inplace=True)
             layer_type_results.drop("fold", axis=1, inplace=True)
+            layer_type_results.drop("boost_fold", axis=1, inplace=True)
             layer_type_results = layer_type_results.sum(axis=0)
 
             weights = 100 * layer_type_results / np.sum(layer_type_results)
@@ -34,22 +35,26 @@ class LayerOutputVisualizer(BaseVisualizer):
             plt.hist(bins, self.bins, weights=weights)
             weighted_bins = np.multiply(weights, bins)
             percentile = np.percentile(weights, 99.9)
-            plt.xlabel("Output Value")
-            plt.ylabel("Frequency (%)")
             plt.ylim([0, percentile])
 
             title = "Output Histogram for {} layers".format(layer_type)
             subtitle1 = "{} - Class {}".format(self.label, clazz)
-            subtitle2 = "Frequency Peak of {:1.2f}% at {:1.2f}.  99.9th Percentile of {:1.2f}%.".format(
-                np.max(weights), self.bins[np.argmax(weights)], percentile)
-            subtitle3 = "Output Value Mean {:1.2f}, Median {:1.2f}, St. Dev. {:1.2f}".format(
-                np.mean(weighted_bins), np.median(weighted_bins),
-                np.std(weighted_bins))
+            plt.ylabel(
+                "Frequency (%): Peak {:1.2f}% at {:1.2f}.  $99.9^{{th}}$ pctl. {:1.2f}%."
+                .format(np.max(weights), self.bins[np.argmax(weights)],
+                        percentile))
+            used_bins = weights > 0.01
+            subtitle2 = "Frequency Bins Used {}.  Used bin range width {:1.2f}.".format(
+                np.sum(used_bins.astype("int32")),
+                max(bins[used_bins]) - min(bins[used_bins]))
+            plt.xlabel(
+                "Output Value: Mean {:1.2f}, Median {:1.2f}, St. Dev. {:1.2f}".
+                format(np.mean(weighted_bins), np.median(weighted_bins),
+                       np.std(weighted_bins)))
             plt.title('')
             fig.suptitle(title, y=1.06, fontsize=14)
             plt.figtext(.5, 0.99, subtitle1, fontsize=12, ha='center')
             plt.figtext(.5, .95, subtitle2, fontsize=12, ha='center')
-            plt.figtext(.5, .91, subtitle3, fontsize=12, ha='center')
             outfile = os.path.join(self.data_dir,
                                    "layer-output-{}.png".format(layer_type))
             print(outfile)
