@@ -13,11 +13,11 @@ class CachedFilereader:
     cache: Dict[str, bytes] = {}
 
     def read(self, filename):
-        # if filename not in self.cache:
-        with open(filename, "rb") as newfile:
-            return io.BytesIO(newfile.read())
+        if filename not in self.cache:
+            with open(filename, "rb") as newfile:
+                self.cache[filename] = newfile.read()
 
-        # return io.BytesIO(self.cache[filename])
+        return io.BytesIO(self.cache[filename])
 
 
 class DataGenerator:
