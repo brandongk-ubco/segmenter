@@ -17,39 +17,33 @@ class DatasetVisualizer:
         name = os.path.basename(result_path)[:-4]
 
         outfile = os.path.join(os.path.dirname(result_path),
-                               "{}.jpg".format(name))
-        if os.path.exists(outfile):
-            return
+                               "{}.png".format(name))
+        # if os.path.exists(outfile):
+        #     return
 
         instance_data = np.load(result_path)
         image = instance_data["image"]
         mask = instance_data["mask"]
 
-        fig = plt.figure(constrained_layout=True)
-
-        gs = fig.add_gridspec(2, mask.shape[-1])
-        fig_image = fig.add_subplot(gs[:, 0])
-        fig_image.axis('off')
-        fig_image.set_title(name)
-        fig_image.imshow(image, cmap='gray')
+        fig, axs = plt.subplots(mask.shape[-1] + 1, 1)
+        axs[0].axis('off')
+        axs[0].set_title(name)
+        axs[0].imshow(image, cmap='gray')
 
         for mask_idx in range(mask.shape[-1]):
-            fig_mask = fig.add_subplot(gs[mask_idx, 1])
-            fig_mask.axis('off')
-            fig_mask.set_title(self.classes[mask_idx])
-            fig_mask.imshow(mask[:, :, mask_idx], cmap='gray')
+            ax = axs[mask_idx + 1]
+            ax.set_frame_on(False)
+            ax.imshow(mask[:, :, mask_idx], cmap='gray')
+            ax.set_yticks([])
+            ax.set_xticks([])
+            ax.set_ylabel(self.classes[mask_idx])
 
-        plt.savefig(outfile,
-                    dpi=70,
-                    bbox_inches='tight',
-                    pad_inches=0.5,
-                    quality=90,
-                    optimize=True)
+        plt.savefig(outfile, dpi=70, bbox_inches='tight', pad_inches=0.5)
 
         plt.close()
 
     def execute(self):
-        mapper(self.execute_result, sorted(self.collect_results()))
+        mapper(self.execute_result, self.collect_results())
 
     def collect_results(self):
-        return glob.glob("{}/*.npz".format(self.src_dir))
+        return sorted(glob.glob("{}/*.npz".format(self.src_dir)))
