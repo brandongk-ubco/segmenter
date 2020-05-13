@@ -14,4 +14,6 @@ From: tensorflow/tensorflow:latest-gpu-py3
     pycodestyle \
     mypy \
     yapf \
-  https://github.com/brandongk60/launcher/archive/master.zip
+    pathos \
+    tqdm \
+    https://github.com/brandongk60/launcher/archive/master.zip
