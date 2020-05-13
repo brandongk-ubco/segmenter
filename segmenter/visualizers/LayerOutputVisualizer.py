@@ -30,10 +30,16 @@ class LayerOutputVisualizer(BaseVisualizer):
 
             weights = 100 * layer_type_results / np.sum(layer_type_results)
 
-            fig = plt.figure()
             bins = self.bins[:len(weights)]
+            mean = np.sum(np.multiply(layer_type_results,
+                                      bins)) / np.sum(layer_type_results)
+            std = np.sum(np.multiply(layer_type_results, (bins - mean)**
+                                     2)) / np.sum(layer_type_results)
+
+            fig = plt.figure()
             plt.hist(bins, self.bins, weights=weights)
             weighted_bins = np.multiply(weights, bins)
+
             percentile = np.percentile(weights, 99.9)
             plt.ylim([0, percentile])
 
@@ -44,13 +50,11 @@ class LayerOutputVisualizer(BaseVisualizer):
                 .format(np.max(weights), self.bins[np.argmax(weights)],
                         percentile))
             used_bins = weights > 0.01
-            subtitle2 = "Frequency Bins Used {}.  Used bin range width {:1.2f}.".format(
-                np.sum(used_bins.astype("int32")),
+            subtitle2 = "Frequency Concentration:  {:1.2f}% in width {:1.2f}.".format(
+                np.sum(weights[used_bins]),
                 max(bins[used_bins]) - min(bins[used_bins]))
-            plt.xlabel(
-                "Output Value: Mean {:1.2f}, Median {:1.2f}, St. Dev. {:1.2f}".
-                format(np.mean(weighted_bins), np.median(weighted_bins),
-                       np.std(weighted_bins)))
+            plt.xlabel("Output Value: Mean {:1.2f}, St. Dev. {:1.2f}".format(
+                mean, std))
             plt.title('')
             fig.suptitle(title, y=1.06, fontsize=14)
             plt.figtext(.5, 0.99, subtitle1, fontsize=12, ha='center')

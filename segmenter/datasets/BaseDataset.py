@@ -41,7 +41,6 @@ class BaseDataset(metaclass=ABCMeta):
             and callable(subclass.get_class_members)
             and hasattr(subclass, 'initialize')
             and callable(subclass.initialize)
-            and hasattr(subclass, 'coverage') and callable(subclass.coverage)
             and hasattr(subclass, 'get_dataset_name')
             and callable(subclass.get_dataset_name))
 
@@ -50,10 +49,6 @@ class BaseDataset(metaclass=ABCMeta):
 
     @abstractmethod
     def initialize(self):
-        raise NotImplementedError
-
-    @abstractmethod
-    def coverage(self):
         raise NotImplementedError
 
     @abstractmethod

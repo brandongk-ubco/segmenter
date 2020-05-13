@@ -35,8 +35,9 @@ class InitializeDataset(Task):
         self.dataset.initialize()
 
 
-class DatasetCoverage(Task):
-    name = 'dataset-coverage'
+class DatasetStatistics(Task):
+
+    name = "dataset-statistics"
 
     def __init__(self, args):
         self.args = args
@@ -44,55 +45,27 @@ class DatasetCoverage(Task):
         self.dataset_dir = os.path.join(
             pathlib.Path(__file__).parent.absolute(), self.dataset_name)
         self.dataset = Datasets.get(self.dataset_name)(self.dataset_dir)
+        self.output_dir = os.path.join(os.path.abspath(args["data_dir"]),
+                                       self.dataset_name)
 
     @staticmethod
     def arguments(parser) -> None:
         command_parser = parser.add_parser(
-            DatasetCoverage.name, help='Calculate the coverage on a dataset.')
-        command_parser.add_argument("dataset",
-                                    type=str,
-                                    choices=Datasets.choices(),
-                                    help='the dataset.')
+            DatasetStatistics.name, help='Collect statistics for a dataset.')
+        command_parser.add_argument(
+            "dataset",
+            type=str,
+            choices=Datasets.choices(),
+            help='the dataset on which to collect statistics.')
 
     @staticmethod
     def arguments_to_cli(args) -> str:
         return " ".join([args["dataset"].name])
 
     def execute(self) -> None:
-        from matplotlib import pyplot as plt
-        import numpy as np
-
-        coverages = self.dataset.coverage()
-        classes = self.dataset.get_classes()
-
-        num_instances = len(coverages)
-        fig, axs = plt.subplots(1, num_instances)
-        axs[0].set_ylabel('Frequency (%)')
-        for i in range(num_instances):
-            coverage = coverages[i]
-
-            ticks = np.round(np.linspace(0, max(coverage), num=11), 2)
-            axs[i].hist(coverage,
-                        bins=ticks,
-                        weights=100 * np.ones(len(coverage)) / len(coverage))
-            axs[i].set_title(classes[i])
-            axs[i].set_xlabel('Coverage (%)')
-            axs[i].set_xticks(ticks)
-            axs[i].tick_params(axis='x', rotation=90)
-
-        fig.suptitle("Instance Coverage Frequency for {} Dataset".format(
-            self.dataset.get_dataset_name()),
-                     y=1.05,
-                     fontsize=14)
-        plt.figtext(.5,
-                    .96,
-                    "excludes instances with no coverage",
-                    fontsize=12,
-                    ha='center')
-
-        out_file = os.path.join(self.dataset_dir, "coverage.png")
-        plt.savefig(out_file, dpi=70, bbox_inches='tight', pad_inches=0.5)
-        plt.close()
+        from segmenter.datasets.DatasetStatistics import DatasetStatistics
+        dataset_statistics = DatasetStatistics(self.dataset, self.output_dir)
+        dataset_statistics.execute()
 
 
 class VisualizeDataset(Task):
@@ -125,35 +98,9 @@ class VisualizeDataset(Task):
     def execute(self) -> None:
         from matplotlib import pyplot as plt
         import numpy as np
+        from segmenter.datasets.DatasetVisualizer import DatasetVisualizer
 
-        classes = self.dataset.get_classes()
-
-        for instance in glob.glob("{}/*.npz".format(self.output_dir)):
-            name = os.path.basename(instance)[:-4]
-            print(name)
-            instance_data = np.load(instance)
-            image = instance_data["image"]
-            mask = instance_data["mask"]
-
-            fig = plt.figure(constrained_layout=True)
-
-            gs = fig.add_gridspec(2, mask.shape[-1])
-            fig_image = fig.add_subplot(gs[:, 0])
-            fig_image.axis('off')
-            fig_image.set_title('Image')
-            fig_image.imshow(image, cmap='gray')
-
-            for mask_idx in range(mask.shape[-1]):
-                fig_mask = fig.add_subplot(gs[mask_idx, 1])
-                fig_mask.axis('off')
-                fig_mask.set_title(classes[mask_idx])
-                fig_mask.imshow(mask[:, :, mask_idx], cmap='gray')
-
-            out_file = os.path.join(os.path.dirname(instance),
-                                    "{}.png".format(name))
-            plt.savefig(out_file, dpi=70, bbox_inches='tight', pad_inches=0.5)
-
-            plt.close()
+        DatasetVisualizer(self.dataset, self.output_dir).execute()
 
 
 class ProcessDataset(Task):
@@ -238,4 +185,6 @@ class ProcessDataset(Task):
                 indent=4)
 
 
-tasks = [InitializeDataset, ProcessDataset, VisualizeDataset, DatasetCoverage]
+tasks = [
+    InitializeDataset, ProcessDataset, VisualizeDataset, DatasetStatistics
+]
