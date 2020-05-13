@@ -5,6 +5,7 @@ import numpy as np
 import os
 from skimage import measure
 from matplotlib import pyplot as plt
+from itertools import chain
 
 
 class DatasetStatistics:
@@ -48,9 +49,9 @@ class DatasetStatistics:
             class_mask = mask[:, :, i]
             components = measure.label(class_mask, background=0)
             component_sizes = []
-            for component in range(1, np.max(components)):
+            for component in range(1, np.max(components) + 1):
                 size = int(np.sum(components == component))
-                component_sizes.append(size)
+                component_sizes.append(size / class_mask.size)
             if len(component_sizes) == 0:
                 raise ValueError("No components for {} Class {}".format(
                     name, clazz))
@@ -134,9 +135,12 @@ class DatasetStatistics:
         for i, clazz in enumerate(self.classes):
             component_file = os.path.join(
                 self.src_dir, "{}_component_size.png".format(clazz))
-            import pdb
-            pdb.set_trace()
-            sizes = [100 * j for j in self.component_results[self.classes[i]]]
+
+            sizes = [
+                100 * j for j in list(
+                    chain.from_iterable(self.component_results[
+                        self.classes[i]]))
+            ]
 
             fig, (ax1,
                   ax2) = plt.subplots(1,
@@ -146,52 +150,118 @@ class DatasetStatistics:
 
             fig.set_size_inches(10, 5)
 
-            bins = np.unique(
-                np.round(np.linspace(0, max(coverages), num=100), 1))
+            bins = np.unique(np.round(np.linspace(0, max(sizes), num=100), 1))
 
-            percentages, _bins, _patches = ax1.hist(
-                coverages,
-                bins=bins,
-                weights=100 * np.ones(len(coverages)) / len(coverages))
+            ax1.hist(sizes,
+                     bins=bins,
+                     weights=100 * np.ones(len(sizes)) / len(sizes))
 
-            percentile_to_find = 99
-            percentile = np.percentile(coverages, percentile_to_find)
-
-            ax1.set(ylabel="Frequency (%): Peak {:1.2f}% at {:1.2f}.".format(
-                np.max(percentages), bins[np.argmax(percentages)]))
-
-            ax1.set(ylim=[0, percentile])
+            ax1.set(ylabel="Frequency (%)")
 
             ax1.set(
                 xlabel=
-                "Coverage (%): Mean {:1.2f}, Median {:1.2f}, St. Dev. {:1.2f}".
-                format(np.mean(coverages), np.median(coverages),
-                       np.std(coverages)))
+                "Component Size (%): Mean {:1.2f}, Median {:1.2f}, St. Dev. {:1.2f}"
+                .format(np.mean(sizes), np.median(sizes), np.std(sizes)))
 
             ax1.set_xticks(bins[::3])
             ax1.tick_params(axis='x', rotation=90)
 
             plt.subplots_adjust(hspace=.2)
 
-            ax2.boxplot(coverages, vert=True)
-            ax2.set(ylabel="Coverage (%)")
+            ax2.boxplot(sizes, vert=True)
+            ax2.set(ylabel="Component Size (%)")
             ax2.set_xticks([])
 
-            title = "Coverage Distribution for Class {}".format(clazz)
+            title = "Component Size Distribution for Class {}".format(clazz)
 
             fig.suptitle(title, y=1.05, fontsize=14)
 
-            fig.savefig(coverage_file,
+            fig.savefig(component_file,
                         dpi=70,
                         bbox_inches='tight',
                         pad_inches=0.5)
             plt.close()
 
+    def plot_component_count(self):
+        for i, clazz in enumerate(self.classes):
+            component_file = os.path.join(
+                self.src_dir, "{}_component_count.png".format(clazz))
+
+            counts = [len(j) for j in self.component_results[self.classes[i]]]
+
+            fig, (ax1,
+                  ax2) = plt.subplots(1,
+                                      2,
+                                      gridspec_kw={'width_ratios': [3, 1]})
+            fig.tight_layout()
+
+            fig.set_size_inches(10, 5)
+
+            bins = np.arange(1, max(counts))
+
+            ax1.hist(counts,
+                     bins=bins,
+                     weights=100 * np.ones(len(counts)) / len(counts),
+                     align='left')
+
+            ax1.set(ylabel="Frequency (%)")
+            ax1.set_xticks(bins[:-1])
+
+            ax1.set(xlabel="Components per Image")
+
+            ax1.tick_params(axis='x', rotation=90)
+
+            plt.subplots_adjust(hspace=.2)
+
+            ax2.boxplot(counts, vert=True)
+            ax2.set(ylabel="Component  per Image")
+            ax2.set_xticks([])
+
+            title = "Components per Image Distribution for Class {}".format(
+                clazz)
+
+            fig.suptitle(title, y=1.05, fontsize=14)
+
+            fig.savefig(component_file,
+                        dpi=70,
+                        bbox_inches='tight',
+                        pad_inches=0.5)
+            plt.close()
+
+    def plot_number_of_instances(self):
+
+        instance_file = os.path.join(self.src_dir, "instance_count.png")
+        instance_counts = dict([(k, len(v))
+                                for k, v in self.class_members.items()])
+        classes = np.arange(len(instance_counts.keys()))
+        counts = [v for k, v in instance_counts.items()]
+
+        fig, ax = plt.subplots()
+        rects = plt.bar(classes, counts, align='center', alpha=0.5)
+        plt.xticks(classes, instance_counts.keys())
+        plt.ylabel('Number of Instances')
+        plt.title('Count of Instances by Class')
+
+        for rect in rects:
+            height = rect.get_height()
+            ax.annotate(
+                '{}'.format(height),
+                xy=(rect.get_x() + rect.get_width() / 2, height),
+                xytext=(0, -12),  # 3 points vertical offset
+                textcoords="offset points",
+                ha='center',
+                va='bottom')
+
+        fig.savefig(instance_file, dpi=70, bbox_inches='tight', pad_inches=0.5)
+        plt.close()
+
     def execute(self):
         self.calculate_coverage()
         self.calculate_components()
-        # self.plot_coverage()
+        self.plot_coverage()
         self.plot_component_size()
+        self.plot_component_count()
+        self.plot_number_of_instances()
 
     def collect_results(self):
-        return glob.glob("{}/*.npz".format(self.src_dir))
+        return sorted(glob.glob("{}/*.npz".format(self.src_dir)))

@@ -80,9 +80,6 @@ class KitsDataset(BaseDataset):
                     "instances": list(self.instances)
                 }, outfile)
 
-    def get_dataset_name(self):
-        return "KiTS19"
-
     def initialize(self):
         current_dir = os.path.dirname(os.path.realpath(__file__))
         check_call("git submodule update --init --remote --force --recursive",
