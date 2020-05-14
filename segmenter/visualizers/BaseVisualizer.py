@@ -9,7 +9,10 @@ class BaseVisualizer(metaclass=ABCMeta):
     label_map = {
         "8ba8ae882c396d08aaa3332167cd7aeb": "Weak Learner",
         "c4fc907d76c4adc975169e34d32b95df": "Boosted Learners",
-        "c041f9d41605254f805232999f143ab0": "Baseline"
+        "c041f9d41605254f805232999f143ab0": "Baseline",
+        "f9e2afd0b43fb3f43ab7dc2a95bd6368": "Weak Learner",
+        "54e053312ee47fe203400e055fa93be8": "Boosted Learners",
+        "89489ee3b0c0504c424df68d1672f0cf": "Baseline"
     }
 
     @classmethod

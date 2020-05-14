@@ -89,41 +89,30 @@ class DatasetStatistics:
                 100 * j for j in self.coverage_results[self.classes[i]]
             ]
 
-            fig, (ax1,
-                  ax2) = plt.subplots(1,
-                                      2,
-                                      gridspec_kw={'width_ratios': [3, 1]})
-            fig.tight_layout()
+            fig = plt.figure()
 
             fig.set_size_inches(10, 5)
 
             bins = np.unique(
                 np.round(np.linspace(0, max(coverages), num=100), 1))
 
-            ax1.hist(coverages,
+            plt.hist(coverages,
                      bins=bins,
                      weights=100 * np.ones(len(coverages)) / len(coverages))
 
-            ax1.set(ylabel="Frequency (%)")
+            plt.ylabel("Frequency (%)")
 
-            ax1.set(
-                xlabel=
+            plt.xlabel(
                 "Coverage (%): Mean {:1.2f}, Median {:1.2f}, St. Dev. {:1.2f}".
                 format(np.mean(coverages), np.median(coverages),
                        np.std(coverages)))
 
-            ax1.set_xticks(bins[::3])
-            ax1.tick_params(axis='x', rotation=90)
-
-            plt.subplots_adjust(hspace=.2)
-
-            ax2.boxplot(coverages, vert=True)
-            ax2.set(ylabel="Coverage (%)")
-            ax2.set_xticks([])
+            plt.xticks(bins[::3])
+            plt.tick_params(axis='x', rotation=90)
 
             title = "Coverage Distribution for Class {}".format(clazz)
 
-            fig.suptitle(title, y=1.05, fontsize=14)
+            plt.title(title)
 
             fig.savefig(coverage_file,
                         dpi=70,
@@ -142,39 +131,26 @@ class DatasetStatistics:
                         self.classes[i]]))
             ]
 
-            fig, (ax1,
-                  ax2) = plt.subplots(1,
-                                      2,
-                                      gridspec_kw={'width_ratios': [3, 1]})
-            fig.tight_layout()
-
-            fig.set_size_inches(10, 5)
+            fig = plt.figure()
 
             bins = np.unique(np.round(np.linspace(0, max(sizes), num=100), 1))
 
-            ax1.hist(sizes,
+            plt.hist(sizes,
                      bins=bins,
                      weights=100 * np.ones(len(sizes)) / len(sizes))
 
-            ax1.set(ylabel="Frequency (%)")
+            plt.ylabel("Frequency (%)")
 
-            ax1.set(
-                xlabel=
+            plt.xlabel(
                 "Component Size (%): Mean {:1.2f}, Median {:1.2f}, St. Dev. {:1.2f}"
                 .format(np.mean(sizes), np.median(sizes), np.std(sizes)))
 
-            ax1.set_xticks(bins[::3])
-            ax1.tick_params(axis='x', rotation=90)
-
-            plt.subplots_adjust(hspace=.2)
-
-            ax2.boxplot(sizes, vert=True)
-            ax2.set(ylabel="Component Size (%)")
-            ax2.set_xticks([])
+            plt.xticks(bins[::5])
+            plt.tick_params(axis='x', rotation=90)
 
             title = "Component Size Distribution for Class {}".format(clazz)
 
-            fig.suptitle(title, y=1.05, fontsize=14)
+            plt.title(title)
 
             fig.savefig(component_file,
                         dpi=70,
@@ -189,38 +165,26 @@ class DatasetStatistics:
 
             counts = [len(j) for j in self.component_results[self.classes[i]]]
 
-            fig, (ax1,
-                  ax2) = plt.subplots(1,
-                                      2,
-                                      gridspec_kw={'width_ratios': [3, 1]})
-            fig.tight_layout()
-
-            fig.set_size_inches(10, 5)
-
+            fig = plt.figure()
             bins = np.arange(1, max(counts))
 
-            ax1.hist(counts,
+            plt.hist(counts,
                      bins=bins,
                      weights=100 * np.ones(len(counts)) / len(counts),
                      align='left')
 
-            ax1.set(ylabel="Frequency (%)")
-            ax1.set_xticks(bins[:-1])
+            plt.ylabel("Frequency (%)")
 
-            ax1.set(xlabel="Components per Image")
+            plt.xticks(bins[:-1])
 
-            ax1.tick_params(axis='x', rotation=90)
+            plt.xlabel("Components per Image")
 
-            plt.subplots_adjust(hspace=.2)
-
-            ax2.boxplot(counts, vert=True)
-            ax2.set(ylabel="Component  per Image")
-            ax2.set_xticks([])
+            plt.tick_params(axis='x', rotation=90)
 
             title = "Components per Image Distribution for Class {}".format(
                 clazz)
 
-            fig.suptitle(title, y=1.05, fontsize=14)
+            plt.title(title)
 
             fig.savefig(component_file,
                         dpi=70,

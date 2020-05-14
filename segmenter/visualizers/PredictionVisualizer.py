@@ -8,7 +8,7 @@ from segmenter.aggregators import Aggregators
 import glob
 import numpy as np
 from matplotlib.lines import Line2D
-from segmenter.helpers.p_tqdm import p_map
+from segmenter.helpers.p_tqdm import p_map as mapper
 
 
 class PredictionVisualizer(BaseVisualizer):
@@ -18,8 +18,8 @@ class PredictionVisualizer(BaseVisualizer):
             return
 
         outfile = os.path.join(os.path.dirname(result), "{}.jpg".format(name))
-        if os.path.exists(outfile):
-            return
+        # if os.path.exists(outfile):
+        #     return
 
         r = np.load(result)
 
@@ -33,12 +33,14 @@ class PredictionVisualizer(BaseVisualizer):
         subtitle = "{} - Class {}, {} Aggregator with Threshold {}".format(
             self.label, clazz, aggregator.display_name(), threshold)
 
-        plot.suptitle(title, y=1.35, fontsize=16)
-        plt.figtext(.5, 1.12, subtitle, fontsize=14, ha='center')
+        # TODO: These values need to be tweaked based on image size.
+        # Try to find a way to calculate these.
+        plot.suptitle(title, y=0.96, fontsize=16)
+        plt.figtext(.5, 0.92, subtitle, fontsize=14, ha='center')
         plt.savefig(outfile,
                     dpi=70,
                     bbox_inches='tight',
-                    pad_inches=0.5,
+                    pad_inches=0.1,
                     quality=90,
                     optimize=True)
         plt.close()
@@ -46,7 +48,7 @@ class PredictionVisualizer(BaseVisualizer):
     def execute(self):
         print(self.data_dir)
         results = sorted(self.collect_results(self.data_dir))
-        p_map(self.execute_result, results)
+        mapper(self.execute_result, results)
 
     def collect_results(self, directory):
         return glob.glob("{}/**/*.npz".format(directory), recursive=True)
@@ -69,10 +71,14 @@ class PredictionVisualizer(BaseVisualizer):
         fn[np.logical_and(np.logical_xor(boolean_mask, boolean_prediction),
                           np.logical_not(boolean_prediction))] = 1.
 
+        alphas = 1 - np.logical_or(np.logical_or(fp, tp), fn).astype(
+            image.dtype)
+
         highlighted_mask = np.dstack((fp, tp, fn))
 
         highlighted_image = np.dstack(
-            (image.copy(), image.copy(), image.copy()))
+            (image.copy() * alphas, image.copy() * alphas,
+             image.copy() * alphas))
 
         highlighted_image[highlighted_mask == 1] = 1.
 
@@ -90,12 +96,12 @@ class PredictionVisualizer(BaseVisualizer):
             Line2D([0], [0], color='g', lw=4),
             Line2D([0], [0], color='b', lw=4)
         ]
-
-        plot = plt.imshow(highlighted_image, cmap='gray')
-        fig = plot.get_figure()
+        fig, ax = plt.subplots()
+        ax.imshow(image, cmap='gray', interpolation='none')
+        ax.imshow(highlighted_image, alpha=0.5, interpolation='none')
         fig.set_size_inches(11,
                             11 * boolean_mask.shape[0] / boolean_mask.shape[1])
-        plt.axis('off')
+        ax.axis('off')
         plt.legend(legend,
                    ['False Positive', 'True Positive', 'False Negative'],
                    bbox_to_anchor=(0, 1, 1, 0.2),

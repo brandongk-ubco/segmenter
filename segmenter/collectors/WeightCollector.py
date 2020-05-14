@@ -18,5 +18,7 @@ class WeightCollector(BaseCollector):
             extension = weight_file.split(".")[-1]
             dest_file = os.path.join(self.data_dir, "weights",
                                      "{}.{}".format(fold_name, extension))
+            if os.path.exists(dest_file):
+                continue
             print("{} -> {}".format(weight_file, dest_file))
             copyfile(weight_file, dest_file)
