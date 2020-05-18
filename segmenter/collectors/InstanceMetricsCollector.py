@@ -7,7 +7,7 @@ from segmenter.collectors.BaseCollector import BaseCollector
 import glob
 import numpy as np
 from typing import Dict
-from segmenter.helpers.p_tqdm import t_map
+from segmenter.helpers.p_tqdm import t_map as mapper
 
 
 class InstanceMetricsCollector(BaseCollector):
@@ -26,11 +26,9 @@ class InstanceMetricsCollector(BaseCollector):
 
     def execute(self):
         outfile = os.path.join(self.data_dir, "instance-metrics.csv")
-        if os.path.exists(outfile):
-            return
 
         results = sorted(self.collect_results(self.data_dir))
-        t_map(self.execute_result, results)
+        mapper(self.execute_result, results)
 
         self.results.to_csv(outfile, index=False)
 

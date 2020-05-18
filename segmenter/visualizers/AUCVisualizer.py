@@ -58,6 +58,8 @@ class AUCVisualizer(BaseVisualizer):
             ax.set_ylabel('True Positive Rate (Sensitivity)')
             subtitle = "{} - Class {}, {} Aggregator".format(
                 self.label, clazz, aggregator.display_name())
+            if aggregator.display_name() == "Dummy":
+                subtitle = "{} - Class {}".format(self.label, clazz)
             plt.figtext(.5, .95, subtitle, fontsize=14, ha='center')
             plt.title(
                 'True Positive Rate vs. False Positive Rate (AUC {:1.2f})'.
@@ -77,6 +79,8 @@ class AUCVisualizer(BaseVisualizer):
             ax.set_ylabel('True Positive Rate (Sensitivity)')
             subtitle = "{} - Class {}, {} Aggregator".format(
                 self.label, clazz, aggregator.display_name())
+            if aggregator.display_name() == "Dummy":
+                subtitle = "{} - Class {}".format(self.label, clazz)
             plt.figtext(.5, .95, subtitle, fontsize=14, ha='center')
             plt.title(
                 'True Positive Rate vs. False Discovery Rate (AUC {:1.2f})'.

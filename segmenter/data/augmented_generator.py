@@ -9,11 +9,7 @@ def make_shape(image, mask):
     return image, mask
 
 
-def generator_to_dataset(generator,
-                         repeat,
-                         shuffle,
-                         zero=False,
-                         buffer_size=500):
+def generator_to_dataset(generator, repeat, shuffle, buffer_size=500):
     dataset = tf.data.Dataset.from_generator(generator.generate,
                                              (K.floatx(), K.floatx()))
 

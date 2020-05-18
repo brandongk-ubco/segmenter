@@ -28,6 +28,9 @@ class MetricVisualizer(BaseVisualizer):
             title = "Metrics vs. Threshold (Max F1-Score {:1.2f})".format(
                 f1_max)
             subtitle_2 = "{} Aggregator ".format(aggregator.display_name())
+            if aggregator.display_name() == "Dummy":
+                subtitle_2 = ""
+
             subtitle_1 = "{} - Class {}".format(self.label, clazz)
 
             outfile = os.path.join(self.data_dir,

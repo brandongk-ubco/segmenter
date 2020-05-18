@@ -31,6 +31,9 @@ class InstanceMetricsVisualizer(BaseVisualizer):
                     aggregator_results.threshold == threshold]
                 subtitle = "{} - Class {}, {} Aggregator with threshold {}".format(
                     self.label, clazz, aggregator.display_name(), threshold)
+                if aggregator.display_name() == "Dummy":
+                    subtitle = "{} - Class {} with threshold {}".format(
+                        self.label, clazz, threshold)
                 for metric, display in self.metrics:
                     outfile = os.path.join(
                         os.path.dirname(self.data_dir), "results",
@@ -58,7 +61,8 @@ class InstanceMetricsVisualizer(BaseVisualizer):
                 title = "{} by Threshold".format(display)
                 subtitle = "{} - Class {}, {} Aggregator".format(
                     self.label, clazz, aggregator.display_name())
-
+                if aggregator.display_name() == "Dummy":
+                    subtitle = "{} - Class {}".format(self.label, clazz)
                 fig = plot.get_figure()
                 plt.title('')
                 fig.suptitle(title, y=1.05, fontsize=14)

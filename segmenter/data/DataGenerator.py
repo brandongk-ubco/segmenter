@@ -15,6 +15,7 @@ class CachedFilereader:
     def read(self, filename):
         if filename not in self.cache:
             with open(filename, "rb") as newfile:
+                # return io.BytesIO(newfile.read())
                 self.cache[filename] = newfile.read()
 
         return io.BytesIO(self.cache[filename])

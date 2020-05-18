@@ -7,7 +7,7 @@ from segmenter.collectors.BaseCollector import BaseCollector
 import glob
 import numpy as np
 from typing import Dict
-from segmenter.helpers.p_tqdm import p_map
+from segmenter.helpers.p_tqdm import t_map as mapper
 
 
 class PredictionCollector(BaseCollector):
@@ -28,7 +28,7 @@ class PredictionCollector(BaseCollector):
 
     def execute(self):
         results = sorted(self.collect_results(self.data_dir))
-        p_map(self.execute_result, results)
+        mapper(self.execute_result, results)
 
         # Persist the report to disk
         for directory, ratings in self.ratings.items():

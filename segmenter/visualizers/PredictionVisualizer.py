@@ -17,9 +17,9 @@ class PredictionVisualizer(BaseVisualizer):
         if name == "layer_outputs":
             return
 
-        outfile = os.path.join(os.path.dirname(result), "{}.jpg".format(name))
-        # if os.path.exists(outfile):
-        #     return
+        outfile = os.path.join(os.path.dirname(result), "{}.png".format(name))
+        if os.path.exists(outfile):
+            return
 
         r = np.load(result)
 
@@ -32,17 +32,22 @@ class PredictionVisualizer(BaseVisualizer):
         title = "Predictions for {} (IOU {:.2f})".format(name, iou)
         subtitle = "{} - Class {}, {} Aggregator with Threshold {}".format(
             self.label, clazz, aggregator.display_name(), threshold)
-
+        if aggregator.display_name() == "Dummy":
+            subtitle = "{} - Class {} with Threshold {}".format(
+                self.label, clazz, threshold)
         # TODO: These values need to be tweaked based on image size.
         # Try to find a way to calculate these.
-        plot.suptitle(title, y=0.96, fontsize=16)
-        plt.figtext(.5, 0.92, subtitle, fontsize=14, ha='center')
-        plt.savefig(outfile,
-                    dpi=70,
-                    bbox_inches='tight',
-                    pad_inches=0.1,
-                    quality=90,
-                    optimize=True)
+        # Severstal Values 1.35 / 1.12
+        # Kits Values 0.96 / 0.92
+        if "/kits/" in os.path.dirname(result):
+            plot.suptitle(title, y=0.96, fontsize=16)
+            plt.figtext(.5, 0.92, subtitle, fontsize=14, ha='center')
+        elif "/severstal/" in os.path.dirname(result):
+            plot.suptitle(title, y=1.35, fontsize=16)
+            plt.figtext(.5, 1.12, subtitle, fontsize=14, ha='center')
+        else:
+            raise ValueError("Couldn't determing dataset.")
+        plt.savefig(outfile, dpi=70, bbox_inches='tight', pad_inches=0.1)
         plt.close()
 
     def execute(self):
