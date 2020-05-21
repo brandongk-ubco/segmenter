@@ -28,12 +28,17 @@ class EvaluateTask(BaseTask):
                                     help='the evaluation to perform.')
         command_parser.add_argument("--classes",
                                     type=str,
-                                    help='the clases to train',
+                                    help='the clases to evaluate',
                                     required=False,
                                     nargs='+')
         command_parser.add_argument("--folds",
                                     type=str,
-                                    help='the folds to train.',
+                                    help='the folds to evaluate.',
+                                    required=False,
+                                    nargs='+')
+        command_parser.add_argument("--aggregators",
+                                    type=str,
+                                    help='the aggregators to evaluate.',
                                     required=False,
                                     nargs='+')
         command_parser.add_argument(
@@ -46,14 +51,20 @@ class EvaluateTask(BaseTask):
     @staticmethod
     def arguments_to_cli(args) -> str:
         return " ".join([
-            args["dataset"], "--evaluator {}".format(args["evaluator"]),
+            args["dataset"],
+            "--evaluator {}".format(args["evaluator"]),
             "--weight-finder {}".format(args["weight_finder"]),
             "--classes {}".format(" ".join(args["classes"]))
-            if args["classes"] is not None else "", "--folds {}".format(
-                " ".join(args["folds"])) if args["folds"] is not None else ""
+            if args["classes"] is not None else "",
+            "--folds {}".format(" ".join(args["folds"]))
+            if args["folds"] is not None else "",
+            "--aggregators {}".format(" ".join(args["aggregators"]))
+            if args["aggregators"] is not None else "",
         ])
 
     def execute(self) -> None:
+        from segmenter.aggregators import Aggregators
+
         super(EvaluateTask, self).execute()
         if self.args["classes"] is not None:
             self.classes = list(
@@ -76,6 +87,16 @@ class EvaluateTask(BaseTask):
             self.folds = list(
                 filter(lambda c: c in self.args["folds"], self.folds))
 
+        if self.job_config["FOLDS"] == 0:
+            self.aggregators = ["dummy"]
+        else:
+            self.aggregators = Aggregators.choices()
+
+        if self.args["aggregators"] is not None:
+            self.aggregators = list(
+                filter(lambda c: c in self.args["aggregators"],
+                       self.aggregators))
+
         for clazz in self.classes:
             self.evaluator(clazz,
                            self.job_config,
@@ -83,7 +104,8 @@ class EvaluateTask(BaseTask):
                            self.data_dir,
                            self.output_dir,
                            self.weight_finder,
-                           folds=self.folds).execute()
+                           folds=self.folds,
+                           aggregators=self.aggregators).execute()
 
 
 tasks = [EvaluateTask]

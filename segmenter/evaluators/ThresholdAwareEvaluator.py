@@ -36,6 +36,7 @@ class ThresholdAwareEvaluator(BaseEvaluator, metaclass=ABCMeta):
         self.loss = get_loss(self.job_config["LOSS"])
 
         self.optimizer = get_optimizer(self.job_config["OPTIMIZER"])
+        self.aggregators = kwargs.get("aggregators")
 
     def execute_threshold(self, threshold, model, aggregator):
         threshold_str = "{:1.2f}".format(threshold)
@@ -61,11 +62,8 @@ class ThresholdAwareEvaluator(BaseEvaluator, metaclass=ABCMeta):
         t_map(execute_function, aggregator.thresholds())
 
     def execute(self) -> None:
-        if self.job_config["FOLDS"] == 0:
-            aggregators = ["dummy"]
-        else:
-            aggregators = Aggregators.choices()
-        deque(map(self.execute_aggregator, aggregators))
+
+        deque(map(self.execute_aggregator, self.aggregators))
 
     @abstractmethod
     def evaluate_threshold(self, model, threshold, threshold_dir) -> None:
