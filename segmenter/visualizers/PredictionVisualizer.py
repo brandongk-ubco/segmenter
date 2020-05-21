@@ -39,14 +39,14 @@ class PredictionVisualizer(BaseVisualizer):
         # Try to find a way to calculate these.
         # Severstal Values 1.35 / 1.12
         # Kits Values 0.96 / 0.92
-        if "/kits/" in os.path.dirname(result):
+        if "/kits19/" in os.path.dirname(result):
             plot.suptitle(title, y=0.96, fontsize=16)
             plt.figtext(.5, 0.92, subtitle, fontsize=14, ha='center')
         elif "/severstal/" in os.path.dirname(result):
             plot.suptitle(title, y=1.35, fontsize=16)
             plt.figtext(.5, 1.12, subtitle, fontsize=14, ha='center')
         else:
-            raise ValueError("Couldn't determing dataset.")
+            raise ValueError("Couldn't determine dataset.")
         plt.savefig(outfile, dpi=70, bbox_inches='tight', pad_inches=0.1)
         plt.close()
 

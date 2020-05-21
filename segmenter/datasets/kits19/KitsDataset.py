@@ -95,6 +95,30 @@ class KitsDataset(BaseDataset):
     def class_represented(self, segmentation):
         return np.sum(segmentation) > 0
 
+    def split_folds(self, class_members, num_folds):
+        chunked = {}
+        for clazz in self.get_classes():
+            train_instances = class_members[clazz]["train_instances"]
+            cases = list(set([l[:10] for l in train_instances]))
+            chunked[clazz] = self.chunkify(cases, num_folds)
+
+        folds = []
+        for fold_number in range(num_folds):
+            fold = {}
+
+            for clazz, members in chunked.items():
+                val_cases = [
+                    c for c in class_members[clazz]["train_instances"]
+                    if c[:10] in chunked[clazz][fold_number]
+                ]
+                train_cases = [
+                    c for c in class_members[clazz]["train_instances"]
+                    if c not in val_cases
+                ]
+                fold[clazz] = {"val": val_cases, "train": train_cases}
+            folds.append(fold)
+        return folds
+
     def load_case(self, case):
         if case != self.case["name"]:
             segmentation = nib.load(

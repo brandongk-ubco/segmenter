@@ -3,7 +3,7 @@ from enum import Enum
 
 class Datasets(Enum):
     severstal = "severstal"
-    kits = "kits"
+    kits = "kits19"
 
     def __str__(self):
         return self.name
@@ -20,8 +20,8 @@ class Datasets(Enum):
         if dataset == "severstal":
             from segmenter.datasets.severstal.SeverstalDataset import SeverstalDataset
             return SeverstalDataset
-        if dataset == "kits":
-            from segmenter.datasets.kits.KitsDataset import KitsDataset
+        if dataset == "kits19":
+            from segmenter.datasets.kits19.KitsDataset import KitsDataset
             return KitsDataset
 
         raise ValueError("Unknown evaluator {}".format(dataset))

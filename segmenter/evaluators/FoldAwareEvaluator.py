@@ -13,9 +13,6 @@ import itertools
 
 
 class FoldAwareEvaluator(BaseEvaluator, metaclass=ABCMeta):
-
-    by_boost_fold = False
-
     @classmethod
     def __subclasshook__(cls, subclass):
         return BaseEvaluator.__subclasshook__(subclass) and hasattr(
@@ -33,20 +30,7 @@ class FoldAwareEvaluator(BaseEvaluator, metaclass=ABCMeta):
         self.inputs = Input(shape=(None, None, 1))
         self.optimizer = get_optimizer(self.job_config["OPTIMIZER"])
         self.classes = self.job_config["CLASSES"]
-        self.folds = ["all"] if self.job_config["FOLDS"] == 0 else [
-            "fold{}".format(o) for o in range(self.job_config["FOLDS"])
-        ]
-
-        if self.by_boost_fold:
-            if self.job_config["BOOST_FOLDS"] > 0:
-                boost_folds = [
-                    "b{}".format(o)
-                    for o in list(range(0, self.job_config["BOOST_FOLDS"] + 1))
-                ]
-                self.folds = [
-                    "".join(o)
-                    for o in itertools.product(*[self.folds, boost_folds])
-                ]
+        self.folds = kwargs.get("folds")
 
     def execute(self) -> None:
         for fold_name in self.folds:

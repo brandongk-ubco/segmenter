@@ -1,7 +1,4 @@
 import os
-import json
-import pandas as pd
-import numpy as np
 from segmenter.collectors.BaseCollector import BaseCollector
 from shutil import copyfile
 from segmenter.models.BestFoldWeightFinder import BestFoldWeightFinder

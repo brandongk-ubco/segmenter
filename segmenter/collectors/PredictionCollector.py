@@ -20,7 +20,10 @@ class PredictionCollector(BaseCollector):
             return
 
         directory = os.path.dirname(result)
-        r = np.load(result)
+        try:
+            r = np.load(result)
+        except Exception as e:
+            raise ValueError("Error loading {}: {}".format(result, str(e)))
         iou, dice = self.metrics(r["mask"], r["prediction"])
         if directory not in self.ratings:
             self.ratings[directory] = {}

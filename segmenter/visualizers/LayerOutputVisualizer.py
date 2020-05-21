@@ -45,10 +45,8 @@ class LayerOutputVisualizer(BaseVisualizer):
 
             title = "Output Histogram for {} layers".format(layer_type)
             subtitle1 = "{} - Class {}".format(self.label, clazz)
-            plt.ylabel(
-                "Frequency (%): Peak {:1.2f}% at {:1.2f}.  $99.9^{{th}}$ pctl. {:1.2f}%."
-                .format(np.max(weights), self.bins[np.argmax(weights)],
-                        percentile))
+            plt.ylabel("Frequency (%): Peak {:1.2f}% at {:1.2f}.".format(
+                np.max(weights), self.bins[np.argmax(weights)]))
             used_bins = weights > 0.01
             subtitle2 = "Frequency Concentration:  {:1.2f}% in width {:1.2f}.".format(
                 np.sum(weights[used_bins]),

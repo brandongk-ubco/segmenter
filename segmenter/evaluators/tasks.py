@@ -3,6 +3,7 @@ from launcher import Task
 from segmenter.evaluators import Evaluators
 from segmenter.tasks import BaseTask
 from segmenter.models import FoldWeightFinders
+import itertools
 
 
 class EvaluateTask(BaseTask):
@@ -30,6 +31,11 @@ class EvaluateTask(BaseTask):
                                     help='the clases to train',
                                     required=False,
                                     nargs='+')
+        command_parser.add_argument("--folds",
+                                    type=str,
+                                    help='the folds to train.',
+                                    required=False,
+                                    nargs='+')
         command_parser.add_argument(
             "--weight-finder",
             type=str,
@@ -43,7 +49,8 @@ class EvaluateTask(BaseTask):
             args["dataset"], "--evaluator {}".format(args["evaluator"]),
             "--weight-finder {}".format(args["weight_finder"]),
             "--classes {}".format(" ".join(args["classes"]))
-            if args["classes"] is not None else ""
+            if args["classes"] is not None else "", "--folds {}".format(
+                " ".join(args["folds"])) if args["folds"] is not None else ""
         ])
 
     def execute(self) -> None:
@@ -51,10 +58,32 @@ class EvaluateTask(BaseTask):
         if self.args["classes"] is not None:
             self.classes = list(
                 filter(lambda c: c in self.args["classes"], self.classes))
+
+        self.folds = ["all"] if self.job_config["FOLDS"] == 0 else [
+            "fold{}".format(o) for o in range(self.job_config["FOLDS"])
+        ]
+        if self.job_config["BOOST_FOLDS"] > 0:
+            boost_folds = [
+                "b{}".format(o)
+                for o in list(range(0, self.job_config["BOOST_FOLDS"] + 1))
+            ]
+            self.folds = [
+                "".join(o)
+                for o in itertools.product(*[self.folds, boost_folds])
+            ]
+
+        if self.args["folds"] is not None:
+            self.folds = list(
+                filter(lambda c: c in self.args["folds"], self.folds))
+
         for clazz in self.classes:
-            self.evaluator(clazz, self.job_config, self.job_hash,
-                           self.data_dir, self.output_dir,
-                           self.weight_finder).execute()
+            self.evaluator(clazz,
+                           self.job_config,
+                           self.job_hash,
+                           self.data_dir,
+                           self.output_dir,
+                           self.weight_finder,
+                           folds=self.folds).execute()
 
 
 tasks = [EvaluateTask]
