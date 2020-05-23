@@ -8,6 +8,7 @@ class Visualizers(Enum):
     instance_metrics = "instance-metrics"
     metric = "metric"
     boost = "boost"
+    best_threshold = "best-threshold"
 
     def __str__(self):
         return self.name
@@ -40,5 +41,8 @@ class Visualizers(Enum):
         if visualizer == "boost":
             from segmenter.visualizers.BoostVisualizer import BoostVisualizer
             return BoostVisualizer
+        if visualizer == "best-threshold":
+            from segmenter.visualizers.BestThresholdVisualizer import BestThresholdVisualizer
+            return BestThresholdVisualizer
 
         raise ValueError("Unknown visualizer {}".format(visualizer))
