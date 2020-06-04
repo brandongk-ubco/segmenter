@@ -38,7 +38,6 @@ class LayerOutputVisualizer(BaseVisualizer):
 
             fig = plt.figure()
             plt.hist(bins, self.bins, weights=weights)
-            weighted_bins = np.multiply(weights, bins)
 
             percentile = np.percentile(weights, 99.9)
             plt.ylim([0, percentile])

@@ -8,7 +8,7 @@ from sklearn.metrics import ConfusionMatrixDisplay
 
 
 class ConfusionVisualizer(BaseVisualizer):
-    combined_visualizer = True
+    job_combined_visualizer = True
 
     def execute_result(self, result):
         confusion = np.load(result)

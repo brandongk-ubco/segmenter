@@ -42,7 +42,10 @@ class VisualizeTask(BaseTask):
 
     def execute(self) -> None:
         super().execute()
-        if self.visualizer.combined_visualizer:
+        if self.visualizer.full_combined_visualizer:
+            self.visualizer(self.output_dir, self.job_config,
+                            self.job_hash).execute()
+        elif self.visualizer.job_combined_visualizer:
             indir = os.path.join(self.output_dir, self.job_hash)
             self.visualizer(indir, self.job_config, self.job_hash).execute()
         else:

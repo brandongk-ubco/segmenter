@@ -5,6 +5,7 @@ class Visualizers(Enum):
     auc = "auc"
     predict = "predict"
     layer_output = "layer-output"
+    combined_layer_output = "combined-layer-output"
     instance_metrics = "instance-metrics"
     metric = "metric"
     boost = "boost"
@@ -33,6 +34,9 @@ class Visualizers(Enum):
         if visualizer == "layer-output":
             from segmenter.visualizers.LayerOutputVisualizer import LayerOutputVisualizer
             return LayerOutputVisualizer
+        if visualizer == "combined-layer-output":
+            from segmenter.visualizers.CombinedLayerOutputVisualizer import CombinedLayerOutputVisualizer
+            return CombinedLayerOutputVisualizer
         if visualizer == "instance-metrics":
             from segmenter.visualizers.InstanceMetricsVisualizer import InstanceMetricsVisualizer
             return InstanceMetricsVisualizer

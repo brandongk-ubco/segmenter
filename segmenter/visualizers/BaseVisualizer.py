@@ -17,7 +17,9 @@ class BaseVisualizer(metaclass=ABCMeta):
         "89030ed7105f2d5c95654f5429366a55": "Strong Learners",
     }
 
-    combined_visualizer = False
+    job_combined_visualizer = False
+    dataset_combined_visualizer = False
+    full_combined_visualizer = False
 
     @classmethod
     def __subclasshook__(cls, subclass):
@@ -27,7 +29,8 @@ class BaseVisualizer(metaclass=ABCMeta):
         self.data_dir = data_dir
         self.job_config = job_config
         self.job_hash = job_hash
-        self.label = self.label_map[self.job_hash]
+        if self.job_hash is not None:
+            self.label = self.label_map[self.job_hash]
 
     def execute(self) -> None:
         raise NotImplementedError

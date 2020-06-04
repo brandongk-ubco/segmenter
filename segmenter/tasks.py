@@ -17,7 +17,9 @@ class BaseTask(Task):
         parser.add_argument(
             "dataset",
             type=str,
-            help='the dataset to use when running the command.')
+            help='the dataset to use when running the command.',
+            nargs='?',
+            default="")
         parser.add_argument(
             "--job-config",
             type=str,
@@ -40,9 +42,27 @@ class BaseTask(Task):
 
     def execute(self):
         from segmenter.config import config_from_dir, validate_config
-        self.job_config, self.job_hash = config_from_dir(self.output_dir)
-        # validate_config(self.job_config)
-        pprint.pprint(self.job_config)
+        self.job_config = None
+        self.job_hash = None
+        if "JOB_CONFIG" in os.environ:
+            self.job_config, self.job_hash = config_from_dir(self.output_dir)
+            # validate_config(self.job_config)
+            pprint.pprint(self.job_config)
+
+            self.classes = self.job_config["CLASSES"]
+            self.folds = ["all"] if self.job_config["FOLDS"] == 0 else [
+                "fold{}".format(o) for o in range(self.job_config["FOLDS"])
+            ]
+
+            if self.job_config["BOOST_FOLDS"] > 0:
+                boost_folds = [
+                    "b{}".format(o)
+                    for o in list(range(0, self.job_config["BOOST_FOLDS"] + 1))
+                ]
+                self.folds = [
+                    "".join(o)
+                    for o in itertools.product(*[self.folds, boost_folds])
+                ]
 
         try:
             import tensorflow as tf
@@ -52,21 +72,6 @@ class BaseTask(Task):
                 tf.get_logger().setLevel("ERROR")
         except ModuleNotFoundError:
             pass
-
-        self.classes = self.job_config["CLASSES"]
-        self.folds = ["all"] if self.job_config["FOLDS"] == 0 else [
-            "fold{}".format(o) for o in range(self.job_config["FOLDS"])
-        ]
-
-        if self.job_config["BOOST_FOLDS"] > 0:
-            boost_folds = [
-                "b{}".format(o)
-                for o in list(range(0, self.job_config["BOOST_FOLDS"] + 1))
-            ]
-            self.folds = [
-                "".join(o)
-                for o in itertools.product(*[self.folds, boost_folds])
-            ]
 
 
 class IsCompleteTask(BaseTask):
