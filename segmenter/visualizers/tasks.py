@@ -42,13 +42,18 @@ class VisualizeTask(BaseTask):
 
     def execute(self) -> None:
         super().execute()
-        if self.args["classes"] is not None:
-            self.classes = list(
-                filter(lambda c: c in self.args["classes"], self.classes))
-        for clazz in self.classes:
-            indir = os.path.join(self.output_dir, self.job_hash, clazz,
-                                 "results")
-            self.visualizer(indir, self.job_config).execute()
+        if self.visualizer.combined_visualizer:
+            indir = os.path.join(self.output_dir, self.job_hash)
+            self.visualizer(indir, self.job_config, self.job_hash).execute()
+        else:
+            if self.args["classes"] is not None:
+                self.classes = list(
+                    filter(lambda c: c in self.args["classes"], self.classes))
+            for clazz in self.classes:
+                indir = os.path.join(self.output_dir, self.job_hash, clazz,
+                                     "results")
+                self.visualizer(indir, self.job_config,
+                                self.job_hash).execute()
 
 
 tasks = [VisualizeTask]

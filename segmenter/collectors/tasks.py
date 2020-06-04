@@ -45,7 +45,7 @@ class CollectTask(BaseTask):
         for clazz in self.classes:
             indir = os.path.join(self.output_dir, self.job_hash, clazz,
                                  "results")
-            self.collector(indir).execute()
+            self.collector(indir, self.data_dir, self.job_config).execute()
 
 
 tasks = [CollectTask]

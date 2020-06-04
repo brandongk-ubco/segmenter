@@ -39,14 +39,11 @@ class InstanceMetricsVisualizer(BaseVisualizer):
                         os.path.dirname(self.data_dir), "results",
                         aggregator.name(), "{:.2f}".format(threshold),
                         "instance-metrics-{}.png".format(metric))
-                    if os.path.exists(outfile):
-                        continue
-                    print(outfile)
                     metric_results = threshold_results[metric]
                     metric_plot = self.visualize(metric_results, display)
-                    title = r'{} ($\mu$ = {:.2f}, $\sigma$ = {:.2f})'.format(
+                    title = r'{} ($\mu$ = {:.2f}, $\sigma$ = {:.2f}, $\tilde{{f_1}}$ = {:.2f})'.format(
                         display, np.mean(metric_results),
-                        np.std(metric_results))
+                        np.std(metric_results), np.median(metric_results))
                     metric_plot.suptitle(title, y=1.07, fontsize=16)
                     plt.figtext(.5, .98, subtitle, fontsize=14, ha='center')
                     plt.savefig(outfile,

@@ -12,9 +12,6 @@ class MetricCollector(BaseCollector):
 
     def execute(self):
         outfile = os.path.join(self.data_dir, "metrics.csv")
-        if os.path.exists(outfile):
-            print("Metrics already collected in {}".format(self.data_dir))
-            return
         for result in sorted(self.collect_results(self.data_dir)):
             print(result)
             aggregator = result.split("/")[-3]

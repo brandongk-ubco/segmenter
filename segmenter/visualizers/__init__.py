@@ -9,6 +9,7 @@ class Visualizers(Enum):
     metric = "metric"
     boost = "boost"
     best_threshold = "best-threshold"
+    confusion = "confusion"
 
     def __str__(self):
         return self.name
@@ -44,5 +45,8 @@ class Visualizers(Enum):
         if visualizer == "best-threshold":
             from segmenter.visualizers.BestThresholdVisualizer import BestThresholdVisualizer
             return BestThresholdVisualizer
+        if visualizer == "confusion":
+            from segmenter.visualizers.ConfusionVisualizer import ConfusionVisualizer
+            return ConfusionVisualizer
 
         raise ValueError("Unknown visualizer {}".format(visualizer))

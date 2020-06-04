@@ -8,7 +8,8 @@ class Collectors(Enum):
     wight = "weight"
     instance_metrics = "instance-metrics"
     layer_output = "layer-output"
-    traub = "train"
+    train = "train"
+    confusion = "confusion"
 
     def __str__(self):
         return self.name
@@ -44,5 +45,8 @@ class Collectors(Enum):
         if collector == "train":
             from segmenter.collectors.TrainCollector import TrainCollector
             return TrainCollector
+        if collector == "confusion":
+            from segmenter.collectors.ConfusionCollector import ConfusionCollector
+            return ConfusionCollector
 
         raise ValueError("Unknown collector {}".format(collector))
