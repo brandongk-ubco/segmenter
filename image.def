@@ -16,4 +16,5 @@ From: tensorflow/tensorflow:latest-gpu-py3
     yapf \
     pathos \
     tqdm \
+    seaborn \
     https://github.com/brandongk60/launcher/archive/master.zip

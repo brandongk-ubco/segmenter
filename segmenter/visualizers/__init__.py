@@ -8,6 +8,7 @@ class Visualizers(Enum):
     combined_layer_output = "combined-layer-output"
     instance_metrics = "instance-metrics"
     metric = "metric"
+    combined_f1 = "combined-f1"
     boost = "boost"
     best_threshold = "best-threshold"
     confusion = "confusion"
@@ -52,5 +53,8 @@ class Visualizers(Enum):
         if visualizer == "confusion":
             from segmenter.visualizers.ConfusionVisualizer import ConfusionVisualizer
             return ConfusionVisualizer
+        if visualizer == "combined-f1":
+            from segmenter.visualizers.CombinedF1Visualizer import CombinedF1Visualizer
+            return CombinedF1Visualizer
 
         raise ValueError("Unknown visualizer {}".format(visualizer))

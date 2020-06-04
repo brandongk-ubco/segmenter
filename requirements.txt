@@ -11,4 +11,5 @@ mypy
 yapf
 pathos
 tqdm
+seaborn
 https://github.com/brandongk60/launcher/archive/master.zip
