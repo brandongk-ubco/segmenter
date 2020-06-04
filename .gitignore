@@ -22,6 +22,11 @@ segmenter/datasets/kits/kits19
 !setup/singularity.sh
 !.gitmodules
 !run.sh
+!commands
+!commands/*.sh
+!jobs
+!jobs/*.env
+!LICENSE
 
 **/__pycache__
 segmenter/datasets/kits19/kits19
