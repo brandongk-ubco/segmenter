@@ -101,7 +101,7 @@ class CombinedF1Visualizer(BaseVisualizer):
             outfile = os.path.join(
                 outdir,
                 "{}-f1-score.png".format(aggregator.replace(" ", "_").lower()))
-            fig.savefig(outfile, dpi=70, bbox_inches='tight', pad_inches=0.5)
+            fig.savefig(outfile, dpi=300, bbox_inches='tight', pad_inches=0.5)
             plt.close()
 
     def collect_results(self, directory):

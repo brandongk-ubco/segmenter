@@ -101,12 +101,20 @@ class ConfusionVisualizer(BaseVisualizer):
             confusion_matrix_display = ConfusionMatrixDisplay(
                 confusion, display_labels=self.labels).plot()
 
+            for row in confusion_matrix_display.text_:
+                for item in row:
+                    item.set_fontsize(20)
             subtitle = "{}".format(self.label)
+
+            ax = confusion_matrix_display.ax_
+            for item in ([ax.xaxis.label, ax.yaxis.label] +
+                         ax.get_xticklabels() + ax.get_yticklabels()):
+                item.set_fontsize(14)
             fig = confusion_matrix_display.figure_
 
             plt.title('')
             fig.suptitle('Confusion Matrix', y=1, fontsize=14)
             plt.figtext(.5, .91, subtitle, fontsize=12, ha='center')
 
-            fig.savefig(outfile, dpi=70, bbox_inches='tight', pad_inches=0.5)
+            fig.savefig(outfile, dpi=150, bbox_inches='tight', pad_inches=0.5)
             plt.close()
