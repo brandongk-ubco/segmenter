@@ -3,6 +3,7 @@ from enum import Enum
 
 class Visualizers(Enum):
     auc = "auc"
+    combined_auc = "combined-auc"
     predict = "predict"
     layer_output = "layer-output"
     combined_layer_output = "combined-layer-output"
@@ -29,6 +30,9 @@ class Visualizers(Enum):
         if visualizer == "auc":
             from segmenter.visualizers.AUCVisualizer import AUCVisualizer
             return AUCVisualizer
+        if visualizer == "combined-auc":
+            from segmenter.visualizers.CombinedAUCVisualizer import CombinedAUCVisualizer
+            return CombinedAUCVisualizer
         if visualizer == "predict":
             from segmenter.visualizers.PredictionVisualizer import PredictionVisualizer
             return PredictionVisualizer

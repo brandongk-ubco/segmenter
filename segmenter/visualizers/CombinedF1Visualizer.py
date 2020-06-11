@@ -72,7 +72,7 @@ class CombinedF1Visualizer(BaseVisualizer):
         filtered_results = filtered_results.drop("dice_y", axis=1)
         baseline_results = df[df["label"] == "Baseline"]
 
-        sns.set(rc={'figure.figsize': (11, 4)})
+        sns.set(rc={'figure.figsize': (11, 2.5)})
         for aggregator in filtered_results["display_aggregator"].unique():
             if aggregator == "":
                 continue
@@ -90,8 +90,11 @@ class CombinedF1Visualizer(BaseVisualizer):
                        loc="lower left",
                        ncol=len(comparable_results["label"].unique()),
                        frameon=False)
+            title = 'F1-Score by Model and Class, {} Aggregator'.format(
+                aggregator)
             plt.title('')
-            fig.suptitle('F1-Score by Model and Class', y=1.02, fontsize=14)
+
+            fig.suptitle(title, y=1.08, fontsize=14)
             plt.xlabel("Class")
             plt.ylabel("F1-Score")
 

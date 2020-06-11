@@ -48,6 +48,9 @@ class VisualizeTask(BaseTask):
         elif self.visualizer.job_combined_visualizer:
             indir = os.path.join(self.output_dir, self.job_hash)
             self.visualizer(indir, self.job_config, self.job_hash).execute()
+        elif self.visualizer.dataset_combined_visualizer:
+            indir = os.path.join(self.output_dir)
+            self.visualizer(indir, self.job_config, self.job_hash).execute()
         else:
             if self.args["classes"] is not None:
                 self.classes = list(

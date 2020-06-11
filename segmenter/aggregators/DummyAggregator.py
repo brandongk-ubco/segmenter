@@ -10,7 +10,7 @@ class DummyAggregator(Aggregator):
         return np.linspace(0., 0.9, num=10)
 
     def display_name(self):
-        return ""
+        return "Dummy"
 
     def layer(self):
         raise NotImplementedError

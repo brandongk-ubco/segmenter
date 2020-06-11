@@ -42,7 +42,7 @@ class BoostVisualizer(BaseVisualizer):
     def lineplot(self, clazz, results):
         results = results[["epoch", "loss", "boost_fold"]]
         results = results.rename(columns={'boost_fold': 'Boost Fold'})
-        # results = results[results['Boost Fold'] > 0]
+
         results["loss"] = pd.to_numeric(results["loss"], errors='coerce')
         results = results[results['loss'].notna()]
         results = results.groupby(["epoch", 'Boost Fold']).mean().unstack()

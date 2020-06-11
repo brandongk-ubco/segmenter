@@ -18,8 +18,8 @@ class PredictionVisualizer(BaseVisualizer):
             return
 
         outfile = os.path.join(os.path.dirname(result), "{}.png".format(name))
-        if os.path.exists(outfile):
-            return
+        # if os.path.exists(outfile):
+        #     return
 
         r = np.load(result)
 
@@ -37,8 +37,6 @@ class PredictionVisualizer(BaseVisualizer):
                 self.label, clazz, threshold)
         # TODO: These values need to be tweaked based on image size.
         # Try to find a way to calculate these.
-        # Severstal Values 1.35 / 1.12
-        # Kits Values 0.96 / 0.92
         if "/kits19/" in os.path.dirname(result):
             plot.suptitle(title, y=0.96, fontsize=16)
             plt.figtext(.5, 0.92, subtitle, fontsize=14, ha='center')
