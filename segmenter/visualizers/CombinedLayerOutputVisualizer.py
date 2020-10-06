@@ -81,7 +81,7 @@ class CombinedLayerOutputVisualizer(BaseVisualizer):
                     "layer-output-{}-{}.png".format(category, layer_type))
                 print(outfile)
                 plt.savefig(outfile,
-                            dpi=70,
+                            dpi=150,
                             bbox_inches='tight',
                             pad_inches=0.5)
                 plt.close()

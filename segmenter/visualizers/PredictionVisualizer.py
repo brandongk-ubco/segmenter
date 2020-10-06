@@ -45,7 +45,7 @@ class PredictionVisualizer(BaseVisualizer):
             plt.figtext(.5, 1.12, subtitle, fontsize=14, ha='center')
         else:
             raise ValueError("Couldn't determine dataset.")
-        plt.savefig(outfile, dpi=70, bbox_inches='tight', pad_inches=0.1)
+        plt.savefig(outfile, dpi=150, bbox_inches='tight', pad_inches=0.1)
         plt.close()
 
     def execute(self):

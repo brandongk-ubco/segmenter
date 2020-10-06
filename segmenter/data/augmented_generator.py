@@ -1,4 +1,4 @@
-from segmenter.data.DataGenerator import DataGenerator
+from segmenter.data.KFoldDataGenerator import KFoldDataGenerator
 import tensorflow as tf
 from tensorflow.keras import backend as K
 
@@ -40,13 +40,13 @@ def augmented_generator(clazz,
                         path,
                         shuffle=False,
                         repeat=False):
-    generator = DataGenerator(clazz,
-                              fold,
-                              shuffle=shuffle,
-                              path=path,
-                              augmentations=augments,
-                              job_config=job_config,
-                              mode=mode)
+    generator = KFoldDataGenerator(clazz,
+                                   fold,
+                                   shuffle=shuffle,
+                                   path=path,
+                                   augmentations=augments,
+                                   job_config=job_config,
+                                   mode=mode)
     augmented = generator_to_dataset(generator, repeat, shuffle)
     num_images = generator.size()
 

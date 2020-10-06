@@ -5,10 +5,10 @@ import os
 import sys
 from launcher import Task
 from segmenter.visualizers import Visualizers
-from segmenter.tasks import BaseTask
+from segmenter.jobs import BaseJob
 
 
-class VisualizeTask(BaseTask):
+class VisualizeTask(BaseJob):
 
     name = 'visualize'
 
@@ -20,7 +20,7 @@ class VisualizeTask(BaseTask):
     def arguments(parser) -> None:
         command_parser = parser.add_parser(VisualizeTask.name,
                                            help='Visualize results.')
-        BaseTask.arguments(command_parser)
+        BaseJob.arguments(command_parser)
         command_parser.add_argument("--visualizer",
                                     type=str,
                                     default="metric",

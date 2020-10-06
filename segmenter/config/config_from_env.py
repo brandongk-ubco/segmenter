@@ -2,6 +2,8 @@ import os
 import json
 from typing import Dict, Any
 from segmenter.config.hash_config import hash_config
+import random
+import sys
 
 
 def get_batch_size():
@@ -85,7 +87,7 @@ def get_optimizer():
         optimizer["BETA_1"] = float(os.environ.get("BETA_1", 0.9))
         optimizer["BETA_2"] = float(os.environ.get("BETA_2", 0.999))
         optimizer["AMSGRAD"] = os.environ.get("AMSGRAD",
-                                              "true").lower() == "false"
+                                              "true").lower() == "true"
         optimizer["LR"] = float(os.environ.get("LR", 0.001))
 
     if optimizer["NAME"] == "sgd":
@@ -102,7 +104,7 @@ def get_optimizer():
             "NAME": "adam",
             "BETA_1": float(os.environ.get("BETA_1", 0.9)),
             "BETA_2": float(os.environ.get("BETA_2", 0.999)),
-            "AMSGRAD": os.environ.get("AMSGRAD", "true").lower() == "false",
+            "AMSGRAD": os.environ.get("AMSGRAD", "true").lower() == "true",
             "LR": float(os.environ.get("LR", 0.001))
         }, {
             "NAME":
@@ -128,7 +130,7 @@ def config_from_env(datadir: str):
         "MIN_LR": float(os.environ.get("MIN_LR", 1e-8)),
         "LR_REDUCTION_FACTOR": float(os.environ.get("LR_REDUCTION_FACTOR",
                                                     0.1)),
-        "L1_REG": float(os.environ.get("L1_REG", 0)),
+        "L1_REG": float(os.environ.get("L1_REG", 3e-5)),
         "L2_REG": float(os.environ.get("L2_REG", 0)),
         "OPTIMIZER": get_optimizer(),
         "FSCORE_THRESHOLD": float(os.environ.get("FSCORE_THRESHOLD", 0.5)),
@@ -142,6 +144,9 @@ def config_from_env(datadir: str):
         "PREPROCESS": get_preprocess(),
         "POSTPROCESS": get_postprocess(),
         "RUN": int(os.environ.get("RUN", 1)),
+        "MAX_TRAIN_SIZE": int(os.environ.get("MAX_TRAIN_SIZE", -1)),
+        "SEED": 0,  #random.randint(0, sys.maxsize),
+        "SEARCH": os.environ.get("SEARCH", "false").lower() == "true"
     }
 
     return config, hash_config(config)

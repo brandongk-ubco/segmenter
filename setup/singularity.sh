@@ -9,18 +9,12 @@ set -euo pipefail
 # Install homebrew
 sudo apt-get -y update
 sudo apt-get -y install build-essential curl file git
+if ! command -v brew; then
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+fi
 
-# Install asdf version manager
-git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.7.8
-
-# NOTE: You may need to add this to your path as well.
-export ASDF_DIR=$(brew --prefix asdf)
-
-# Add asdf go plugin
-asdf plugin-add golang https://github.com/kennyp/asdf-golang.git
-
-# Install asdf versions
-asdf install
+brew install gcc
+brew install go
 
 # Install singularity dependencies
 sudo apt-get -y update
@@ -38,12 +32,16 @@ sudo apt-get install -y \
 
 # Install singularity
 export SINGULARITY_VERSION=3.5.2 # adjust this as necessary
-wget https://github.com/sylabs/singularity/releases/download/v${SINGULARITY_VERSION}/singularity-${SINGULARITY_VERSION}.tar.gz
-tar -xzf singularity-${SINGULARITY_VERSION}.tar.gz
+if [ ! -d singularity ]; then
+    if [ ! -f "singularity-${SINGULARITY_VERSION}.tar.gz" ]; then
+        wget https://github.com/sylabs/singularity/releases/download/v${SINGULARITY_VERSION}/singularity-${SINGULARITY_VERSION}.tar.gz
+    fi
+    tar -xzf singularity-${SINGULARITY_VERSION}.tar.gz
+fi
 
 cd singularity
 ./mconfig
-sudo make -C builddir
+make -C builddir
 sudo make -C builddir install
 cd -
 sudo rm -rf singularity

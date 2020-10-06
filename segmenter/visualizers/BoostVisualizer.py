@@ -36,7 +36,7 @@ class BoostVisualizer(BaseVisualizer):
         plot.set_xlabel('Number of Boost Folds')
 
         outfile = os.path.join(self.data_dir, "boost_boxplot.png")
-        fig.savefig(outfile, dpi=70, bbox_inches='tight', pad_inches=0.5)
+        fig.savefig(outfile, dpi=150, bbox_inches='tight', pad_inches=0.5)
         plt.close()
 
     def lineplot(self, clazz, results):
@@ -59,7 +59,7 @@ class BoostVisualizer(BaseVisualizer):
         plt.xlabel('Training Epoch')
 
         outfile = os.path.join(self.data_dir, "boost_lineplot.png")
-        fig.savefig(outfile, dpi=70, bbox_inches='tight', pad_inches=0.5)
+        fig.savefig(outfile, dpi=150, bbox_inches='tight', pad_inches=0.5)
         plt.close()
 
     def execute(self):

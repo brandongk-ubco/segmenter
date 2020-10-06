@@ -1,4 +1,4 @@
-from tensorflow.keras.layers import LeakyReLU, ReLU, PReLU, Activation
+from tensorflow.keras.layers import LeakyReLU, ReLU, PReLU, Activation, ELU
 import tensorflow as tf
 
 
@@ -30,4 +30,11 @@ def get_activation(activation):
         return PReLU
     if activation == "relu":
         return ReLU
+    if activation == "elu":
+        return ELU
+    if activation == "linear":
+        return lambda: Activation(lambda x: x)
+    if activation == "swish":
+        return lambda: Activation(lambda x: x * tf.keras.activations.sigmoid(x)
+                                  )
     raise ValueError("Activation %s not defined" % activation)

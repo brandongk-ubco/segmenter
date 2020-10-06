@@ -45,6 +45,7 @@ class DatasetStatistics(Task):
         self.dataset_dir = os.path.join(
             pathlib.Path(__file__).parent.absolute(), self.dataset_name)
         self.dataset = Datasets.get(self.dataset_name)(self.dataset_dir)
+        self.dataset.divide_members()
         self.output_dir = os.path.join(os.path.abspath(args["data_dir"]),
                                        self.dataset_name)
 
@@ -75,12 +76,8 @@ class VisualizeDataset(Task):
     def __init__(self, args):
         self.args = args
         self.dataset_name = args["dataset"]
-        self.dataset_dir = os.path.join(
-            pathlib.Path(__file__).parent.absolute(), self.dataset_name)
-        self.dataset = Datasets.get(self.dataset_name)(self.dataset_dir)
-        self.output_dir = os.path.join(os.path.abspath(args["data_dir"]),
-                                       self.dataset_name)
-        os.makedirs(self.output_dir, exist_ok=True)
+        self.dataset_dir = os.path.join(os.path.abspath(args["data_dir"]),
+                                        self.dataset_name)
 
     @staticmethod
     def arguments(parser) -> None:
@@ -100,7 +97,7 @@ class VisualizeDataset(Task):
         import numpy as np
         from segmenter.datasets.DatasetVisualizer import DatasetVisualizer
 
-        DatasetVisualizer(self.dataset, self.output_dir).execute()
+        DatasetVisualizer(self.dataset_dir).execute()
 
 
 class ProcessDataset(Task):
@@ -113,6 +110,7 @@ class ProcessDataset(Task):
         self.dataset_dir = os.path.join(
             pathlib.Path(__file__).parent.absolute(), self.dataset_name)
         self.dataset = Datasets.get(self.dataset_name)(self.dataset_dir)
+        self.dataset.divide_members()
         self.output_dir = os.path.join(os.path.abspath(args["data_dir"]),
                                        self.dataset_name)
         os.makedirs(self.output_dir, exist_ok=True)

@@ -134,7 +134,7 @@ class CombinedAUCVisualizer(BaseVisualizer):
                 outdir, "{}-auc-false-discovery.png".format("_".join(
                     aggregator.split())))
             print(outfile)
-            plt.savefig(outfile, dpi=70, bbox_inches='tight', pad_inches=0.5)
+            plt.savefig(outfile, dpi=150, bbox_inches='tight', pad_inches=0.5)
             plt.close()
 
     def visualize(self, tpr, fpr):

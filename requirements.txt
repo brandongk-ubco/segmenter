@@ -12,4 +12,6 @@ yapf
 pathos
 tqdm
 seaborn
+deepdiff
+nibabel
 https://github.com/brandongk60/launcher/archive/master.zip

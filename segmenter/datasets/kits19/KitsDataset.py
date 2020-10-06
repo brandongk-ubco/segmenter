@@ -52,6 +52,20 @@ class KitsDataset(BaseDataset):
 
     def __init__(self, src_dir):
         self.src_dir = os.path.join(os.path.abspath(src_dir), "kits19", "data")
+
+    def initialize(self):
+        current_dir = os.path.dirname(os.path.realpath(__file__))
+        check_call("git submodule update --init --remote --force --recursive",
+                   shell=True,
+                   cwd=current_dir)
+        check_call("pip install -r requirements.txt",
+                   shell=True,
+                   cwd=os.path.join(current_dir, "kits19"))
+        check_call("python -m starter_code.get_imaging",
+                   shell=True,
+                   cwd=os.path.join(current_dir, "kits19"))
+
+    def divide_members(self):
         self.train_cases = sorted([
             d for d in os.listdir(self.src_dir) if os.path.isfile(
                 os.path.join(self.src_dir, d, "segmentation.nii.gz"))
@@ -79,18 +93,6 @@ class KitsDataset(BaseDataset):
                     "class_members": self.class_members,
                     "instances": list(self.instances)
                 }, outfile)
-
-    def initialize(self):
-        current_dir = os.path.dirname(os.path.realpath(__file__))
-        check_call("git submodule update --init --remote --force --recursive",
-                   shell=True,
-                   cwd=current_dir)
-        check_call("pip install -r requirements.txt",
-                   shell=True,
-                   cwd=os.path.join(current_dir, "kits19"))
-        check_call("python -m starter_code.get_imaging",
-                   shell=True,
-                   cwd=os.path.join(current_dir, "kits19"))
 
     def class_represented(self, segmentation):
         return np.sum(segmentation) > 0

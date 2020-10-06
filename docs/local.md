@@ -159,10 +159,13 @@ Create an account at [Singularity Cloud](https://cloud.sylabs.io/home) and gener
 
 `singularity remote login` and paste the token you created.
 
-
 ## Build the singularity container
 
 `singularity build --fakeroot image.sif image.def`
+
+Or, to build remotely:
+
+`singularity build --remote image.sif image.def`
 
 ## See if it all works
 

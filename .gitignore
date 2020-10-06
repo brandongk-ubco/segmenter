@@ -29,4 +29,4 @@ segmenter/datasets/kits/kits19
 !LICENSE
 
 **/__pycache__
-segmenter/datasets/kits19/kits19
+!segmenter/datasets/kits19/kits19

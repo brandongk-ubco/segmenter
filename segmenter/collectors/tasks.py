@@ -5,10 +5,10 @@ import os
 import sys
 from launcher import Task
 from segmenter.collectors import Collectors
-from segmenter.tasks import BaseTask
+from segmenter.jobs import BaseJob
 
 
-class CollectTask(BaseTask):
+class CollectTask(BaseJob):
 
     name = 'collect'
 
@@ -20,7 +20,7 @@ class CollectTask(BaseTask):
     def arguments(parser) -> None:
         command_parser = parser.add_parser(CollectTask.name,
                                            help='Collect results.')
-        BaseTask.arguments(command_parser)
+        BaseJob.arguments(command_parser)
         command_parser.add_argument("--collector",
                                     type=str,
                                     default="metric",

@@ -2,88 +2,41 @@ import os
 import json
 import random
 import numpy as np
-import io
 import glob
 from tensorflow.keras import backend as K
 from typing import Dict
-
-
-class CachedFilereader:
-
-    cache: Dict[str, bytes] = {}
-
-    def read(self, filename):
-        if filename not in self.cache:
-            with open(filename, "rb") as newfile:
-                return io.BytesIO(newfile.read())
-                # self.cache[filename] = newfile.read()
-
-        # return io.BytesIO(self.cache[filename])
+from .CachingFileReader import CachingFileReader
 
 
 class DataGenerator:
     def __init__(self,
-                 clazz,
-                 fold=None,
-                 shuffle=False,
-                 mode="train",
-                 path="/data",
-                 augmentations=None,
-                 job_config=None):
+                 image_files=[],
+                 preprocess=[],
+                 postprocess=[],
+                 augmentation_generator=None,
+                 use_cache=True):
 
-        self.cache = CachedFilereader()
-        self.augmentations = augmentations
-        self.path = path
-
-        with open(os.path.join(path, "classes.json"), "r") as json_file:
-            self.data = json.load(json_file)
-
-        if mode == "evaluate" or (fold is None and mode == "val"):
-            self.image_files = sorted(
-                self.data["classes"][clazz]["eval_instances"])
-        elif fold is None and mode == "train":
-            self.image_files = sorted(
-                self.data["classes"][clazz]["train_instances"])
-        elif fold is not None and mode in ["train", "val"]:
-            with open(
-                    os.path.join(path,
-                                 "%s-folds.json" % (job_config["FOLDS"])),
-                    "r") as json_file:
-                json_data = json.load(json_file)
-                self.image_files = sorted(
-                    json_data["folds"][fold][clazz][mode])
-        else:
-            raise ValueError("Invalid combination: mode %s / fold %s" %
-                             (mode, fold))
-
-        self.image_files = list(
-            map(lambda f: os.path.abspath(os.path.join(self.path, f)),
-                self.image_files))
-
-        if shuffle:
-            random.shuffle(self.image_files)
-
-        self.job_config = job_config
-        self.mask_index = [str(c)
-                           for c in self.job_config["CLASSES"]].index(clazz)
+        self.cache = CachingFileReader(use_cache=use_cache)
+        self.augmentation_generator = augmentation_generator
+        self.image_files = image_files
+        self.preprocess_functions = preprocess
+        self.postprocess_functions = postprocess
 
     def size(self):
         return len(self.image_files)
 
     def preprocess(self, img, mask):
-        if True or self.job_config["PREPROCESS"]["ZERO_BLANKS"]:
-            img = self.zero(img, mask)
+        for f in self.preprocess_functions:
+            img = f(img, mask)
         return img.astype(K.floatx()), mask.astype(K.floatx())
 
     def postprocess(self, img, mask):
-        if False and self.job_config["POSTPROCESS"]["RECENTER"]:
-            img = img - np.mean(img)
+        for f in self.postprocess_functions:
+            img = f(img, mask)
         return img.astype(K.floatx()), mask.astype(K.floatx())
 
     def augment(self, img, mask):
-        augmentation_for_image = self.augmentations(
-            self.job_config["AUGMENTS"], self.data["properties"]["mean"],
-            self.data["properties"]["std"], img.shape)
+        augmentation_for_image = self.augmentation_generator(img)
         if augmentation_for_image is None:
             return img, mask
         mask_coverage_before = np.sum(mask)
@@ -106,17 +59,11 @@ class DataGenerator:
         img[~keep] = 0
         return img
 
-    def _generate(self, idx):
-        filename = os.path.join(self.path,
-                                "{}.npz".format(self.image_files[idx]))
-        i_data = np.load(self.cache.read(filename))
-        img = i_data["image"]
-        mask = i_data["mask"][:, :, self.mask_index]
-        if len(img.shape) == 2:
-            img = np.reshape(img, (img.shape[0], img.shape[1], 1))
-        mask = np.reshape(mask, (mask.shape[0], mask.shape[1], 1))
+    def get_image(self, idx):
+        return self.image_files[idx]
 
-        return img, mask
+    def _generate(self, idx):
+        raise NotImplementedError()
 
     def generate(self):
         for i in range(len(self.image_files)):

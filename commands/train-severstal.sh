@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 set -euo pipefail
-
+ 
 find ./jobs -name '*.env' -exec sh -c 'export $(cat {} | xargs) && launch configure severstal' \;
 
 #launch is-complete --job-config c041f9d41605254f805232999f143ab0 severstal

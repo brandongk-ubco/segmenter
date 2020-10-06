@@ -40,7 +40,7 @@ class MetricVisualizer(BaseVisualizer):
             plot.suptitle(title, y=1.1, fontsize=16)
             plt.figtext(.5, 1.01, subtitle_1, fontsize=14, ha='center')
             plt.figtext(.5, 0.96, subtitle_2, fontsize=14, ha='center')
-            plot.savefig(outfile, dpi=70, bbox_inches='tight', pad_inches=0.5)
+            plot.savefig(outfile, dpi=150, bbox_inches='tight', pad_inches=0.5)
             plot.close()
 
     def visualize(self, results):

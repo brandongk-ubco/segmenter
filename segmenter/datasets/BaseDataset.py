@@ -46,6 +46,10 @@ class BaseDataset(metaclass=ABCMeta):
         self.src_dir = os.path.abspath(src_dir)
 
     @abstractmethod
+    def divide_members(self):
+        raise NotImplementedError
+
+    @abstractmethod
     def initialize(self):
         raise NotImplementedError
 

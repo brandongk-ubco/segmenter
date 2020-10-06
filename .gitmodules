@@ -1,4 +1,4 @@
-[submodule "segmenter/datasets/kits/kits19"]
-	path = segmenter/datasets/kits/kits19
+[submodule "segmenter/datasets/kits19/kits19"]
+	path = segmenter/datasets/kits19/kits19
 	url = https://github.com/neheller/kits19
 	branch = interpolated

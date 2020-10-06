@@ -10,8 +10,7 @@ from segmenter.helpers.contrast_stretch import contrast_stretch
 
 
 class SeverstalDataset(BaseDataset):
-    def __init__(self, src_dir):
-        super(SeverstalDataset, self).__init__(src_dir)
+    def divide_members(self):
         # reading in the training set
         data = pd.read_csv(os.path.join(self.src_dir, 'train.csv'))
 

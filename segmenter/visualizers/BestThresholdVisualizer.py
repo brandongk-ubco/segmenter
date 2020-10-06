@@ -55,7 +55,7 @@ class BestThresholdVisualizer(BaseVisualizer):
                    frameon=False)
 
         outfile = os.path.join(self.data_dir, "best_metrics.png")
-        fig.savefig(outfile, dpi=70, bbox_inches='tight', pad_inches=0.5)
+        fig.savefig(outfile, dpi=150, bbox_inches='tight', pad_inches=0.5)
         plt.close()
 
     def execute_threshold(self):
@@ -87,7 +87,7 @@ class BestThresholdVisualizer(BaseVisualizer):
                    frameon=False)
 
         outfile = os.path.join(self.data_dir, "best_threshold.png")
-        fig.savefig(outfile, dpi=70, bbox_inches='tight', pad_inches=0.5)
+        fig.savefig(outfile, dpi=150, bbox_inches='tight', pad_inches=0.5)
         plt.close()
 
     def execute(self):

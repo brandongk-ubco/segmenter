@@ -18,5 +18,6 @@
     "python.testing.nosetestsEnabled": false,
     "python.formatting.provider": "yapf",
     "telemetry.enableCrashReporter": false,
-    "telemetry.enableTelemetry": false
+    "telemetry.enableTelemetry": false,
+    "files.eol": "\r\n"
 }

@@ -115,7 +115,7 @@ class DatasetStatistics:
             plt.title(title)
 
             fig.savefig(coverage_file,
-                        dpi=70,
+                        dpi=150,
                         bbox_inches='tight',
                         pad_inches=0.5)
             plt.close()
@@ -153,7 +153,7 @@ class DatasetStatistics:
             plt.title(title)
 
             fig.savefig(component_file,
-                        dpi=70,
+                        dpi=150,
                         bbox_inches='tight',
                         pad_inches=0.5)
             plt.close()
@@ -187,7 +187,7 @@ class DatasetStatistics:
             plt.title(title)
 
             fig.savefig(component_file,
-                        dpi=70,
+                        dpi=150,
                         bbox_inches='tight',
                         pad_inches=0.5)
             plt.close()
@@ -216,7 +216,10 @@ class DatasetStatistics:
                 ha='center',
                 va='bottom')
 
-        fig.savefig(instance_file, dpi=70, bbox_inches='tight', pad_inches=0.5)
+        fig.savefig(instance_file,
+                    dpi=150,
+                    bbox_inches='tight',
+                    pad_inches=0.5)
         plt.close()
 
     def execute(self):

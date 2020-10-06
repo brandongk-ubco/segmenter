@@ -70,7 +70,7 @@ class AUCVisualizer(BaseVisualizer):
                 self.data_dir,
                 "{}-auc-false-positive.png".format(aggregator.name()))
             print(outfile)
-            plt.savefig(outfile, dpi=70, bbox_inches='tight', pad_inches=0.5)
+            plt.savefig(outfile, dpi=150, bbox_inches='tight', pad_inches=0.5)
             plt.close()
 
             #Plot False-Discovery Rate
@@ -91,7 +91,7 @@ class AUCVisualizer(BaseVisualizer):
                 self.data_dir,
                 "{}-auc-false-discovery.png".format(aggregator.name()))
             print(outfile)
-            plt.savefig(outfile, dpi=70, bbox_inches='tight', pad_inches=0.5)
+            plt.savefig(outfile, dpi=150, bbox_inches='tight', pad_inches=0.5)
             plt.close()
 
     def visualize(self, tpr, fpr):

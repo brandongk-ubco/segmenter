@@ -1,12 +1,12 @@
 import argparse
 from launcher import Task
 from segmenter.evaluators import Evaluators
-from segmenter.tasks import BaseTask
+from segmenter.jobs import BaseJob
 from segmenter.models import FoldWeightFinders
 import itertools
 
 
-class EvaluateTask(BaseTask):
+class EvaluateTask(BaseJob):
 
     name = 'evaluate'
 
@@ -19,7 +19,7 @@ class EvaluateTask(BaseTask):
     def arguments(parser) -> None:
         command_parser = parser.add_parser(EvaluateTask.name,
                                            help='Evaluate a model.')
-        BaseTask.arguments(command_parser)
+        BaseJob.arguments(command_parser)
 
         command_parser.add_argument("--evaluator",
                                     type=str,

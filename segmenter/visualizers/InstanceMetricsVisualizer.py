@@ -47,7 +47,7 @@ class InstanceMetricsVisualizer(BaseVisualizer):
                     metric_plot.suptitle(title, y=1.07, fontsize=16)
                     plt.figtext(.5, .98, subtitle, fontsize=14, ha='center')
                     plt.savefig(outfile,
-                                dpi=70,
+                                dpi=150,
                                 bbox_inches='tight',
                                 pad_inches=0.5)
                     plt.close()
@@ -73,7 +73,7 @@ class InstanceMetricsVisualizer(BaseVisualizer):
                     "{}-instance-metrics-{}.png".format(
                         aggregator.name(), metric))
                 fig.savefig(outfile,
-                            dpi=70,
+                            dpi=150,
                             bbox_inches='tight',
                             pad_inches=0.5)
                 plt.close()
