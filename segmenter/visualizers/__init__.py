@@ -13,6 +13,8 @@ class Visualizers(Enum):
     boost = "boost"
     best_threshold = "best-threshold"
     confusion = "confusion"
+    seach_depth_width = "search-depth-width"
+    search_parallel_coordinates = "search-parallel-coordinates"
 
     def __str__(self):
         return self.name
@@ -60,5 +62,11 @@ class Visualizers(Enum):
         if visualizer == "combined-f1":
             from segmenter.visualizers.CombinedF1Visualizer import CombinedF1Visualizer
             return CombinedF1Visualizer
+        if visualizer == "search-depth-width":
+            from segmenter.visualizers.SearchDepthWidthVisualizer import SearchDepthWidthVisualizer
+            return SearchDepthWidthVisualizer
+        if visualizer == "search-parallel-coordinates":
+            from segmenter.visualizers.SearchParallelCoordinatesVisualizer import SearchParallelCoordinatesVisualizer
+            return SearchParallelCoordinatesVisualizer
 
         raise ValueError("Unknown visualizer {}".format(visualizer))

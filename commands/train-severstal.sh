@@ -2,6 +2,8 @@
 
 set -euo pipefail
  
+find "$OUTPUT_DIR/severstal" -type d -printf '%f\n' | xargs -n1 -I % sh -c '{ sbatch run.sh train severstal --job-config % --classes 1 --folds 0; sleep 5; }'
+
 find ./jobs -name '*.env' -exec sh -c 'export $(cat {} | xargs) && launch configure severstal' \;
 
 #launch is-complete --job-config c041f9d41605254f805232999f143ab0 severstal

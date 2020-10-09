@@ -42,10 +42,11 @@ class CollectTask(BaseJob):
         if self.args["classes"] is not None:
             self.classes = list(
                 filter(lambda c: c in self.args["classes"], self.classes))
-        for clazz in self.classes:
-            indir = os.path.join(self.output_dir, self.job_hash, clazz,
-                                 "results")
-            self.collector(indir, self.data_dir, self.job_config).execute()
+        # for clazz in self.classes:
+        #     indir = os.path.join(self.output_dir, self.job_hash, clazz,
+        #                          "results")
+        indir = os.path.join(self.output_dir)
+        self.collector(indir, self.data_dir, self.job_config).execute()
 
 
 tasks = [CollectTask]

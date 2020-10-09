@@ -5,6 +5,7 @@ import os
 import itertools
 import sys
 import pprint
+import json
 
 
 class BaseJob(Task):
@@ -40,6 +41,12 @@ class BaseJob(Task):
         from segmenter.config import config_from_dir, validate_config
         self.job_config = None
         self.job_hash = None
+
+        with open(os.path.join(self.data_dir, "classes.json"),
+                  "r") as json_file:
+            data = json.load(json_file)
+            self.classes = data["class_order"]
+
         if "JOB_CONFIG" in os.environ:
             self.job_config, self.job_hash = config_from_dir(
                 os.path.join(self.output_dir, os.environ["JOB_CONFIG"]))

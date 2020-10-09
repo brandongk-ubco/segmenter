@@ -12,6 +12,7 @@ path = os.path.abspath(path)
 
 configs = {}
 
+
 def flatten(d, parent_key='', sep='_'):
     items = []
     for k, v in d.items():
@@ -22,30 +23,32 @@ def flatten(d, parent_key='', sep='_'):
             items.append((new_key, v))
     return dict(items)
 
+
 def get_config(directory, confighash):
-   
-   if confighash not in configs:
-      configpath = os.path.join(directory, "config.json")
 
-      with open(configpath, "r") as configfile:
-         config = json.load(configfile)
+    if confighash not in configs:
+        configpath = os.path.join(directory, "config.json")
 
-      configs[confighash] = flatten(config)
+        with open(configpath, "r") as configfile:
+            config = json.load(configfile)
 
-   return configs[confighash]
+        configs[confighash] = flatten(config)
+
+    return configs[confighash]
+
 
 def get_configs(directory):
 
-   headers = set(["fold", "class"])
-   for root, dirs, files in os.walk(directory):
+    headers = set(["fold", "class"])
+    for root, dirs, files in os.walk(directory):
 
-      relpath = root.replace(directory, "")[1:]
+        relpath = root.replace(directory, "")[1:]
 
-      if "config.json" in files:
-         confighash = relpath.split("/")[1]
-         get_config(root, confighash)
-   return configs
+        if "config.json" in files:
+            confighash = relpath.split("/")[1]
+            get_config(root, confighash)
+    return configs
+
 
 if __name__ == "__main__":
-   pprint.pprint(get_configs(path))
-
+    pprint.pprint(get_configs(path))

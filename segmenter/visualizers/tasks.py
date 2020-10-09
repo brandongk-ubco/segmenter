@@ -41,6 +41,9 @@ class VisualizeTask(BaseJob):
         ])
 
     def execute(self) -> None:
+        import matplotlib
+        matplotlib.use('Agg')
+
         super().execute()
         if self.visualizer.full_combined_visualizer:
             self.visualizer(self.output_dir, self.job_config,
@@ -52,14 +55,14 @@ class VisualizeTask(BaseJob):
             indir = os.path.join(self.output_dir)
             self.visualizer(indir, self.job_config, self.job_hash).execute()
         else:
-            if self.args["classes"] is not None:
-                self.classes = list(
-                    filter(lambda c: c in self.args["classes"], self.classes))
-            for clazz in self.classes:
-                indir = os.path.join(self.output_dir, self.job_hash, clazz,
-                                     "results")
-                self.visualizer(indir, self.job_config,
-                                self.job_hash).execute()
+            # if self.args["classes"] is not None:
+            #     self.classes = list(
+            #         filter(lambda c: c in self.args["classes"], self.classes))
+            # import pdb
+            # pdb.set_trace()
+            # for clazz in self.classes:
+            self.visualizer(self.output_dir, self.job_config,
+                            self.job_hash).execute()
 
 
 tasks = [VisualizeTask]
