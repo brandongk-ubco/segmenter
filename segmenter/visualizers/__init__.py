@@ -15,6 +15,7 @@ class Visualizers(Enum):
     confusion = "confusion"
     seach_depth_width = "search-depth-width"
     search_parallel_coordinates = "search-parallel-coordinates"
+    search_activation = "search-activation"
 
     def __str__(self):
         return self.name
@@ -68,5 +69,8 @@ class Visualizers(Enum):
         if visualizer == "search-parallel-coordinates":
             from segmenter.visualizers.SearchParallelCoordinatesVisualizer import SearchParallelCoordinatesVisualizer
             return SearchParallelCoordinatesVisualizer
+        if visualizer == "search-activation":
+            from segmenter.visualizers.SearchActivationVisualizer import SearchActivationVisualizer
+            return SearchActivationVisualizer
 
         raise ValueError("Unknown visualizer {}".format(visualizer))

@@ -30,8 +30,13 @@ class IsCompleteJob(BaseJob):
         if not os.path.exists(file_path):
             return False
         with open(file_path, "r") as json_file:
-            early_stopping = json.load(json_file)
-        return early_stopping["wait"] >= early_stopping["patience"]
+            try:
+                early_stopping = json.load(json_file)
+            except json.JSONDecodeError:
+                print("Unreadable JSON in %s" % file_path)
+                return False
+            else:
+                return early_stopping["wait"] >= early_stopping["patience"]
 
     def is_complete(self, directory):
         incomplete = []
@@ -99,7 +104,7 @@ class IsCompleteJob(BaseJob):
         return self.is_complete(os.path.join(self.output_dir, config))
 
     def calculate(self):
-        from segmenter.helpers.p_tqdm import t_map as mapper
+        from segmenter.helpers.p_tqdm import p_map as mapper
 
         if os.environ.get("JOB_CONFIG") is None:
             configs = self.collect_results(self.output_dir)

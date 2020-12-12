@@ -53,7 +53,7 @@ class KFoldDataGenerator(DataGenerator):
             random.shuffle(image_files)
 
         if job_config["MAX_TRAIN_SIZE"] > 0 and job_config[
-                "MAX_TRAIN_SIZE"] < len(image_files):
+                "MAX_TRAIN_SIZE"] < len(image_files) and mode != "evaluate":
             print("Capping %s image set at %s" %
                   (len(image_files), job_config["MAX_TRAIN_SIZE"]))
             image_files = image_files[:job_config["MAX_TRAIN_SIZE"]]

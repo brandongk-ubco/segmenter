@@ -58,8 +58,6 @@ class VisualizeTask(BaseJob):
             # if self.args["classes"] is not None:
             #     self.classes = list(
             #         filter(lambda c: c in self.args["classes"], self.classes))
-            # import pdb
-            # pdb.set_trace()
             # for clazz in self.classes:
             self.visualizer(self.output_dir, self.job_config,
                             self.job_hash).execute()

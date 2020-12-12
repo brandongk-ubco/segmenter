@@ -96,6 +96,9 @@ def model_folds(inputs, job_config, weight_finder, aggregator):
 
     folds = range(job_config["FOLDS"]) if job_config["FOLDS"] else [None]
 
+    if job_config["SEARCH"]:
+        folds = [0]
+
     for fold in folds:
         fold_name = "all" if fold is None else "fold{}".format(fold)
         models.append(

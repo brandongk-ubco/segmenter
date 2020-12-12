@@ -20,6 +20,7 @@ class BaseJob(Task):
         parser.add_argument(
             "--job-config",
             type=str,
+            default='',
             help=
             'the configuration on which to run the command. Can also be set through the JOB_CONFIG environment variable.',
             required=False)
@@ -47,7 +48,7 @@ class BaseJob(Task):
             data = json.load(json_file)
             self.classes = data["class_order"]
 
-        if "JOB_CONFIG" in os.environ:
+        if "JOB_CONFIG" in os.environ and os.environ["JOB_CONFIG"]:
             self.job_config, self.job_hash = config_from_dir(
                 os.path.join(self.output_dir, os.environ["JOB_CONFIG"]))
             # validate_config(self.job_config)

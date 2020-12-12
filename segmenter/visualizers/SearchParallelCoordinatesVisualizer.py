@@ -13,7 +13,7 @@ class SearchParallelCoordinatesVisualizer(BaseVisualizer):
     def plot(self, results):
         results = results[[
             "model_filters", "model_layers", "model_activation", "l1_reg",
-            "val_loss"
+            "val_loss", "class"
         ]]
         results = results.rename(
             columns={
@@ -25,70 +25,80 @@ class SearchParallelCoordinatesVisualizer(BaseVisualizer):
         print(activations)
         activation_map = dict([(a, activations.index(a)) for a in activations])
         results["activation_key"] = results["activation"].map(activation_map)
-        results = results.groupby(
-            ['filters', 'layers', "activation", "activation_key",
-             "l1_reg"]).min().reset_index()
+        results = results.groupby([
+            'filters', 'layers', "activation", "activation_key", "l1_reg",
+            "class"
+        ]).min().reset_index()
 
         results = results.sort_values(by="val_loss", ascending=True)
-        slices = 20
-        num_per_slice = len(results) // slices
-        for slce in range(0, slices):
-            start = slce * num_per_slice
-            end = (slce + 1) * num_per_slice
-            print(start, end)
-            result_slice = results[start:end]
 
-            fig = go.Figure(data=go.Parcoords(
-                line=dict(color=result_slice['val_loss'],
-                          colorscale='Electric_r',
-                          showscale=True),
-                dimensions=list([
-                    dict(label='filters',
-                         values=result_slice["filters"],
-                         tickvals=results["filters"].unique().tolist(),
-                         range=[
-                             min(results["filters"]),
-                             max(results["filters"])
-                         ]),
-                    dict(
-                        label='layers',
-                        values=result_slice["layers"],
-                        tickvals=results["layers"].unique().tolist(),
-                        range=[min(results["layers"]),
-                               max(results["layers"])]),
-                    dict(label='activation',
-                         values=result_slice["activation_key"],
-                         tickvals=list(activation_map.values()),
-                         ticktext=list(activation_map.keys()),
-                         range=[
-                             min(results["activation_key"]),
-                             max(results["activation_key"])
-                         ]),
-                    dict(
-                        label='l1_reg',
-                        values=result_slice["l1_reg"],
-                        tickvals=results["l1_reg"].unique().tolist(),
-                        range=[min(results["l1_reg"]),
-                               max(results["l1_reg"])],
-                        ticktext=[
-                            "{:.1E}".format(t)
-                            for t in results["l1_reg"].unique().tolist()
-                        ]),
-                    dict(label='val_loss',
-                         values=result_slice["val_loss"],
-                         range=[
-                             max(result_slice["val_loss"]),
-                             min(result_slice["val_loss"])
-                         ]),
-                ])))
-            fig.update_layout(
-                title=
-                "Validation Loss Percentiles %d%% to %d%% Grid Search Results"
-                % (100 - (slce + 1) / slices * 100, 100 - slce / slices * 100))
-            outfile = os.path.join(
-                self.data_dir,
-                "parallel_coordinates_%d.png" % (100 - slce / slices * 100))
-            fig.write_image(outfile)
+        for clazz in results["class"].unique().tolist():
+            clazz_results = results[results["class"] == clazz]
+
+            slices = 20
+            num_per_slice = len(clazz_results) // slices
+            for slce in range(0, slices):
+                start = slce * num_per_slice
+                end = (slce + 1) * num_per_slice
+                print(start, end)
+                result_slice = clazz_results[start:end]
+
+                fig = go.Figure(data=go.Parcoords(
+                    line=dict(color=result_slice['val_loss'],
+                              colorscale='Electric_r',
+                              showscale=True),
+                    dimensions=list([
+                        dict(label='filters',
+                             values=result_slice["filters"],
+                             tickvals=clazz_results["filters"].unique().tolist(
+                             ),
+                             range=[
+                                 min(clazz_results["filters"]),
+                                 max(clazz_results["filters"])
+                             ]),
+                        dict(
+                            label='layers',
+                            values=result_slice["layers"],
+                            tickvals=clazz_results["layers"].unique().tolist(),
+                            range=[
+                                min(clazz_results["layers"]),
+                                max(clazz_results["layers"])
+                            ]),
+                        dict(label='activation',
+                             values=result_slice["activation_key"],
+                             tickvals=list(activation_map.values()),
+                             ticktext=list(activation_map.keys()),
+                             range=[
+                                 min(clazz_results["activation_key"]),
+                                 max(clazz_results["activation_key"])
+                             ]),
+                        dict(label='l1_reg',
+                             values=result_slice["l1_reg"],
+                             tickvals=results["l1_reg"].unique().tolist(),
+                             range=[
+                                 min(clazz_results["l1_reg"]),
+                                 max(clazz_results["l1_reg"])
+                             ],
+                             ticktext=[
+                                 "{:.1E}".format(t) for t in
+                                 clazz_results["l1_reg"].unique().tolist()
+                             ]),
+                        dict(label='val_loss',
+                             values=result_slice["val_loss"],
+                             range=[
+                                 max(result_slice["val_loss"]),
+                                 min(result_slice["val_loss"])
+                             ]),
+                    ])))
+                fig.update_layout(
+                    title=
+                    "Class %s Validation Loss Percentiles %d%% to %d%% Grid Search Results"
+                    % (clazz, 100 -
+                       (slce + 1) / slices * 100, 100 - slce / slices * 100))
+                outfile = os.path.join(
+                    self.data_dir, "class_%s_parallel_coordinates_%d.png" %
+                    (clazz, (100 - slce / slices * 100)))
+                fig.write_image(outfile)
         # plot = pd.plotting.parallel_coordinates(results, "quantile")
         # fig = plot.get_figure()
         # plot.legend('')

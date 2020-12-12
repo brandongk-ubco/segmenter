@@ -38,15 +38,24 @@ class CollectTask(BaseJob):
             [args["dataset"], "--collector {}".format(args["collector"])])
 
     def execute(self) -> None:
+        from segmenter.config import config_from_dir
+
         super().execute()
         if self.args["classes"] is not None:
             self.classes = list(
                 filter(lambda c: c in self.args["classes"], self.classes))
-        # for clazz in self.classes:
-        #     indir = os.path.join(self.output_dir, self.job_hash, clazz,
-        #                          "results")
-        indir = os.path.join(self.output_dir)
-        self.collector(indir, self.data_dir, self.job_config).execute()
+
+        job_configs = [
+            d for d in os.listdir(self.output_dir)
+            if os.path.isdir(os.path.join(self.output_dir, d))
+        ]
+
+        for job_hash in job_configs:
+            job_config, job_hash = config_from_dir(
+                os.path.join(self.output_dir, job_hash))
+
+            self.collector(os.path.join(self.output_dir, job_hash),
+                           self.data_dir, job_config).execute()
 
 
 tasks = [CollectTask]

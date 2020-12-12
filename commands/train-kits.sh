@@ -1,6 +1,14 @@
 #!/bin/bash
 
 find ./jobs -name '*.env' -exec sh -c 'export $(cat {} | xargs) && launch configure kits19' \;
+find "$OUTPUT_DIR/severstal" -type d -printf '%f\n' | xargs -n1 -I % sh -c '{ sbatch run.sh train severstal --job-config % --classes 3 --folds 0; sleep 5; }'
+
+find . -maxdepth 1 -type d | xargs -P 5 -I % sh -c 'rsync -a --bwlimit=50000 $(echo bgk@cedar.computecanada.ca:/scratch/bgk/results/seversal/%/ %/)'
+
+
+rsync -avzm --stats --safe-links --ignore-existing --dry-run --human-readable bgk@cedar.computecanada.ca:/scratch/bgk/results/ . > /tmp/transfer.log
+
+cat /tmp/transfer.log | parallel --will-cite -j 5 rsync -avzm --relative --stats --safe-links --ignore-existing --human-readable bgk@cedar.computecanada.ca:/scratch/bgk/results/{} . > result.log
 
 # launch is-complete --job-config 89489ee3b0c0504c424df68d1672f0cf kits19
 # launch is-complete --job-config f9e2afd0b43fb3f43ab7dc2a95bd6368 kits19

@@ -16,7 +16,7 @@ class TrainCollector(BaseCollector):
     results = pd.DataFrame()
 
     def execute_result(self, result):
-        clazz = result.split("/")[-6]
+        clazz = result.split("/")[-4]
         fold_str = result.split("/")[-3]
         fold = fold_str.split("b")[0].replace("fold", "")
         boost_fold = int(fold_str.split("b")[1]) if "b" in fold_str else 0

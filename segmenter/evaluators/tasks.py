@@ -4,6 +4,7 @@ from segmenter.evaluators import Evaluators
 from segmenter.jobs import BaseJob
 from segmenter.models import FoldWeightFinders
 import itertools
+import os
 
 
 class EvaluateTask(BaseJob):
@@ -50,7 +51,7 @@ class EvaluateTask(BaseJob):
 
     @staticmethod
     def arguments_to_cli(args) -> str:
-        return " ".join([
+        args = " ".join([
             args["dataset"],
             "--evaluator {}".format(args["evaluator"]),
             "--weight-finder {}".format(args["weight_finder"]),
@@ -61,51 +62,64 @@ class EvaluateTask(BaseJob):
             "--aggregators {}".format(" ".join(args["aggregators"]))
             if args["aggregators"] is not None else "",
         ])
+        return args
 
     def execute(self) -> None:
         from segmenter.aggregators import Aggregators
-
+        from segmenter.config import config_from_dir
         super(EvaluateTask, self).execute()
+
+        job_configs = [
+            d for d in os.listdir(self.output_dir)
+            if os.path.isdir(os.path.join(self.output_dir, d))
+        ]
+
         if self.args["classes"] is not None:
             self.classes = list(
                 filter(lambda c: c in self.args["classes"], self.classes))
 
-        self.folds = ["all"] if self.job_config["FOLDS"] == 0 else [
-            "fold{}".format(o) for o in range(self.job_config["FOLDS"])
-        ]
-        if self.job_config["BOOST_FOLDS"] > 0:
-            boost_folds = [
-                "b{}".format(o)
-                for o in list(range(0, self.job_config["BOOST_FOLDS"] + 1))
+        for job_hash in job_configs:
+            job_config, job_hash = config_from_dir(
+                os.path.join(self.output_dir, job_hash))
+
+            folds = ["all"] if job_config["FOLDS"] == 0 else [
+                "fold{}".format(o) for o in range(job_config["FOLDS"])
             ]
-            self.folds = [
-                "".join(o)
-                for o in itertools.product(*[self.folds, boost_folds])
-            ]
+            if job_config["BOOST_FOLDS"] > 0:
+                boost_folds = [
+                    "b{}".format(o)
+                    for o in list(range(0, job_config["BOOST_FOLDS"] + 1))
+                ]
+                folds = [
+                    "".join(o)
+                    for o in itertools.product(*[self.folds, boost_folds])
+                ]
 
-        if self.args["folds"] is not None:
-            self.folds = list(
-                filter(lambda c: c in self.args["folds"], self.folds))
+            if self.args["folds"] is not None:
+                folds = list(filter(lambda c: c in self.args["folds"], folds))
 
-        if self.job_config["FOLDS"] == 0:
-            self.aggregators = ["dummy"]
-        else:
-            self.aggregators = Aggregators.choices()
+            if job_config["SEARCH"]:
+                folds = ["fold0"]
 
-        if self.args["aggregators"] is not None:
-            self.aggregators = list(
-                filter(lambda c: c in self.args["aggregators"],
-                       self.aggregators))
+            if len(folds) <= 1:
+                aggregators = ["dummy"]
+            else:
+                aggregators = Aggregators.choices()
 
-        for clazz in self.classes:
-            self.evaluator(clazz,
-                           self.job_config,
-                           self.job_hash,
-                           self.data_dir,
-                           self.output_dir,
-                           self.weight_finder,
-                           folds=self.folds,
-                           aggregators=self.aggregators).execute()
+            if self.args["aggregators"] is not None:
+                aggregators = list(
+                    filter(lambda c: c in self.args["aggregators"],
+                           aggregators))
+
+            for clazz in self.classes:
+                self.evaluator(clazz,
+                               job_config,
+                               job_hash,
+                               self.data_dir,
+                               self.output_dir,
+                               self.weight_finder,
+                               folds=folds,
+                               aggregators=aggregators).execute()
 
 
 tasks = [EvaluateTask]
