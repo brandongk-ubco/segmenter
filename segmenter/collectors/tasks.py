@@ -50,12 +50,13 @@ class CollectTask(BaseJob):
             if os.path.isdir(os.path.join(self.output_dir, d))
         ]
 
-        for job_hash in job_configs:
-            job_config, job_hash = config_from_dir(
-                os.path.join(self.output_dir, job_hash))
+        # for job_hash in job_configs:
+        job_hash = job_configs[0]
+        job_config, job_hash = config_from_dir(
+            os.path.join(self.output_dir, job_hash))
 
-            self.collector(os.path.join(self.output_dir, job_hash),
-                           self.data_dir, job_config).execute()
+        self.collector(os.path.join(self.output_dir, job_hash), self.data_dir,
+                       job_config).execute()
 
 
 tasks = [CollectTask]

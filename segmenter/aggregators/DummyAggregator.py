@@ -7,7 +7,8 @@ class DummyAggregator(Aggregator):
         return "dummy"
 
     def thresholds(self):
-        return np.linspace(0., 0.9, num=10)
+        # return np.linspace(0., 0.9, num=10)
+        return [0.5]
 
     def display_name(self):
         return "Dummy"

@@ -1,4 +1,5 @@
 from enum import Enum
+from segmenter.visualizers.VarianceVisualizer import VarianceVisualizer
 
 
 class Visualizers(Enum):
@@ -16,6 +17,8 @@ class Visualizers(Enum):
     seach_depth_width = "search-depth-width"
     search_parallel_coordinates = "search-parallel-coordinates"
     search_activation = "search-activation"
+    variance = "variance"
+    best_pair = "best-pair"
 
     def __str__(self):
         return self.name
@@ -72,5 +75,11 @@ class Visualizers(Enum):
         if visualizer == "search-activation":
             from segmenter.visualizers.SearchActivationVisualizer import SearchActivationVisualizer
             return SearchActivationVisualizer
+        if visualizer == "variance":
+            from segmenter.visualizers.VarianceVisualizer import VarianceVisualizer
+            return VarianceVisualizer
+        if visualizer == "best-pair":
+            from segmenter.visualizers.BestPairVisualizer import BestPairVisualizer
+            return BestPairVisualizer
 
         raise ValueError("Unknown visualizer {}".format(visualizer))

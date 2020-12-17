@@ -1,12 +1,7 @@
 import os
-import json
 import pandas as pd
-import numpy as np
 from matplotlib import pyplot as plt
 from segmenter.visualizers.BaseVisualizer import BaseVisualizer
-import seaborn as sns
-import plotly.express as px
-import plotly.graph_objects as go
 
 
 def calculate_network_size(filters, layers):
@@ -81,7 +76,12 @@ class SearchActivationVisualizer(BaseVisualizer):
             for dimension in ["flops", "parameters", "size"]:
                 dimension_results = clazz_results[[
                     dimension, "activation", "val_loss"
-                ]]
+                ]].copy()
+
+                min_dimension = dimension_results[dimension].min()
+
+                dimension_results.loc[:, dimension] = dimension_results[
+                    dimension].div(min_dimension)
 
                 dimension_results = dimension_results.groupby(
                     [dimension, "activation"]).min().reset_index()
@@ -94,7 +94,7 @@ class SearchActivationVisualizer(BaseVisualizer):
                 plt.title("Class %s - Val Loss vs. Network %s" %
                           (clazz, dimension.title()))
                 plt.ylabel("Val Loss")
-                plt.xlabel(dimension.title())
+                plt.xlabel("Relative Netowrk %s" % dimension.title())
                 outfile = os.path.join(
                     self.data_dir,
                     "class_%s_val_loss_vs_%s.png" % (clazz, dimension.title()))

@@ -10,6 +10,7 @@ class Collectors(Enum):
     layer_output = "layer-output"
     train = "train"
     confusion = "confusion"
+    variance = "variance"
 
     def __str__(self):
         return self.name
@@ -48,5 +49,8 @@ class Collectors(Enum):
         if collector == "confusion":
             from segmenter.collectors.ConfusionCollector import ConfusionCollector
             return ConfusionCollector
+        if collector == "variance":
+            from segmenter.collectors.VarianceCollector import VarianceCollector
+            return VarianceCollector
 
         raise ValueError("Unknown collector {}".format(collector))

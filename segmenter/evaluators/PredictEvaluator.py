@@ -9,8 +9,8 @@ class PredictEvaluator(ThresholdAwareEvaluator):
         for batch, (images, masks) in enumerate(self.dataset):
             name = os.path.basename(self.generator.image_files[batch])
             outfile = os.path.join(outdir, name)
-            if os.path.exists("{}.npz".format(outfile)):
-                continue
+            # if os.path.exists("{}.npz ".format(outfile)):
+            #     continue
             print("{} ({}/{})".format(name, batch, self.num_images))
             predictions = model.predict_on_batch(images).numpy()
             for i in range(predictions.shape[0]):
@@ -28,5 +28,6 @@ class PredictEvaluator(ThresholdAwareEvaluator):
 
                 np.savez_compressed(outfile,
                                     image=image,
+                                    raw_prediction=prediction,
                                     prediction=thresholded_prediction,
                                     mask=mask)
