@@ -19,6 +19,8 @@ class Visualizers(Enum):
     search_activation = "search-activation"
     variance = "variance"
     best_pair = "best-pair"
+    ensemble = "ensemble"
+    ensemble_prediction = "ensemble-prediction"
 
     def __str__(self):
         return self.name
@@ -81,5 +83,11 @@ class Visualizers(Enum):
         if visualizer == "best-pair":
             from segmenter.visualizers.BestPairVisualizer import BestPairVisualizer
             return BestPairVisualizer
+        if visualizer == "ensemble":
+            from segmenter.visualizers.EnsembleVisualizer import EnsembleVisualizer
+            return EnsembleVisualizer
+        if visualizer == "ensemble-prediction":
+            from segmenter.visualizers.EnsemblePredictionVisualizer import EnsemblePredictionVisualizer
+            return EnsemblePredictionVisualizer
 
         raise ValueError("Unknown visualizer {}".format(visualizer))
